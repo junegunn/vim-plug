@@ -47,7 +47,7 @@ if exists('g:loaded_plug')
 endif
 let g:loaded_plug = 1
 
-let s:plug_source = 'https://raw.github.com/junegunn/vim-plug/master/vim-plug.vim'
+let s:plug_source = 'https://raw.github.com/junegunn/vim-plug/master/plug.vim'
 let s:plug_win = 0
 let s:is_win = has('win32') || has('win64')
 let s:me = expand('<sfile>:p')
@@ -347,7 +347,7 @@ function! s:upgrade()
       \ new, s:plug_source, mee, mee, new, mee))
     if v:shell_error == 0
       unlet g:loaded_plug
-      execute "source ". s:me
+      echo "Now reload vim-plug with: source ". s:me
     else
       echoerr "Error upgrading vim-plug"
       return
