@@ -77,7 +77,7 @@ function! plug#init(...)
   command! -nargs=* PlugInstall call s:install(<f-args>)
   command! -nargs=* PlugUpdate  call s:update(<f-args>)
   command! -nargs=0 PlugClean   call s:clean()
-  command! -nargs=0 PlugUpgrade call s:upgrade()
+  command! -nargs=0 PlugUpgrade if s:upgrade() | execute "source ". s:me | endif
 endfunction
 
 function! s:add(...)
@@ -96,7 +96,7 @@ function! s:add(...)
 
   let name = split(plugin, '/')[-1]
   let dir  = fnamemodify(join([g:plug_home, plugin, branch], '/'), ':p')
-  let uri  = 'https://github.com/' . plugin
+  let uri  = 'https://git:@github.com/' . plugin . '.git'
   let spec = { 'name': name, 'dir': dir, 'uri': uri, 'branch': branch }
   execute "set rtp+=".dir
   let g:plug[plugin] = spec
@@ -130,12 +130,14 @@ function! s:syntax()
   syn match plugBracket /[[\]]/ containedin=plug2
   syn match plugDash /^-/
   syn match plugName /\(^- \)\@<=[^:]*/
+  syn match plugError /^- [^:]\+: (x).*/
   hi def link plug1       Title
   hi def link plug2       Repeat
   hi def link plugBracket Structure
   hi def link plugNumber  Number
   hi def link plugDash    Special
   hi def link plugName    Label
+  hi def link plugError   Error
 endfunction
 
 function! s:lpad(str, len)
@@ -347,14 +349,15 @@ function! s:upgrade()
       \ new, s:plug_source, mee, mee, new, mee))
     if v:shell_error == 0
       unlet g:loaded_plug
-      echo "Now reload vim-plug with: source ". s:me
+      echo "Downloaded ". s:plug_source
+      return 1
     else
       echoerr "Error upgrading vim-plug"
-      return
+      return 0
     endif
   else
     echoerr "`curl' not found"
-    return
+    return 0
   endif
 endfunction
 
