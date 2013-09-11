@@ -1,15 +1,15 @@
 vim-plug
 ========
 
-Vim plugin manager.
+A single-file Vim plugin manager.
 
-### Why?
+### Wh..why?
 
-Because I can?
+... because I can?
 
 ### Pros.
 
-- Marginally simpler
+- Easier to setup
 - Parallel installation/update (requires +ruby)
 - Alternative directory structure: user/repo/branch
 
@@ -23,7 +23,7 @@ Download plug.vim and put it in ~/.vim/autoload
 
 ```sh
 mkdir -p ~/.vim/autoload
-curl -fL -o ~/.vim/autoload/plug.vim https://raw.github.com/junegunn/vim-plug/master/plug.vim
+curl -fLo ~/.vim/autoload/plug.vim https://raw.github.com/junegunn/vim-plug/master/plug.vim
 ```
 
 Edit your .vimrc
@@ -50,5 +50,5 @@ You can change the location of the plugins with `plug#init(path)` call.
 | PlugClean              | Remove unused directories |
 | PlugUpgrade            | Upgrade vim-plug itself   |
 
-(Default #threads = Number of plugins)
+(Default number of threads = `g:plug_threads` or 16)
 

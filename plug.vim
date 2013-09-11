@@ -4,7 +4,7 @@
 " Download plug.vim and put it in ~/.vim/autoload
 "
 "   mkdir -p ~/.vim/autoload
-"   curl -fL -o ~/.vim/autoload/plug.vim \
+"   curl -fLo ~/.vim/autoload/plug.vim \
 "     https://raw.github.com/junegunn/vim-plug/master/plug.vim
 "
 " Edit your .vimrc
@@ -188,7 +188,8 @@ endfunction
 
 function! s:update_impl(pull, args)
   if has('ruby') && get(g:, 'plug_parallel', 1)
-    let threads = len(a:args) > 0 ? a:args[0] : len(g:plug)
+    let threads = min(
+      \ [len(g:plug), len(a:args) > 0 ? a:args[0] : get(g:, 'plug_threads', 16)])
   else
     let threads = 1
   endif
@@ -255,11 +256,23 @@ function! s:update_parallel(pull, threads)
   total = all.length
   cnt   = 0
   skip  = 'Already installed'
-  all.each_slice(VIM::evaluate('a:threads').to_i).each do |slice|
-    slice.map { |pair|
-      spec = pair.last
-      Thread.new do
-        name, dir, uri, branch = spec.values_at *%w[name dir uri branch]
+  mtx   = Mutex.new
+  take1 = proc { mtx.synchronize { all.shift } }
+  log   = proc { |name, result, ok|
+    mtx.synchronize {
+      result = '(x) ' + result unless ok
+      result = "- #{name}: #{result}"
+      $curbuf[1] = "Updating plugins (#{cnt += 1}/#{total})"
+      $curbuf[2] = '[' + ('=' * cnt).ljust(total) + ']'
+      $curbuf.append $curbuf.count, result
+      VIM::command('normal! 2G')
+      VIM::command('redraw')
+    }
+  }
+  VIM::evaluate('a:threads').to_i.times.map { |i|
+    Thread.new(i) do |ii|
+      while pair = take1.call
+        name, dir, uri, branch = pair.last.values_at *%w[name dir uri branch]
         result =
           if File.directory? dir
             pull ? `#{cd} #{dir} && git pull 2>&1` : skip
@@ -267,18 +280,10 @@ function! s:update_parallel(pull, threads)
             FileUtils.mkdir_p(base)
             `#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{dir} 2>&1`
           end.lines.to_a.last.strip
-        result = '(x) ' + result if $? != 0 && result != skip
-        Thread.current[:result] = "- #{name}: #{result}"
+        log.call name, result, ($? == 0 || result == skip)
       end
-    }.each do |t|
-      t.join
-      $curbuf[1] = "Updating plugins (#{cnt += 1}/#{total})"
-      $curbuf[2] = '[' + ('=' * cnt).ljust(total) + ']'
-      $curbuf.append $curbuf.count, t[:result]
-      VIM::command('normal! 2G')
-      VIM::command('redraw')
     end
-  end
+  }.each(&:join)
   $curbuf[1] = "Updated. Elapsed time: #{"%.6f" % (Time.now - st)} sec."
 EOF
 endfunction
@@ -345,7 +350,7 @@ function! s:upgrade()
     redraw
     let mv = s:is_win ? 'move /Y' : 'mv -f'
     call system(printf(
-      \ "curl -fL -o %s %s && ".mv." %s %s.old && ".mv." %s %s",
+      \ "curl -fLo %s %s && ".mv." %s %s.old && ".mv." %s %s",
       \ new, s:plug_source, mee, mee, new, mee))
     if v:shell_error == 0
       unlet g:loaded_plug
