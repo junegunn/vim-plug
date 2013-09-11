@@ -99,6 +99,9 @@ function! s:add(...)
   let uri  = 'https://git:@github.com/' . plugin . '.git'
   let spec = { 'name': name, 'dir': dir, 'uri': uri, 'branch': branch }
   execute "set rtp+=".dir
+  if isdirectory(dir.'after')
+    execute "set rtp+=".dir.'after'
+  endif
   let g:plug[plugin] = spec
 endfunction
 
