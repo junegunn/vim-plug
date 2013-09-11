@@ -119,7 +119,7 @@ function! s:apply()
   endfor
   runtime! plugin/*.vim
   runtime! after/*.vim
-  source $MYVIMRC
+  silent! source $MYVIMRC
 endfunction
 
 function! s:syntax()
@@ -288,8 +288,13 @@ function! s:update_parallel(pull, threads)
 EOF
 endfunction
 
+function! s:path(path)
+  return substitute(s:is_win ? substitute(a:path, '/', '\', 'g') : a:path,
+        \ '[/\\]*$', '', '')
+endfunction
+
 function! s:glob_dir(path)
-  return filter(split(globpath(a:path, '**'), '\n'), 'isdirectory(v:val)')
+  return map(filter(split(globpath(a:path, '**'), '\n'), 'isdirectory(v:val)'), 's:path(v:val)')
 endfunction
 
 function! s:clean()
@@ -297,7 +302,7 @@ function! s:clean()
   call append(0, 'Removing unused plugins in '.g:plug_home)
 
   " List of files
-  let dirs = map(values(g:plug), 'substitute(v:val.dir, "/*$", "", "")')
+  let dirs = map(values(g:plug), 's:path(v:val.dir)')
   let alldirs = dirs +
         \ map(copy(dirs), 'fnamemodify(v:val, ":h")') +
         \ map(copy(dirs), 'fnamemodify(v:val, ":h:h")')
