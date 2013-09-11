@@ -247,6 +247,7 @@ endfunction
 
 function! s:update_parallel(pull, threads)
   ruby << EOF
+  require 'thread'
   require 'fileutils'
   st    = Time.now
   cd    = VIM::evaluate('s:is_win').to_i == 1 ? 'cd /d' : 'cd'
