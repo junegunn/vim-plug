@@ -12,6 +12,7 @@
 "   call plug#init()
 "
 "   Plug 'junegunn/seoul256'
+"   Plug 'junegunn/vim-easy-align'
 "   " Plug 'user/repo', 'branch_or_tag'
 "   " ...
 "
@@ -56,7 +57,8 @@ function! plug#init(...)
   set nocompatible
   filetype off
   filetype plugin indent on
-  let home = a:0 > 0 ? fnamemodify(a:1, ':p') : (split(&rtp, ',')[0].'/plugged')
+  let home = a:0 > 0 ? fnamemodify(a:1, ':p') :
+        \ get(g:, 'plug_home', split(&rtp, ',')[0].'/plugged')
   if !isdirectory(home)
     try
       call mkdir(home, 'p')
@@ -71,7 +73,7 @@ function! plug#init(...)
   endif
 
   let g:plug_home = home
-  let g:plug = {}
+  let g:plugs = {}
 
   command! -nargs=+ Plug        call s:add(<args>)
   command! -nargs=* PlugInstall call s:install(<f-args>)
@@ -95,14 +97,14 @@ function! s:add(...)
   endif
 
   let name = split(plugin, '/')[-1]
-  let dir  = fnamemodify(join([g:plug_home, plugin, branch], '/'), ':p')
+  let dir  = fnamemodify(join([g:plug_home, plugin], '/'), ':p')
   let uri  = 'https://git:@github.com/' . plugin . '.git'
   let spec = { 'name': name, 'dir': dir, 'uri': uri, 'branch': branch }
-  execute "set rtp+=".dir
+  execute "set rtp^=".dir
   if isdirectory(dir.'after')
     execute "set rtp+=".dir.'after'
   endif
-  let g:plug[plugin] = spec
+  let g:plugs[plugin] = spec
 endfunction
 
 function! s:install(...)
@@ -114,7 +116,7 @@ function! s:update(...)
 endfunction
 
 function! s:apply()
-  for spec in values(g:plug)
+  for spec in values(g:plugs)
     let docd = join([spec.dir, 'doc'], '/')
     if isdirectory(docd)
       execute "helptags ". join([spec.dir, 'doc'], '/')
@@ -192,14 +194,14 @@ endfunction
 function! s:update_impl(pull, args)
   if has('ruby') && get(g:, 'plug_parallel', 1)
     let threads = min(
-      \ [len(g:plug), len(a:args) > 0 ? a:args[0] : get(g:, 'plug_threads', 16)])
+      \ [len(g:plugs), len(a:args) > 0 ? a:args[0] : get(g:, 'plug_threads', 16)])
   else
     let threads = 1
   endif
 
   call s:prepare()
   call append(0, 'Updating plugins')
-  call append(1, '['. s:lpad('', len(g:plug)) .']')
+  call append(1, '['. s:lpad('', len(g:plugs)) .']')
   normal! 2G
   redraw
 
@@ -215,14 +217,17 @@ function! s:update_serial(pull)
   let st = reltime()
   let base = g:plug_home
   let cnt = 0
-  let total = len(g:plug)
+  let total = len(g:plugs)
 
-  for [name, spec] in items(g:plug)
+  for [name, spec] in items(g:plugs)
     let cnt += 1
     let d = shellescape(spec.dir)
     if isdirectory(spec.dir)
       execute 'cd '.spec.dir
-      let result = a:pull ? s:system('git pull 2>&1') : 'Already installed'
+      let result = a:pull ?
+        \ s:system(
+        \ printf('git checkout -q %s && git pull origin %s 2>&1',
+        \   spec.branch, spec.branch)) : 'Already installed'
       let error = a:pull ? v:shell_error != 0 : 0
     else
       if !isdirectory(base)
@@ -256,7 +261,7 @@ function! s:update_parallel(pull, threads)
   cd    = VIM::evaluate('s:is_win').to_i == 1 ? 'cd /d' : 'cd'
   pull  = VIM::evaluate('a:pull').to_i == 1
   base  = VIM::evaluate('g:plug_home')
-  all   = VIM::evaluate('g:plug')
+  all   = VIM::evaluate('g:plugs')
   total = all.length
   cnt   = 0
   skip  = 'Already installed'
@@ -279,7 +284,9 @@ function! s:update_parallel(pull, threads)
         name, dir, uri, branch = pair.last.values_at *%w[name dir uri branch]
         result =
           if File.directory? dir
-            pull ? `#{cd} #{dir} && git pull 2>&1` : skip
+            pull ?
+              `#{cd} #{dir} && git checkout -q #{branch} && git pull origin #{branch} 2>&1`
+              : skip
           else
             FileUtils.mkdir_p(base)
             `#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{dir} 2>&1`
@@ -306,10 +313,9 @@ function! s:clean()
   call append(0, 'Removing unused plugins in '.g:plug_home)
 
   " List of files
-  let dirs = map(values(g:plug), 's:path(v:val.dir)')
+  let dirs = map(values(g:plugs), 's:path(v:val.dir)')
   let alldirs = dirs +
-        \ map(copy(dirs), 'fnamemodify(v:val, ":h")') +
-        \ map(copy(dirs), 'fnamemodify(v:val, ":h:h")')
+        \ map(copy(dirs), 'fnamemodify(v:val, ":h")')
   for dir in dirs
     let alldirs += s:glob_dir(dir)
   endfor

@@ -3,19 +3,16 @@ vim-plug
 
 A single-file Vim plugin manager.
 
-### Wh..why?
-
-... because I can?
-
 ### Pros.
 
 - Easier to setup
 - Parallel installation/update (requires +ruby)
-- Alternative directory structure: user/repo/branch
+- Alternative directory structure: user/repo
+  - Make it easier to switch plugins of the same name from different authors
 
 ### Cons.
 
-Everything else.
+- Everything else
 
 ### Usage
 
