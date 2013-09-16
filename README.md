@@ -3,13 +3,21 @@ vim-plug
 
 A single-file Vim plugin manager.
 
+### Parallel installation
+
+![](https://raw.github.com/junegunn/vim-plug/master/gif/pi.gif)
+
+### Serial installation
+
+![](https://raw.github.com/junegunn/vim-plug/master/gif/si.gif)
+
 ### Parallel update
 
-![](https://raw.github.com/junegunn/vim-plug/master/gif/parallel.gif)
+![](https://raw.github.com/junegunn/vim-plug/master/gif/pu.gif)
 
 ### Serial update
 
-![](https://raw.github.com/junegunn/vim-plug/master/gif/serial.gif)
+![](https://raw.github.com/junegunn/vim-plug/master/gif/su.gif)
 
 ### Pros.
 
