@@ -5,11 +5,11 @@ A single-file Vim plugin manager.
 
 ### Parallel update
 
-![](https://raw.github.com/junegunn/vim-plug/gif/parallel.gif)
+![](https://raw.github.com/junegunn/vim-plug/master/gif/parallel.gif)
 
 ### Serial update
 
-![](https://raw.github.com/junegunn/vim-plug/gif/serial.gif)
+![](https://raw.github.com/junegunn/vim-plug/master/gif/serial.gif)
 
 ### Pros.
 
