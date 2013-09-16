@@ -3,6 +3,14 @@ vim-plug
 
 A single-file Vim plugin manager.
 
+### Parallel update
+
+![](https://raw.github.com/junegunn/vim-plug/gif/parallel.gif)
+
+### Serial update
+
+![](https://raw.github.com/junegunn/vim-plug/gif/serial.gif)
+
 ### Pros.
 
 - Easier to setup
