@@ -42,12 +42,14 @@ curl -fLo ~/.vim/autoload/plug.vim https://raw.github.com/junegunn/vim-plug/mast
 Edit your .vimrc
 
 ```vim
-call plug#init()
+call plug#begin()
 
 Plug 'junegunn/seoul256'
 Plug 'junegunn/vim-easy-align'
 " Plug 'user/repo', 'branch_or_tag'
 " ...
+
+call plug#end()
 ```
 
 Then :PlugInstall to install plugins. (Default plugin directory: `~/.vim/plugged`)

@@ -9,15 +9,17 @@
 "
 " Edit your .vimrc
 "
-"   call plug#init()
+"   call plug#begin()
 "
 "   Plug 'junegunn/seoul256'
 "   Plug 'junegunn/vim-easy-align'
 "   " Plug 'user/repo', 'branch_or_tag'
 "   " ...
 "
+"   call plug#end()
+"
 " Then :PlugInstall to install plugins. (default: ~/.vim/plugged)
-" You can change the location of the plugins with plug#init(path) call.
+" You can change the location of the plugins with plug#begin(path) call.
 "
 "
 " Copyright (c) 2013 Junegunn Choi
@@ -53,10 +55,7 @@ let s:plug_win = 0
 let s:is_win = has('win32') || has('win64')
 let s:me = expand('<sfile>:p')
 
-function! plug#init(...)
-  set nocompatible
-  filetype off
-  filetype plugin indent on
+function! plug#begin(...)
   let home = a:0 > 0 ? fnamemodify(a:1, ':p') :
         \ get(g:, 'plug_home', split(&rtp, ',')[0].'/plugged')
   if !isdirectory(home)
@@ -82,6 +81,20 @@ function! plug#init(...)
   command! -nargs=0 PlugUpgrade if s:upgrade() | execute "source ". s:me | endif
 endfunction
 
+function! plug#end()
+  set nocompatible
+  filetype off
+  for plug in values(g:plugs)
+    let dir = plug.dir
+    execute "set rtp^=".dir
+    if isdirectory(dir.'after')
+      execute "set rtp+=".dir.'after'
+    endif
+  endfor
+  filetype plugin indent on
+  syntax on
+endfunction
+
 function! s:add(...)
   if a:0 == 1
     let [plugin, branch] = [a:1, 'master']
@@ -100,10 +113,6 @@ function! s:add(...)
   let dir  = fnamemodify(join([g:plug_home, plugin], '/'), ':p')
   let uri  = 'https://git:@github.com/' . plugin . '.git'
   let spec = { 'name': name, 'dir': dir, 'uri': uri, 'branch': branch }
-  execute "set rtp^=".dir
-  if isdirectory(dir.'after')
-    execute "set rtp+=".dir.'after'
-  endif
   let g:plugs[plugin] = spec
 endfunction
 
