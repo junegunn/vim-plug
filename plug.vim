@@ -105,15 +105,20 @@ function! s:add(...)
     return
   endif
 
-  if plugin !~ '/'
-    let plugin = 'vim-scripts/'. plugin
+  if plugin =~ ':'
+    let uri = plugin
+  else
+    if plugin !~ '/'
+      let plugin = 'vim-scripts/'. plugin
+    endif
+    let uri = 'https://git:@github.com/' . plugin . '.git'
   endif
 
-  let name = split(plugin, '/')[-1]
-  let dir  = fnamemodify(join([g:plug_home, plugin], '/'), ':p')
-  let uri  = 'https://git:@github.com/' . plugin . '.git'
-  let spec = { 'name': name, 'dir': dir, 'uri': uri, 'branch': branch }
-  let g:plugs[plugin] = spec
+  let name = substitute(split(plugin, '/')[-1], '\.git$', '', '')
+  let dir  = fnamemodify(join([g:plug_home, name], '/'), ':p')
+
+  let spec = { 'dir': dir, 'uri': uri, 'branch': branch }
+  let g:plugs[name] = spec
 endfunction
 
 function! s:install(...)
@@ -159,7 +164,8 @@ function! s:lpad(str, len)
 endfunction
 
 function! s:system(cmd)
-  return split(system(a:cmd), '\n')[-1]
+  let lines = split(system(a:cmd), '\n')
+  return get(lines, -1, '')
 endfunction
 
 function! s:prepare()
@@ -233,11 +239,16 @@ function! s:update_serial(pull)
     let d = shellescape(spec.dir)
     if isdirectory(spec.dir)
       execute 'cd '.spec.dir
-      let result = a:pull ?
-        \ s:system(
-        \ printf('git checkout -q %s && git pull origin %s 2>&1',
-        \   spec.branch, spec.branch)) : 'Already installed'
-      let error = a:pull ? v:shell_error != 0 : 0
+      if s:git_valid(spec, 0)
+        let result = a:pull ?
+          \ s:system(
+          \ printf('git checkout -q %s && git pull origin %s 2>&1',
+          \   spec.branch, spec.branch)) : 'Already installed'
+        let error = a:pull ? v:shell_error != 0 : 0
+      else
+        let result = "PlugClean required. Invalid remote repository."
+        let error = 1
+      endif
     else
       if !isdirectory(base)
         call mkdir(base, 'p')
@@ -290,17 +301,27 @@ function! s:update_parallel(pull, threads)
   VIM::evaluate('a:threads').to_i.times.map { |i|
     Thread.new(i) do |ii|
       while pair = take1.call
-        name, dir, uri, branch = pair.last.values_at *%w[name dir uri branch]
-        result =
+        name = pair.first
+        dir, uri, branch = pair.last.values_at *%w[dir uri branch]
+        ok, result =
           if File.directory? dir
-            pull ?
-              `#{cd} #{dir} && git checkout -q #{branch} && git pull origin #{branch} 2>&1`
-              : skip
+            current_uri = `#{cd} #{dir} && git config remote.origin.url`.chomp
+            if $? == 0 && current_uri == uri
+              if pull
+                [true, `#{cd} #{dir} && git checkout -q #{branch} && git pull origin #{branch} 2>&1`]
+              else
+                [true, skip]
+              end
+            else
+              [false, "PlugClean required. Invalid remote repository."]
+            end
           else
             FileUtils.mkdir_p(base)
-            `#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{dir} 2>&1`
-          end.lines.to_a.last.strip
-        log.call name, result, ($? == 0 || result == skip)
+            r = `#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{dir} 2>&1`
+            [$? == 0, r]
+          end
+        result = result.lines.to_a.last.strip
+        log.call name, result, ok
       end
     end
   }.each(&:join)
@@ -317,12 +338,20 @@ function! s:glob_dir(path)
   return map(filter(split(globpath(a:path, '**'), '\n'), 'isdirectory(v:val)'), 's:path(v:val)')
 endfunction
 
+function! s:git_valid(spec, cd)
+  if a:cd | execute "cd " . a:spec.dir | endif
+  let ret = s:system("git config remote.origin.url") == a:spec.uri
+  if a:cd | cd - | endif
+  return ret
+endfunction
+
 function! s:clean()
   call s:prepare()
   call append(0, 'Removing unused plugins in '.g:plug_home)
 
-  " List of files
-  let dirs = map(values(g:plugs), 's:path(v:val.dir)')
+  " List of valid directories
+  let dirs = map(filter(values(g:plugs), 's:git_valid(v:val, 1)'), 'v:val.dir')
+
   let alldirs = dirs +
         \ map(copy(dirs), 'fnamemodify(v:val, ":h")')
   for dir in dirs

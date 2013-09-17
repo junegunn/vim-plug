@@ -23,8 +23,6 @@ A single-file Vim plugin manager.
 
 - Easier to setup
 - Parallel installation/update (requires +ruby)
-- Alternative directory structure: user/repo
-  - Make it easier to switch plugins of the same name from different authors
 
 ### Cons.
 
@@ -47,6 +45,7 @@ call plug#begin()
 Plug 'junegunn/seoul256'
 Plug 'junegunn/vim-easy-align'
 " Plug 'user/repo', 'branch_or_tag'
+" Plug 'git@github.com:junegunn/vim-github-dashboard.git'
 " ...
 
 call plug#end()
