@@ -3,22 +3,6 @@ vim-plug
 
 A single-file Vim plugin manager.
 
-### Parallel installation
-
-![](https://raw.github.com/junegunn/vim-plug/master/gif/pi.gif)
-
-### Serial installation
-
-![](https://raw.github.com/junegunn/vim-plug/master/gif/si.gif)
-
-### Parallel update
-
-![](https://raw.github.com/junegunn/vim-plug/master/gif/pu.gif)
-
-### Serial update
-
-![](https://raw.github.com/junegunn/vim-plug/master/gif/su.gif)
-
 ### Pros.
 
 - Easier to setup
@@ -65,4 +49,22 @@ You can change the location of the plugins with `plug#init(path)` call.
 | PlugUpgrade            | Upgrade vim-plug itself   |
 
 (Default number of threads = `g:plug_threads` or 16)
+
+### Screenshots
+
+#### Parallel installation
+
+![](https://raw.github.com/junegunn/vim-plug/master/gif/pi.gif)
+
+#### Serial installation
+
+![](https://raw.github.com/junegunn/vim-plug/master/gif/si.gif)
+
+#### Parallel update
+
+![](https://raw.github.com/junegunn/vim-plug/master/gif/pu.gif)
+
+#### Serial update
+
+![](https://raw.github.com/junegunn/vim-plug/master/gif/su.gif)
 
