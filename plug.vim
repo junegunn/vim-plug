@@ -77,7 +77,7 @@ function! plug#begin(...)
   command! -nargs=+ Plug        call s:add(<args>)
   command! -nargs=* PlugInstall call s:install(<f-args>)
   command! -nargs=* PlugUpdate  call s:update(<f-args>)
-  command! -nargs=0 PlugClean   call s:clean()
+  command! -nargs=0 -bang PlugClean call s:clean('<bang>' == '!')
   command! -nargs=0 PlugUpgrade if s:upgrade() | execute "source ". s:me | endif
 endfunction
 
@@ -264,7 +264,7 @@ function! s:update_serial(pull)
       let result = '(x) ' . result
     endif
     call setline(1, "Updating plugins (".cnt."/".total.")")
-    call setline(2, '[' . s:lpad(repeat('=', cnt), total) . ']')
+    call s:progress_bar(2, cnt, total)
     call append(line('$'), '- ' . name . ': ' . result)
     normal! 2G
     redraw
@@ -338,19 +338,37 @@ function! s:glob_dir(path)
   return map(filter(split(globpath(a:path, '**'), '\n'), 'isdirectory(v:val)'), 's:path(v:val)')
 endfunction
 
+function! s:progress_bar(line, cnt, total)
+  call setline(a:line, '[' . s:lpad(repeat('=', a:cnt), a:total) . ']')
+endfunction
+
 function! s:git_valid(spec, cd)
-  if a:cd | execute "cd " . a:spec.dir | endif
-  let ret = s:system("git config remote.origin.url") == a:spec.uri
-  if a:cd | cd - | endif
+  if isdirectory(a:spec.dir)
+    if a:cd | execute "cd " . a:spec.dir | endif
+    let ret = s:system("git config remote.origin.url") == a:spec.uri
+    if a:cd | cd - | endif
+  else
+    let ret = 0
+  endif
   return ret
 endfunction
 
-function! s:clean()
+function! s:clean(force)
   call s:prepare()
   call append(0, 'Removing unused plugins in '.g:plug_home)
+  call append(1, '')
 
   " List of valid directories
-  let dirs = map(filter(values(g:plugs), 's:git_valid(v:val, 1)'), 'v:val.dir')
+  let dirs = []
+  let [cnt, total] = [0, len(g:plugs)]
+  for spec in values(g:plugs)
+    if s:git_valid(spec, 1)
+      call add(dirs, spec.dir)
+    endif
+    let cnt += 1
+    call s:progress_bar(2, cnt, total)
+    redraw
+  endfor
 
   let alldirs = dirs +
         \ map(copy(dirs), 'fnamemodify(v:val, ":h")')
@@ -379,9 +397,9 @@ function! s:clean()
     call append(line('$'), 'Already clean.')
   else
     call inputsave()
-    let yes = input("Proceed? (Y/N) ")
+    let yes = a:force || input("Proceed? (Y/N) ")
     call inputrestore()
-    if yes =~? '^y'
+    if a:force || yes =~? '^y'
       for dir in todo
         if isdirectory(dir)
           call system((s:is_win ? 'rmdir /S /Q ' : 'rm -rf ') . dir)
