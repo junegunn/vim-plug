@@ -3,6 +3,7 @@ vim-plug
 
 A single-file Vim plugin manager.
 
+
 ### Pros.
 
 - Easier to setup
@@ -49,6 +50,10 @@ You can change the location of the plugins with `plug#begin(path)` call.
 | PlugUpgrade            | Upgrade vim-plug itself   |
 
 (Default number of threads = `g:plug_threads` or 16)
+
+### Articles
+
+- [Writing my own Vim plugin manager](http://junegunn.kr/2013/09/writing-my-own-vim-plugin-manager)
 
 ### Screenshots
 
