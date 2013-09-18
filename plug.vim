@@ -397,9 +397,9 @@ function! s:clean(force)
     call append(line('$'), 'Already clean.')
   else
     call inputsave()
-    let yes = a:force || input("Proceed? (Y/N) ")
+    let yes = a:force || (input("Proceed? (Y/N) ") =~? '^y')
     call inputrestore()
-    if a:force || yes =~? '^y'
+    if yes
       for dir in todo
         if isdirectory(dir)
           call system((s:is_win ? 'rmdir /S /Q ' : 'rm -rf ') . dir)
