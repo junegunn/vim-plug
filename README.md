@@ -37,7 +37,7 @@ call plug#end()
 
 Then :PlugInstall to install plugins. (Default plugin directory: `~/.vim/plugged`)
 
-You can change the location of the plugins with `plug#init(path)` call.
+You can change the location of the plugins with `plug#begin(path)` call.
 
 ### Commands
 
