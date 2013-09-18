@@ -355,7 +355,7 @@ endfunction
 
 function! s:clean(force)
   call s:prepare()
-  call append(0, 'Removing unused plugins in '.g:plug_home)
+  call append(0, 'Searching for unused plugins in '.g:plug_home)
   call append(1, '')
 
   " List of valid directories
