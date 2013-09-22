@@ -3,12 +3,15 @@ vim-plug
 
 A single-file Vim plugin manager.
 
+Somewhere between [Pathogen](https://github.com/tpope/vim-pathogen) and
+[Vundle](https://github.com/gmarik/vundle), but with faster parallel installer.
 
 ### Pros.
 
 - Easier to setup
 - Parallel installation/update (requires
   [+ruby](http://junegunn.kr/2013/09/installing-vim-with-ruby-support/))
+- Smallest possible feature set
 
 ### Cons.
 
