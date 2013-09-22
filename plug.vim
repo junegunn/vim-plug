@@ -145,8 +145,8 @@ function! s:syntax()
   syntax clear
   syntax region plug1 start=/\%1l/ end=/\%2l/ contains=ALL
   syntax region plug2 start=/\%2l/ end=/\%3l/ contains=ALL
-  syn match plugNumber /[0-9]\+[0-9.]*/ containedin=plug1
-  syn match plugBracket /[[\]]/ containedin=plug2
+  syn match plugNumber /[0-9]\+[0-9.]*/ containedin=plug1 contained
+  syn match plugBracket /[[\]]/ containedin=plug2 contained
   syn match plugDash /^-/
   syn match plugName /\(^- \)\@<=[^:]*/
   syn match plugError /^- [^:]\+: (x).*/
