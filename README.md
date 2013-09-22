@@ -7,7 +7,8 @@ A single-file Vim plugin manager.
 ### Pros.
 
 - Easier to setup
-- Parallel installation/update (requires +ruby)
+- Parallel installation/update (requires
+  [+ruby](http://junegunn.kr/2013/09/installing-vim-with-ruby-support/))
 
 ### Cons.
 
