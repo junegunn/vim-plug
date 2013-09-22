@@ -40,9 +40,11 @@ Plug 'junegunn/vim-easy-align'
 call plug#end()
 ```
 
-Then :PlugInstall to install plugins. (Default plugin directory: `~/.vim/plugged`)
-
-You can change the location of the plugins with `plug#begin(path)` call.
+Then `:PlugInstall` to install plugins. By default, plugins are installed in
+`plugged` directory under the first path in runtimepath at the point when
+`plug#begin()` is called. This is usually `~/.vim/plugged` (or `$HOME/vimfiles`
+on Windows) given that you didn't touch runtimepath before the call. You can
+explicitly set the location of the plugins with `plug#begin(path)` call.
 
 ### Commands
 
