@@ -265,7 +265,7 @@ function! s:update_serial(pull)
     endif
     call setline(1, "Updating plugins (".cnt."/".total.")")
     call s:progress_bar(2, cnt, total)
-    call append(line('$'), '- ' . name . ': ' . result)
+    call append(3, '- ' . name . ': ' . result)
     normal! 2G
     redraw
   endfor
@@ -293,7 +293,7 @@ function! s:update_parallel(pull, threads)
       result = "- #{name}: #{result}"
       $curbuf[1] = "Updating plugins (#{cnt += 1}/#{total})"
       $curbuf[2] = '[' + ('=' * cnt).ljust(total) + ']'
-      $curbuf.append $curbuf.count, result
+      $curbuf.append 3, result
       VIM::command('normal! 2G')
       VIM::command('redraw')
     }
