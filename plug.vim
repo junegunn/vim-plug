@@ -79,6 +79,7 @@ function! plug#begin(...)
   command! -nargs=* PlugUpdate  call s:update(<f-args>)
   command! -nargs=0 -bang PlugClean call s:clean('<bang>' == '!')
   command! -nargs=0 PlugUpgrade if s:upgrade() | execute "source ". s:me | endif
+  command! -nargs=0 PlugStatus  call s:status()
 endfunction
 
 function! plug#end()
@@ -246,7 +247,7 @@ function! s:update_serial(pull)
           \   spec.branch, spec.branch)) : 'Already installed'
         let error = a:pull ? v:shell_error != 0 : 0
       else
-        let result = "PlugClean required. Invalid remote repository."
+        let result = "PlugClean required. Invalid remote."
         let error = 1
       endif
     else
@@ -313,7 +314,7 @@ function! s:update_parallel(pull, threads)
                 [true, skip]
               end
             else
-              [false, "PlugClean required. Invalid remote repository."]
+              [false, "PlugClean required. Invalid remote."]
             end
           else
             FileUtils.mkdir_p(base)
@@ -435,5 +436,34 @@ function! s:upgrade()
     echoerr "`curl' not found"
     return 0
   endif
+endfunction
+
+function! s:status()
+  call s:prepare()
+  call append(0, 'Checking plugins')
+
+  let errs = 0
+  for [name, spec] in items(g:plugs)
+    let err = 'OK'
+    if isdirectory(spec.dir)
+      execute 'cd '.spec.dir
+      if s:git_valid(spec, 0)
+        let branch = s:system('git rev-parse --abbrev-ref HEAD')
+        if spec.branch != branch
+          let err = '(x) Invalid branch: '.branch.'. Try PlugUpdate.'
+        endif
+      else
+        let err = '(x) Invalid remote. Try PlugClean.'
+      endif
+      cd -
+    else
+      let err = '(x) Not found. Try PlugInstall.'
+    endif
+    let errs += err != 'OK'
+    call append(2, printf('- %s: %s', name, err))
+    call cursor(3, 1)
+    redraw
+  endfor
+  call setline(1, 'Finished. '.errs.' error(s).')
 endfunction
 
