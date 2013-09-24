@@ -6,6 +6,8 @@ A single-file Vim plugin manager.
 Somewhere between [Pathogen](https://github.com/tpope/vim-pathogen) and
 [Vundle](https://github.com/gmarik/vundle), but with faster parallel installer.
 
+![](https://raw.github.com/junegunn/vim-plug/master/gif/vim-plug.gif)
+
 ### Pros.
 
 - Easier to setup
@@ -65,22 +67,4 @@ plugins with `plug#begin(path)` call.
 ### Articles
 
 - [Writing my own Vim plugin manager](http://junegunn.kr/2013/09/writing-my-own-vim-plugin-manager)
-
-### Screenshots
-
-#### Parallel installation
-
-![](https://raw.github.com/junegunn/vim-plug/master/gif/pi.gif)
-
-#### Serial installation
-
-![](https://raw.github.com/junegunn/vim-plug/master/gif/si.gif)
-
-#### Parallel update
-
-![](https://raw.github.com/junegunn/vim-plug/master/gif/pu.gif)
-
-#### Serial update
-
-![](https://raw.github.com/junegunn/vim-plug/master/gif/su.gif)
 
