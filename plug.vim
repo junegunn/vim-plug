@@ -216,7 +216,7 @@ function! s:update_impl(pull, args)
   endif
 
   call s:prepare()
-  call append(0, 'Updating plugins')
+  call append(0, a:pull ? 'Updating plugins' : 'Installing plugins')
   call append(1, '['. s:lpad('', len(g:plugs)) .']')
   normal! 2G
   redraw
