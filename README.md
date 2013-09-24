@@ -68,3 +68,17 @@ plugins with `plug#begin(path)` call.
 
 - [Writing my own Vim plugin manager](http://junegunn.kr/2013/09/writing-my-own-vim-plugin-manager)
 
+### Regarding feature request
+
+You may submit a request for a new feature by [creating an
+issue](https://github.com/junegunn/vim-plug/issues). However, please be minded
+that this is an opinionated software and I want to keep the feature set as small
+as possible. So I may not agree with you on the necessity of the suggested
+feature. If that happens, I suggest the following options.
+
+1. Check out [Vundle](https://github.com/gmarik/vundle) or
+   [NeoBundle](https://github.com/Shougo/neobundle.vim).
+   They offer broader feature sets.
+2. Create a fork of this project and let it be your own plugin manager.
+   There's no need for us to have a single canonical branch.
+
