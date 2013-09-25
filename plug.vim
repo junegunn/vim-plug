@@ -274,7 +274,7 @@ function! s:update_serial(pull)
         if s:git_valid(spec, 0)
           let result = a:pull ?
             \ s:system(
-            \ printf('git checkout -q %s && git pull origin %s 2>&1',
+            \ printf('git checkout -q %s 2>&1 && git pull origin %s 2>&1',
             \   spec.branch, spec.branch)) : 'Already installed'
           let error = a:pull ? v:shell_error != 0 : 0
         else
@@ -352,7 +352,8 @@ function! s:update_parallel(pull, threads)
               current_uri = `#{cd} #{dir} && git config remote.origin.url`.chomp
               if $? == 0 && current_uri == uri
                 if pull
-                  [true, `#{cd} #{dir} && git checkout -q #{branch} && git pull origin #{branch} 2>&1`]
+                  output = `#{cd} #{dir} && git checkout -q #{branch} 2>&1 && git pull origin #{branch} 2>&1`
+                  [$? == 0, output]
                 else
                   [true, skip]
                 end
