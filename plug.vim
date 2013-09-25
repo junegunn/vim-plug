@@ -344,40 +344,38 @@ function! s:update_parallel(pull, threads)
       logh.call
     end
   }
-  refill = proc { |name|
-    mtx.synchronize do
-      all.merge! VIM::evaluate("s:extend(['#{name}'])")
-      logh.call
-    end
-  }
-  VIM::evaluate('a:threads').to_i.times.map { |i|
-    Thread.new(i) do |ii|
-      while pair = take1.call
-        name = pair.first
-        dir, uri, branch = pair.last.values_at *%w[dir uri branch]
-        ok, result =
-          if File.directory? dir
-            current_uri = `#{cd} #{dir} && git config remote.origin.url`.chomp
-            if $? == 0 && current_uri == uri
-              if pull
-                [true, `#{cd} #{dir} && git checkout -q #{branch} && git pull origin #{branch} 2>&1`]
+  until all.empty?
+    names = all.keys
+    [names.length, VIM::evaluate('a:threads').to_i].min.times.map { |i|
+      Thread.new(i) do
+        while pair = take1.call
+          name = pair.first
+          dir, uri, branch = pair.last.values_at *%w[dir uri branch]
+          ok, result =
+            if File.directory? dir
+              current_uri = `#{cd} #{dir} && git config remote.origin.url`.chomp
+              if $? == 0 && current_uri == uri
+                if pull
+                  [true, `#{cd} #{dir} && git checkout -q #{branch} && git pull origin #{branch} 2>&1`]
+                else
+                  [true, skip]
+                end
               else
-                [true, skip]
+                [false, "PlugClean required. Invalid remote."]
               end
             else
-              [false, "PlugClean required. Invalid remote."]
+              FileUtils.mkdir_p(base)
+              r = `#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{dir} 2>&1`
+              [$? == 0, r]
             end
-          else
-            FileUtils.mkdir_p(base)
-            r = `#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{dir} 2>&1`
-            [$? == 0, r]
-          end
-        result = result.lines.to_a.last.strip
-        log.call name, result, ok
-        refill.call name
+          result = result.lines.to_a.last.strip
+          log.call name, result, ok
+        end
       end
-    end
-  }.each(&:join)
+    }.each(&:join)
+    all.merge! VIM::evaluate("s:extend(#{names.inspect})")
+    logh.call
+  end
   $curbuf[1] = "Updated. Elapsed time: #{"%.6f" % (Time.now - st)} sec."
 EOF
 endfunction
