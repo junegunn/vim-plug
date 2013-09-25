@@ -73,16 +73,14 @@ installation.
 
 A `Plugfile` should contain a set of `Plug` commands for the dependent plugins.
 
-I've created two dummy repositories with Plugfiles as an example to this scheme.
+I've created three dummy repositories with Plugfiles as an example to this
+scheme.
 
-- [junegunn/dummy1](https://github.com/junegunn/dummy1)
-  - `Plug 'junegunn/vim-scroll-position'`
-  - `Plug 'junegunn/dummy2'`
-- [junegunn/dummy2](https://github.com/junegunn/dummy2)
-  - `Plug 'junegunn/Zenburn'`
-  - `Plug 'junegunn/jellybeans.vim'`
-  - `Plug 'junegunn/dummy1'`
-    - (Circular dependencies are ignored)
+- [junegunn/dummy1](https://github.com/junegunn/dummy1/blob/master/Plugfile)
+  - Plugfile includes `Plug 'junegunn/dummy2'`
+- [junegunn/dummy2](https://github.com/junegunn/dummy2/blob/master/Plugfile)
+  - Plugfile includes `Plug 'junegunn/dummy3'`
+- [junegunn/dummy3](https://github.com/junegunn/dummy3/blob/master/Plugfile)
 
 If you put `Plug 'junegunn/dummy1'` in your configuration file, and run
 `:PlugInstall`,
