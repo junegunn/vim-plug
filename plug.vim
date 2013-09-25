@@ -93,16 +93,20 @@ function! plug#end()
   set nocompatible
   filetype off
   for plug in values(g:plugs)
-    let dir = plug.dir
-    let rtp = dir.get(plug, 'rtp', '')
-    if rtp !~ '/$' | let rtp .= '/' | endif
+    let rtp = s:rtp(plug)
     execute "set rtp^=".rtp
-    if isdirectory(dir.'after')
+    if isdirectory(rtp.'after')
       execute "set rtp+=".rtp.'after'
     endif
   endfor
   filetype plugin indent on
   syntax on
+endfunction
+
+function! s:rtp(spec)
+  let rtp = a:spec.dir . get(a:spec, 'rtp', '')
+  if rtp !~ '/$' | let rtp .= '/' | endif
+  return rtp
 endfunction
 
 function! s:add(...)
@@ -251,8 +255,7 @@ function! s:extend(names)
   try
     command! -nargs=+ Plug call s:add(0, <args>)
     for name in a:names
-      let spec = g:plugs[name]
-      let plugfile = spec.dir . '/'. s:plug_file
+      let plugfile = s:rtp(g:plugs[name]) . s:plug_file
       if filereadable(plugfile)
         execute "source ". plugfile
       endif
