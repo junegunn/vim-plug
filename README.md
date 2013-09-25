@@ -55,13 +55,13 @@ plugins with `plug#begin(path)` call.
 
 ### Commands
 
-| Command                | Description                                                         |
-| ---------------------- | ------------------------------------------------------------------- |
-| PlugInstall [#threads] | Install plugins                                                     |
-| PlugUpdate  [#threads] | Install or update plugins                                           |
-| PlugClean[!]           | Remove unused directories. (Bang version will clean without prompt) |
-| PlugUpgrade            | Upgrade vim-plug itself                                             |
-| PlugStatus             | Check the status of plugins                                         |
+| Command                | Description                                                        |
+| ---------------------- | ------------------------------------------------------------------ |
+| PlugInstall [#threads] | Install plugins                                                    |
+| PlugUpdate  [#threads] | Install or update plugins                                          |
+| PlugClean[!]           | Remove unused directories (bang version will clean without prompt) |
+| PlugUpgrade            | Upgrade vim-plug itself                                            |
+| PlugStatus             | Check the status of plugins                                        |
 
 (Default number of threads = `g:plug_threads` or 16)
 
