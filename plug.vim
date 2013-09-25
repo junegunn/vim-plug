@@ -51,6 +51,7 @@ endif
 let g:loaded_plug = 1
 
 let s:plug_source = 'https://raw.github.com/junegunn/vim-plug/master/plug.vim'
+let s:plug_file = 'Plugfile'
 let s:plug_win = 0
 let s:is_win = has('win32') || has('win64')
 let s:me = expand('<sfile>:p')
@@ -74,7 +75,7 @@ function! plug#begin(...)
   let g:plug_home = home
   let g:plugs = {}
 
-  command! -nargs=+ Plug        call s:add(<args>)
+  command! -nargs=+ Plug        call s:add(1, <args>)
   command! -nargs=* PlugInstall call s:install(<f-args>)
   command! -nargs=* PlugUpdate  call s:update(<f-args>)
   command! -nargs=0 -bang PlugClean call s:clean('<bang>' == '!')
@@ -83,6 +84,11 @@ function! plug#begin(...)
 endfunction
 
 function! plug#end()
+  let keys = keys(g:plugs)
+  while !empty(keys)
+    let keys = keys(s:extend(keys))
+  endwhile
+
   set nocompatible
   filetype off
   for plug in values(g:plugs)
@@ -97,10 +103,11 @@ function! plug#end()
 endfunction
 
 function! s:add(...)
-  if a:0 == 1
-    let [plugin, branch] = [a:1, 'master']
-  elseif a:0 == 2
-    let [plugin, branch] = a:000
+  let force = a:1
+  if a:0 == 2
+    let [plugin, branch] = [a:2, 'master']
+  elseif a:0 == 3
+    let [plugin, branch] = [a:2, a:3]
   else
     echoerr "Invalid number of arguments (1..2)"
     return
@@ -116,6 +123,8 @@ function! s:add(...)
   endif
 
   let name = substitute(split(plugin, '/')[-1], '\.git$', '', '')
+  if !force && has_key(g:plugs, name) | return | endif
+
   let dir  = fnamemodify(join([g:plug_home, name], '/'), ':p')
 
   let spec = { 'dir': dir, 'uri': uri, 'branch': branch }
@@ -208,12 +217,7 @@ function! s:finish()
 endfunction
 
 function! s:update_impl(pull, args)
-  if has('ruby') && get(g:, 'plug_parallel', 1)
-    let threads = min(
-      \ [len(g:plugs), len(a:args) > 0 ? a:args[0] : get(g:, 'plug_threads', 16)])
-  else
-    let threads = 1
-  endif
+  let threads = len(a:args) > 0 ? a:args[0] : get(g:, 'plug_threads', 16)
 
   call s:prepare()
   call append(0, a:pull ? 'Updating plugins' : 'Installing plugins')
@@ -221,7 +225,7 @@ function! s:update_impl(pull, args)
   normal! 2G
   redraw
 
-  if threads > 1
+  if has('ruby') && threads > 1
     call s:update_parallel(a:pull, threads)
   else
     call s:update_serial(a:pull)
@@ -229,47 +233,80 @@ function! s:update_impl(pull, args)
   call s:finish()
 endfunction
 
-function! s:update_serial(pull)
-  let st = reltime()
-  let base = g:plug_home
-  let cnt = 0
-  let total = len(g:plugs)
+function! s:extend(names)
+  let prev = copy(g:plugs)
+  try
+    command! -nargs=+ Plug call s:add(0, <args>)
+    for name in a:names
+      let spec = g:plugs[name]
+      let plugfile = spec.dir . '/'. s:plug_file
+      if filereadable(plugfile)
+        execute "source ". plugfile
+      endif
+    endfor
+  finally
+    command! -nargs=+ Plug call s:add(1, <args>)
+  endtry
+  return filter(copy(g:plugs), '!has_key(prev, v:key)')
+endfunction
 
-  for [name, spec] in items(g:plugs)
-    let cnt += 1
-    let d = shellescape(spec.dir)
-    if isdirectory(spec.dir)
-      execute 'cd '.spec.dir
-      if s:git_valid(spec, 0)
-        let result = a:pull ?
-          \ s:system(
-          \ printf('git checkout -q %s && git pull origin %s 2>&1',
-          \   spec.branch, spec.branch)) : 'Already installed'
-        let error = a:pull ? v:shell_error != 0 : 0
+function! s:update_progress(pull, cnt, total)
+  call setline(1, (a:pull ? 'Updating' : 'Installing').
+        \ " plugins (".a:cnt."/".a:total.")")
+  call s:progress_bar(2, a:cnt, a:total)
+  normal! 2G
+  redraw
+endfunction
+
+function! s:update_serial(pull)
+  let st    = reltime()
+  let base  = g:plug_home
+  let todo  = copy(g:plugs)
+  let total = len(todo)
+  let done  = {}
+
+  while !empty(todo)
+    for [name, spec] in items(todo)
+      let done[name] = 1
+      let d = shellescape(spec.dir)
+      if isdirectory(spec.dir)
+        execute 'cd '.spec.dir
+        if s:git_valid(spec, 0)
+          let result = a:pull ?
+            \ s:system(
+            \ printf('git checkout -q %s 2>&1 && git pull origin %s 2>&1',
+            \   spec.branch, spec.branch)) : 'Already installed'
+          let error = a:pull ? v:shell_error != 0 : 0
+        else
+          let result = "PlugClean required. Invalid remote."
+          let error = 1
+        endif
       else
-        let result = "PlugClean required. Invalid remote."
-        let error = 1
+        if !isdirectory(base)
+          call mkdir(base, 'p')
+        endif
+        execute 'cd '.base
+        let result = s:system(
+              \ printf('git clone --recursive %s -b %s %s 2>&1',
+              \ shellescape(spec.uri), shellescape(spec.branch), d))
+        let error = v:shell_error != 0
       endif
+      cd -
+      if error
+        let result = '(x) ' . result
+      endif
+      call append(3, '- ' . name . ': ' . result)
+      call s:update_progress(a:pull, len(done), total)
+    endfor
+
+    if !empty(s:extend(keys(todo)))
+      let todo = filter(copy(g:plugs), '!has_key(done, v:key)')
+      let total += len(todo)
+      call s:update_progress(a:pull, len(done), total)
     else
-      if !isdirectory(base)
-        call mkdir(base, 'p')
-      endif
-      execute 'cd '.base
-      let result = s:system(
-            \ printf('git clone --recursive %s -b %s %s 2>&1',
-            \ shellescape(spec.uri), shellescape(spec.branch), d))
-      let error = v:shell_error != 0
+      break
     endif
-    cd -
-    if error
-      let result = '(x) ' . result
-    endif
-    call setline(1, "Updating plugins (".cnt."/".total.")")
-    call s:progress_bar(2, cnt, total)
-    call append(3, '- ' . name . ': ' . result)
-    normal! 2G
-    redraw
-  endfor
+  endwhile
 
   call setline(1, "Updated. Elapsed time: " . split(reltimestr(reltime(st)))[0] . ' sec.')
 endfunction
@@ -282,50 +319,60 @@ function! s:update_parallel(pull, threads)
   cd    = VIM::evaluate('s:is_win').to_i == 1 ? 'cd /d' : 'cd'
   pull  = VIM::evaluate('a:pull').to_i == 1
   base  = VIM::evaluate('g:plug_home')
-  all   = VIM::evaluate('g:plugs')
-  total = all.length
-  cnt   = 0
+  all   = VIM::evaluate('copy(g:plugs)')
+  done  = {}
   skip  = 'Already installed'
   mtx   = Mutex.new
   take1 = proc { mtx.synchronize { all.shift } }
-  log   = proc { |name, result, ok|
-    mtx.synchronize {
+  logh  = proc {
+    cnt, tot = done.length, VIM::evaluate('len(g:plugs)')
+    $curbuf[1] = "#{pull ? 'Updating' : 'Installing'} plugins (#{cnt}/#{tot})"
+    $curbuf[2] = '[' + ('=' * cnt).ljust(tot) + ']'
+    VIM::command('normal! 2G')
+    VIM::command('redraw')
+  }
+  log = proc { |name, result, ok|
+    mtx.synchronize do
+      done[name] = true
       result = '(x) ' + result unless ok
       result = "- #{name}: #{result}"
-      $curbuf[1] = "Updating plugins (#{cnt += 1}/#{total})"
-      $curbuf[2] = '[' + ('=' * cnt).ljust(total) + ']'
       $curbuf.append 3, result
-      VIM::command('normal! 2G')
-      VIM::command('redraw')
-    }
+      logh.call
+    end
   }
-  VIM::evaluate('a:threads').to_i.times.map { |i|
-    Thread.new(i) do |ii|
-      while pair = take1.call
-        name = pair.first
-        dir, uri, branch = pair.last.values_at *%w[dir uri branch]
-        ok, result =
-          if File.directory? dir
-            current_uri = `#{cd} #{dir} && git config remote.origin.url`.chomp
-            if $? == 0 && current_uri == uri
-              if pull
-                [true, `#{cd} #{dir} && git checkout -q #{branch} && git pull origin #{branch} 2>&1`]
+  until all.empty?
+    names = all.keys
+    [names.length, VIM::evaluate('a:threads').to_i].min.times.map { |i|
+      Thread.new(i) do
+        while pair = take1.call
+          name = pair.first
+          dir, uri, branch = pair.last.values_at *%w[dir uri branch]
+          ok, result =
+            if File.directory? dir
+              current_uri = `#{cd} #{dir} && git config remote.origin.url`.chomp
+              if $? == 0 && current_uri == uri
+                if pull
+                  output = `#{cd} #{dir} && git checkout -q #{branch} 2>&1 && git pull origin #{branch} 2>&1`
+                  [$? == 0, output]
+                else
+                  [true, skip]
+                end
               else
-                [true, skip]
+                [false, "PlugClean required. Invalid remote."]
               end
             else
-              [false, "PlugClean required. Invalid remote."]
+              FileUtils.mkdir_p(base)
+              r = `#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{dir} 2>&1`
+              [$? == 0, r]
             end
-          else
-            FileUtils.mkdir_p(base)
-            r = `#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{dir} 2>&1`
-            [$? == 0, r]
-          end
-        result = result.lines.to_a.last.strip
-        log.call name, result, ok
+          result = result.lines.to_a.last.strip
+          log.call name, result, ok
+        end
       end
-    end
-  }.each(&:join)
+    }.each(&:join)
+    all.merge! VIM::evaluate("s:extend(#{names.inspect})")
+    logh.call
+  end
   $curbuf[1] = "Updated. Elapsed time: #{"%.6f" % (Time.now - st)} sec."
 EOF
 endfunction
