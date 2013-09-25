@@ -107,7 +107,7 @@ function! s:add(...)
   if a:0 == 2
     let [plugin, branch] = [a:2, 'master']
   elseif a:0 == 3
-    let [plugin, branch] = a:000
+    let [plugin, branch] = [a:2, a:3]
   else
     echoerr "Invalid number of arguments (1..2)"
     return
