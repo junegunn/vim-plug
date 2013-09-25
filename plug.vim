@@ -65,12 +65,12 @@ function! plug#begin(...)
       call mkdir(home, 'p')
     catch
       echoerr 'Invalid plug directory: '. home
-      return
+      return 0
     endtry
   endif
   if !executable('git')
     echoerr "`git' executable not found. vim-plug requires git."
-    return
+    return 0
   endif
 
   let g:plug_home = home
@@ -82,6 +82,8 @@ function! plug#begin(...)
   command! -nargs=0 -bang PlugClean call s:clean('<bang>' == '!')
   command! -nargs=0 PlugUpgrade if s:upgrade() | execute "source ". s:me | endif
   command! -nargs=0 PlugStatus  call s:status()
+
+  return 1
 endfunction
 
 function! plug#end()
