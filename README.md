@@ -36,7 +36,8 @@ call plug#begin()
 
 Plug 'junegunn/seoul256'
 Plug 'junegunn/vim-easy-align'
-" Plug 'user/repo', 'branch_or_tag'
+" Plug 'user/repo1', 'branch_or_tag'
+" Plug 'user/repo2', { 'rtp': 'vim/plugin/dir', 'branch': 'devel' }
 " Plug 'git@github.com:junegunn/vim-github-dashboard.git'
 " ...
 

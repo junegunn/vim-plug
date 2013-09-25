@@ -13,7 +13,8 @@
 "
 "   Plug 'junegunn/seoul256'
 "   Plug 'junegunn/vim-easy-align'
-"   " Plug 'user/repo', 'branch_or_tag'
+"   " Plug 'user/repo1', 'branch_or_tag'
+"   " Plug 'user/repo2', { 'rtp': 'vim/plugin/dir', 'branch': 'devel' }
 "   " ...
 "
 "   call plug#end()
@@ -93,9 +94,11 @@ function! plug#end()
   filetype off
   for plug in values(g:plugs)
     let dir = plug.dir
-    execute "set rtp^=".dir
+    let rtp = dir.get(plug, 'rtp', '')
+    if rtp !~ '/$' | let rtp .= '/' | endif
+    execute "set rtp^=".rtp
     if isdirectory(dir.'after')
-      execute "set rtp+=".dir.'after'
+      execute "set rtp+=".rtp.'after'
     endif
   endfor
   filetype plugin indent on
@@ -104,10 +107,19 @@ endfunction
 
 function! s:add(...)
   let force = a:1
+  let opts = { 'branch': 'master' }
   if a:0 == 2
-    let [plugin, branch] = [a:2, 'master']
+    let plugin = a:2
   elseif a:0 == 3
-    let [plugin, branch] = [a:2, a:3]
+    let plugin = a:2
+    if type(a:3) == 1
+      let opts.branch = a:3
+    elseif type(a:3) == 4
+      call extend(opts, a:3)
+    else
+      echoerr "Invalid argument type (expected: string or dictionary)"
+      return
+    endif
   else
     echoerr "Invalid number of arguments (1..2)"
     return
@@ -126,8 +138,9 @@ function! s:add(...)
   if !force && has_key(g:plugs, name) | return | endif
 
   let dir  = fnamemodify(join([g:plug_home, name], '/'), ':p')
+  if dir !~ '/$' | let dir .= '/' | endif
 
-  let spec = { 'dir': dir, 'uri': uri, 'branch': branch }
+  let spec = extend(opts, { 'dir': dir, 'uri': uri })
   let g:plugs[name] = spec
 endfunction
 
