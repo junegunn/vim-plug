@@ -22,7 +22,8 @@ Somewhere between [Pathogen](https://github.com/tpope/vim-pathogen) and
 
 ### Usage
 
-Download plug.vim and put it in ~/.vim/autoload
+[Download plug.vim](https://raw.github.com/junegunn/vim-plug/master/plug.vim)
+and put it in ~/.vim/autoload
 
 ```sh
 mkdir -p ~/.vim/autoload
