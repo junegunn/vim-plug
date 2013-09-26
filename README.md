@@ -92,6 +92,8 @@ If you put `Plug 'junegunn/dummy1'` in your configuration file, and run
 4. Dependent plugins are then installed as well, and their Plugfiles are
    examined and their dependencies are resolved recursively.
 
+![](https://raw.github.com/junegunn/vim-plug/master/gif/Plugfile.gif)
+
 ### Articles
 
 - [Writing my own Vim plugin manager](http://junegunn.kr/2013/09/writing-my-own-vim-plugin-manager)
