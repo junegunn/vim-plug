@@ -330,7 +330,8 @@ function! s:update_parallel(pull, threads)
   require 'thread'
   require 'fileutils'
   st    = Time.now
-  cd    = VIM::evaluate('s:is_win').to_i == 1 ? 'cd /d' : 'cd'
+  iswin = VIM::evaluate('s:is_win').to_i == 1
+  cd    = iswin ? 'cd /d' : 'cd'
   pull  = VIM::evaluate('a:pull').to_i == 1
   base  = VIM::evaluate('g:plug_home')
   all   = VIM::evaluate('copy(g:plugs)')
@@ -343,7 +344,7 @@ function! s:update_parallel(pull, threads)
     $curbuf[1] = "#{pull ? 'Updating' : 'Installing'} plugins (#{cnt}/#{tot})"
     $curbuf[2] = '[' + ('=' * cnt).ljust(tot) + ']'
     VIM::command('normal! 2G')
-    VIM::command('redraw')
+    VIM::command('redraw') unless iswin
   }
   log = proc { |name, result, ok|
     mtx.synchronize do
@@ -354,6 +355,14 @@ function! s:update_parallel(pull, threads)
       logh.call
     end
   }
+  bt = iswin ? proc { |cmd|
+    tmp = VIM::evaluate('tempname()')
+    system("#{cmd} > #{tmp}")
+    data = File.read(tmp).chomp
+    File.unlink tmp rescue nil
+    data
+  } : proc { |cmd| `#{cmd}`.chomp }
+
   until all.empty?
     names = all.keys
     [names.length, VIM::evaluate('a:threads').to_i].min.times.map { |i|
@@ -363,10 +372,10 @@ function! s:update_parallel(pull, threads)
           dir, uri, branch = pair.last.values_at *%w[dir uri branch]
           ok, result =
             if File.directory? dir
-              current_uri = `#{cd} #{dir} && git config remote.origin.url`.chomp
+              current_uri = bt.call "#{cd} #{dir} && git config remote.origin.url"
               if $? == 0 && current_uri == uri
                 if pull
-                  output = `#{cd} #{dir} && git checkout -q #{branch} 2>&1 && git pull origin #{branch} 2>&1`
+                  output = bt.call "#{cd} #{dir} && git checkout -q #{branch} 2>&1 && git pull origin #{branch} 2>&1"
                   [$? == 0, output]
                 else
                   [true, skip]
@@ -377,11 +386,11 @@ function! s:update_parallel(pull, threads)
             else
               FileUtils.mkdir_p(base)
               d = dir.sub(%r{[\\/]+$}, '')
-              r = `#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{d} 2>&1`
+              r = bt.call "#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{d} 2>&1"
               [$? == 0, r]
             end
-          result = result.lines.to_a.last.strip
-          log.call name, result, ok
+          result = result.lines.to_a.last
+          log.call name, (result && result.strip), ok
         end
       end
     }.each(&:join)
