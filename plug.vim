@@ -106,9 +106,7 @@ function! plug#end()
 endfunction
 
 function! s:rtp(spec)
-  let rtp = a:spec.dir . get(a:spec, 'rtp', '')
-  if rtp !~ '/$' | let rtp .= '/' | endif
-  return rtp
+  return s:dirpath(a:spec.dir . get(a:spec, 'rtp', ''))
 endfunction
 
 function! s:add(...)
@@ -143,9 +141,7 @@ function! s:add(...)
   let name = substitute(split(plugin, '/')[-1], '\.git$', '', '')
   if !force && has_key(g:plugs, name) | return | endif
 
-  let dir  = fnamemodify(join([g:plug_home, name], '/'), ':p')
-  if dir !~ '/$' | let dir .= '/' | endif
-
+  let dir  = s:dirpath( fnamemodify(join([g:plug_home, name], '/'), ':p') )
   let spec = extend(opts, { 'dir': dir, 'uri': uri })
   let g:plugs[name] = spec
 endfunction
@@ -286,7 +282,6 @@ function! s:update_serial(pull)
   while !empty(todo)
     for [name, spec] in items(todo)
       let done[name] = 1
-      let d = shellescape(spec.dir)
       if isdirectory(spec.dir)
         execute 'cd '.spec.dir
         if s:git_valid(spec, 0)
@@ -304,6 +299,7 @@ function! s:update_serial(pull)
           call mkdir(base, 'p')
         endif
         execute 'cd '.base
+        let d = shellescape(substitute(spec.dir, '[\/]\+$', '', ''))
         let result = s:system(
               \ printf('git clone --recursive %s -b %s %s 2>&1',
               \ shellescape(spec.uri), shellescape(spec.branch), d))
@@ -380,7 +376,8 @@ function! s:update_parallel(pull, threads)
               end
             else
               FileUtils.mkdir_p(base)
-              r = `#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{dir} 2>&1`
+              d = dir.sub(%r{[\\/]+$}, '')
+              r = `#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{d} 2>&1`
               [$? == 0, r]
             end
           result = result.lines.to_a.last.strip
@@ -400,8 +397,17 @@ function! s:path(path)
         \ '[/\\]*$', '', '')
 endfunction
 
+function! s:dirpath(path)
+  let path = s:path(a:path)
+  if s:is_win
+    return path !~ '\\$' ? path.'\' : path
+  else
+    return path !~ '/$' ? path.'/' : path
+  endif
+endfunction
+
 function! s:glob_dir(path)
-  return map(filter(split(globpath(a:path, '**'), '\n'), 'isdirectory(v:val)'), 's:path(v:val)')
+  return map(filter(split(globpath(a:path, '**'), '\n'), 'isdirectory(v:val)'), 's:dirpath(v:val)')
 endfunction
 
 function! s:progress_bar(line, cnt, total)
@@ -436,14 +442,12 @@ function! s:clean(force)
     redraw
   endfor
 
-  let alldirs = dirs +
-        \ map(copy(dirs), 'fnamemodify(v:val, ":h")')
-  for dir in dirs
-    let alldirs += s:glob_dir(dir)
-  endfor
   let allowed = {}
-  for dir in alldirs
+  for dir in dirs
     let allowed[dir] = 1
+    for child in s:glob_dir(dir)
+      let allowed[child] = 1
+    endfor
   endfor
 
   let todo = []
