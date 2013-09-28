@@ -383,7 +383,7 @@ function! s:update_parallel(pull, threads)
         pids = [fd.pid]
         unless `which pgrep`.empty?
           children = pids
-          while !children.empty?
+          until children.empty?
             children = children.map { |pid|
               `pgrep -P #{pid}`.lines.map(&:chomp)
             }.flatten
