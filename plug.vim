@@ -284,14 +284,15 @@ function! s:update_serial(pull)
       let done[name] = 1
       if isdirectory(spec.dir)
         execute 'cd '.spec.dir
-        if s:git_valid(spec, 0)
+        let [valid, msg] = s:git_valid(spec, 0)
+        if valid
           let result = a:pull ?
             \ s:system(
             \ printf('git checkout -q %s 2>&1 && git pull origin %s 2>&1',
             \   spec.branch, spec.branch)) : 'Already installed'
           let error = a:pull ? v:shell_error != 0 : 0
         else
-          let result = "PlugClean required. Invalid remote."
+          let result = msg
           let error = 1
         endif
       else
@@ -329,12 +330,14 @@ function! s:update_parallel(pull, threads)
   ruby << EOF
   require 'thread'
   require 'fileutils'
+  require 'timeout'
   st    = Time.now
   iswin = VIM::evaluate('s:is_win').to_i == 1
   cd    = iswin ? 'cd /d' : 'cd'
   pull  = VIM::evaluate('a:pull').to_i == 1
   base  = VIM::evaluate('g:plug_home')
   all   = VIM::evaluate('copy(g:plugs)')
+  limit = VIM::evaluate('get(g:, "plug_timeout", 60)')
   done  = {}
   skip  = 'Already installed'
   mtx   = Mutex.new
@@ -355,13 +358,23 @@ function! s:update_parallel(pull, threads)
       logh.call
     end
   }
-  bt = iswin ? proc { |cmd|
-    tmp = VIM::evaluate('tempname()')
-    system("#{cmd} > #{tmp}")
-    data = File.read(tmp).chomp
-    File.unlink tmp rescue nil
-    data
-  } : proc { |cmd| `#{cmd}`.chomp }
+  bt = proc { |cmd|
+    begin
+      Timeout::timeout(limit) do
+        if iswin
+          tmp = VIM::evaluate('tempname()')
+          system("#{cmd} > #{tmp}")
+          data = File.read(tmp).chomp
+          File.unlink tmp rescue nil
+        else
+          data = `#{cmd}`.chomp
+        end
+        [$? == 0, data]
+      end
+    rescue Timeout::Error
+      [false, "Timeout!"]
+    end
+  }
 
   until all.empty?
     names = all.keys
@@ -372,22 +385,21 @@ function! s:update_parallel(pull, threads)
           dir, uri, branch = pair.last.values_at *%w[dir uri branch]
           ok, result =
             if File.directory? dir
-              current_uri = bt.call "#{cd} #{dir} && git config remote.origin.url"
-              if $? == 0 && current_uri == uri
+              ret, data = bt.call "#{cd} #{dir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url"
+              current_uri = data.lines.to_a.last
+              if ret && current_uri == uri
                 if pull
-                  output = bt.call "#{cd} #{dir} && git checkout -q #{branch} 2>&1 && git pull origin #{branch} 2>&1"
-                  [$? == 0, output]
+                  bt.call "#{cd} #{dir} && git checkout -q #{branch} 2>&1 && git pull origin #{branch} 2>&1"
                 else
                   [true, skip]
                 end
               else
-                [false, "PlugClean required. Invalid remote."]
+                [false, "PlugClean required. Invalid status."]
               end
             else
               FileUtils.mkdir_p(base)
               d = dir.sub(%r{[\\/]+$}, '')
-              r = bt.call "#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{d} 2>&1"
-              [$? == 0, r]
+              bt.call "#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{d} 2>&1"
             end
           result = result.lines.to_a.last
           log.call name, (result && result.strip), ok
@@ -424,14 +436,31 @@ function! s:progress_bar(line, cnt, total)
 endfunction
 
 function! s:git_valid(spec, cd)
+  let ret = 1
+  let msg = 'OK'
   if isdirectory(a:spec.dir)
     if a:cd | execute "cd " . a:spec.dir | endif
-    let ret = s:system("git config remote.origin.url") == a:spec.uri
+    let remote = s:system("git config remote.origin.url")
+
+    if remote != a:spec.uri
+      let msg = 'Invalid remote: ' . remote . '. Try PlugClean.'
+      let ret = 0
+    else
+      let branch = s:system('git rev-parse --abbrev-ref HEAD')
+      if v:shell_error != 0
+        let msg = 'Invalid git repository. Try PlugClean.'
+        let ret = 0
+      elseif a:spec.branch != branch
+        let msg = 'Invalid branch: '.branch.'. Try PlugUpdate.'
+        let ret = 0
+      endif
+    endif
     if a:cd | cd - | endif
   else
+    let msg = 'Not found'
     let ret = 0
   endif
-  return ret
+  return [ret, msg]
 endfunction
 
 function! s:clean(force)
@@ -443,7 +472,7 @@ function! s:clean(force)
   let dirs = []
   let [cnt, total] = [0, len(g:plugs)]
   for spec in values(g:plugs)
-    if s:git_valid(spec, 1)
+    if s:git_valid(spec, 1)[0]
       call add(dirs, spec.dir)
     endif
     let cnt += 1
@@ -525,13 +554,9 @@ function! s:status()
     let err = 'OK'
     if isdirectory(spec.dir)
       execute 'cd '.spec.dir
-      if s:git_valid(spec, 0)
-        let branch = s:system('git rev-parse --abbrev-ref HEAD')
-        if spec.branch != branch
-          let err = '(x) Invalid branch: '.branch.'. Try PlugUpdate.'
-        endif
-      else
-        let err = '(x) Invalid remote. Try PlugClean.'
+      let [valid, msg] = s:git_valid(spec, 0)
+      if !valid
+        let err = '(x) '. msg
       endif
       cd -
     else

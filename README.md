@@ -65,7 +65,12 @@ plugins with `plug#begin(path)` call.
 | PlugUpgrade            | Upgrade vim-plug itself                                            |
 | PlugStatus             | Check the status of plugins                                        |
 
-(Default number of threads = `g:plug_threads` or 16)
+### Options for parallel installer
+
+| Flag             | Default | Description                        |
+| ---------------- | ------- | ---------------------------------  |
+| `g:plug_threads` | 16      | Default number of threads to use   |
+| `g:plug_timeout` | 60      | Time limit of each task in seconds |
 
 ### Dependency resolution
 
