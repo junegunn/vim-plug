@@ -106,7 +106,11 @@ function! plug#end()
 endfunction
 
 function! s:rtp(spec)
-  return s:dirpath(a:spec.dir . get(a:spec, 'rtp', ''))
+  let rtp = s:dirpath(a:spec.dir . get(a:spec, 'rtp', ''))
+  if s:is_win
+    let rtp = substitute(rtp, '\\*$', '', '')
+  endif
+  return rtp
 endfunction
 
 function! s:add(...)
