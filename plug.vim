@@ -380,7 +380,17 @@ function! s:update_parallel(pull, threads)
       end
     rescue Timeout::Error, Interrupt => e
       if fd && !fd.closed?
-        Process.kill 'KILL', fd.pid
+        pids = [fd.pid]
+        unless `which pgrep`.empty?
+          children = pids
+          while !children.empty?
+            children = children.map { |pid|
+              `pgrep -P #{pid}`.lines.map(&:chomp)
+            }.flatten
+            pids += children
+          end
+        end
+        pids.each { |pid| Process.kill 'TERM', pid.to_i rescue nil }
         fd.close
       end
       [false, e.is_a?(Interrupt) ? "Interrupted!" : "Timeout!"]
