@@ -328,22 +328,26 @@ endfunction
 
 function! s:update_parallel(pull, threads)
   ruby << EOF
+  st    = Time.now
   require 'thread'
   require 'fileutils'
   require 'timeout'
-  st    = Time.now
+  running = true
   iswin = VIM::evaluate('s:is_win').to_i == 1
-  cd    = iswin ? 'cd /d' : 'cd'
   pull  = VIM::evaluate('a:pull').to_i == 1
   base  = VIM::evaluate('g:plug_home')
   all   = VIM::evaluate('copy(g:plugs)')
   limit = VIM::evaluate('get(g:, "plug_timeout", 60)')
+  nthr  = VIM::evaluate('a:threads').to_i
+  cd    = iswin ? 'cd /d' : 'cd'
   done  = {}
+  tot   = 0
   skip  = 'Already installed'
   mtx   = Mutex.new
-  take1 = proc { mtx.synchronize { all.shift } }
+  take1 = proc { mtx.synchronize { running && all.shift } }
   logh  = proc {
-    cnt, tot = done.length, VIM::evaluate('len(g:plugs)')
+    cnt = done.length
+    tot = VIM::evaluate('len(g:plugs)') || tot
     $curbuf[1] = "#{pull ? 'Updating' : 'Installing'} plugins (#{cnt}/#{tot})"
     $curbuf[2] = '[' + ('=' * cnt).ljust(tot) + ']'
     VIM::command('normal! 2G')
@@ -360,6 +364,7 @@ function! s:update_parallel(pull, threads)
   }
   bt = proc { |cmd|
     begin
+      fd = nil
       Timeout::timeout(limit) do
         if iswin
           tmp = VIM::evaluate('tempname()')
@@ -367,48 +372,74 @@ function! s:update_parallel(pull, threads)
           data = File.read(tmp).chomp
           File.unlink tmp rescue nil
         else
-          data = `#{cmd}`.chomp
+          fd = IO.popen(cmd)
+          data = fd.read.chomp
+          fd.close
         end
         [$? == 0, data]
       end
-    rescue Timeout::Error
-      [false, "Timeout!"]
+    rescue Timeout::Error, Interrupt => e
+      if fd && !fd.closed?
+        Process.kill 'KILL', fd.pid
+        fd.close
+      end
+      [false, e.is_a?(Interrupt) ? "Interrupted!" : "Timeout!"]
     end
+  }
+  main = Thread.current
+  threads = []
+  watcher = Thread.new {
+    while VIM::evaluate('getchar(1)')
+      sleep 0.1
+    end
+    mtx.synchronize do
+      running = false
+      threads.each { |t| t.raise Interrupt }
+    end
+    threads.each { |t| t.join rescue nil }
+    main.kill
   }
 
   until all.empty?
     names = all.keys
-    [names.length, VIM::evaluate('a:threads').to_i].min.times.map { |i|
-      Thread.new(i) do
-        while pair = take1.call
-          name = pair.first
-          dir, uri, branch = pair.last.values_at *%w[dir uri branch]
-          ok, result =
-            if File.directory? dir
-              ret, data = bt.call "#{cd} #{dir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url"
-              current_uri = data.lines.to_a.last
-              if ret && current_uri == uri
-                if pull
-                  bt.call "#{cd} #{dir} && git checkout -q #{branch} 2>&1 && git pull origin #{branch} 2>&1"
+    [names.length, nthr].min.times do
+      mtx.synchronize do
+        threads << Thread.new {
+          while pair = take1.call
+            name = pair.first
+            dir, uri, branch = pair.last.values_at *%w[dir uri branch]
+            ok, result =
+              if File.directory? dir
+                ret, data = bt.call "#{cd} #{dir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url"
+                current_uri = data.lines.to_a.last
+                if ret && current_uri == uri
+                  if pull
+                    bt.call "#{cd} #{dir} && git checkout -q #{branch} 2>&1 && git pull origin #{branch} 2>&1"
+                  else
+                    [true, skip]
+                  end
+                elsif current_uri =~ /^Interrupted|^Timeout/
+                  [false, current_uri]
                 else
-                  [true, skip]
+                  [false, "PlugClean required: #{current_uri}"]
                 end
               else
-                [false, "PlugClean required. Invalid status."]
+                FileUtils.mkdir_p(base)
+                d = dir.sub(%r{[\\/]+$}, '')
+                bt.call "#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{d} 2>&1"
               end
-            else
-              FileUtils.mkdir_p(base)
-              d = dir.sub(%r{[\\/]+$}, '')
-              bt.call "#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{d} 2>&1"
-            end
-          result = result.lines.to_a.last
-          log.call name, (result && result.strip), ok
-        end
+            result = result.lines.to_a.last
+            log.call name, (result && result.strip), ok
+          end
+        } if running
       end
-    }.each(&:join)
-    all.merge! VIM::evaluate("s:extend(#{names.inspect})")
+    end
+    threads.each(&:join)
+    mtx.synchronize { threads.clear }
+    all.merge!(VIM::evaluate("s:extend(#{names.inspect})") || {})
     logh.call
   end
+  watcher.kill
   $curbuf[1] = "Updated. Elapsed time: #{"%.6f" % (Time.now - st)} sec."
 EOF
 endfunction
