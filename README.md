@@ -103,6 +103,7 @@ If you put `Plug 'junegunn/dummy1'` in your configuration file, and run
 ### Articles
 
 - [Writing my own Vim plugin manager](http://junegunn.kr/2013/09/writing-my-own-vim-plugin-manager)
+- [Thoughts on Vim plugin dependency](http://junegunn.kr/2013/09/thoughts-on-vim-plugin-dependency)
 
 ### Regarding feature request
 
