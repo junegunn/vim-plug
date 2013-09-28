@@ -72,6 +72,14 @@ plugins with `plug#begin(path)` call.
 | `g:plug_threads` | 16      | Default number of threads to use   |
 | `g:plug_timeout` | 60      | Time limit of each task in seconds |
 
+### Example: A small [sensible](https://github.com/tpope/vim-sensible) Vim configuration
+
+```vim
+call plug#begin()
+Plug 'tpope/vim-sensible'
+call plug#end()
+```
+
 ### Dependency resolution
 
 If a Vim plugin specifies its dependent plugins in `Plugfile` in its root
