@@ -45,7 +45,7 @@ Plug 'junegunn/vim-easy-align'
 call plug#end()
 ```
 
-Then `:PlugInstall` to install plugins.
+Reload .vimrc and `:PlugInstall` to install plugins.
 
 ### Plugin directory
 
@@ -97,8 +97,8 @@ scheme.
   - Plugfile includes `Plug 'junegunn/dummy3'`
 - [junegunn/dummy3](https://github.com/junegunn/dummy3/blob/master/Plugfile)
 
-If you put `Plug 'junegunn/dummy1'` in your configuration file, and run
-`:PlugInstall`,
+If you put `Plug 'junegunn/dummy1'` in your configuration file, reload it, and
+run `:PlugInstall`,
 
 1. vim-plug first installs dummy1
 2. And sees if the repository has Plugfile
