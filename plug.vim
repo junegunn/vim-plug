@@ -573,8 +573,9 @@ function! s:upgrade()
     echo "Downloading ". s:plug_source
     redraw
     let mv = s:is_win ? 'move /Y' : 'mv -f'
+    let cp = s:is_win ? 'copy /Y' : 'cp -f'
     call system(printf(
-      \ "curl -fLo %s %s && ".mv." %s %s.old && ".mv." %s %s",
+      \ "curl -fLo %s %s && ".cp." %s %s.old && ".mv." %s %s",
       \ new, s:plug_source, mee, mee, new, mee))
     if v:shell_error == 0
       unlet g:loaded_plug
@@ -584,8 +585,25 @@ function! s:upgrade()
       echoerr "Error upgrading vim-plug"
       return 0
     endif
+  elseif has('ruby')
+    echo "Downloading ". s:plug_source
+    ruby << EOF
+      require 'open-uri'
+      require 'fileutils'
+      me  = VIM::evaluate('s:me')
+      old = me + '.old'
+      new = me + '.new'
+      File.open(new, 'w') do |f|
+        f << open(VIM::evaluate('s:plug_source')).read
+      end
+      FileUtils.cp me, old
+      File.rename  new, me
+EOF
+    unlet g:loaded_plug
+    echo "Downloaded ". s:plug_source
+    return 1
   else
-    echoerr "`curl' not found"
+    echoerr "curl executable or ruby support not found"
     return 0
   endif
 endfunction
