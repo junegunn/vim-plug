@@ -1,5 +1,4 @@
-vim-plug
-========
+![vim-plug](https://raw.github.com/junegunn/vim-plug/master/plug.png)
 
 A single-file Vim plugin manager.
 
