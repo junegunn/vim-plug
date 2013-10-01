@@ -112,7 +112,30 @@ run `:PlugInstall`,
 - [Writing my own Vim plugin manager](http://junegunn.kr/2013/09/writing-my-own-vim-plugin-manager)
 - [Thoughts on Vim plugin dependency](http://junegunn.kr/2013/09/thoughts-on-vim-plugin-dependency)
 
-### Regarding feature request
+### FAQ
+
+#### `Vim: Caught deadly signal SEGV`
+
+If your Vim crashes with the above message, first check if its Ruby interface is
+working correctly.
+
+```vim
+:ruby puts RUBY_VERSION
+```
+
+If Vim crashes even with this command, it is likely that Ruby interface is
+broken, and you have to rebuild Vim with a working version of Ruby.
+(`brew remove vim && brew install vim` or `./configure && make ...`)
+
+If you're on OS X, one possibility is that you had installed Vim with
+[Homebrew](http://brew.sh/) while using a Ruby installed with
+[RVM](http://rvm.io/) or [rbenv](https://github.com/sstephenson/rbenv) and later
+removed that version of Ruby.
+
+If you can't resolve the problem, let me know. In the meantime, you can set
+`g:plug_threads` to 1, so that Ruby installer is not used at all.
+
+#### Regarding feature request
 
 You may submit a request for a new feature by [creating an
 issue](https://github.com/junegunn/vim-plug/issues). However, please be minded
