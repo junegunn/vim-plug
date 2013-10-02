@@ -112,12 +112,18 @@ run `:PlugInstall`,
 - [Writing my own Vim plugin manager](http://junegunn.kr/2013/09/writing-my-own-vim-plugin-manager)
 - [Thoughts on Vim plugin dependency](http://junegunn.kr/2013/09/thoughts-on-vim-plugin-dependency)
 
-### FAQ
+### Troubleshooting
 
-#### `Vim: Caught deadly signal SEGV`
+#### Plugins are not installed/updated in parallel
+
+Your Vim does not support Ruby interface. `:echo has('ruby')` should print 1.
+In order to setup Vim with Ruby support, you may refer to [this
+article](http://junegunn.kr/2013/09/installing-vim-with-ruby-support).
+
+#### *Vim: Caught deadly signal SEGV*
 
 If your Vim crashes with the above message, first check if its Ruby interface is
-working correctly.
+working correctly with the following command:
 
 ```vim
 :ruby puts RUBY_VERSION
@@ -132,10 +138,11 @@ If you're on OS X, one possibility is that you had installed Vim with
 [RVM](http://rvm.io/) or [rbenv](https://github.com/sstephenson/rbenv) and later
 removed that version of Ruby.
 
-If you can't resolve the problem, let me know. In the meantime, you can set
-`g:plug_threads` to 1, so that Ruby installer is not used at all.
+[Please let me know](https://github.com/junegunn/vim-plug/issues) if you can't
+resolve the problem. In the meantime, you can set `g:plug_threads` to 1, so that
+Ruby installer is not used at all.
 
-#### Regarding feature request
+### Regarding feature request
 
 You may submit a request for a new feature by [creating an
 issue](https://github.com/junegunn/vim-plug/issues). However, please be minded
