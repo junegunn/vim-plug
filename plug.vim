@@ -76,17 +76,21 @@ function! plug#begin(...)
   let g:plug_home = home
   let g:plugs = {}
 
-  command! -nargs=+ Plug        call s:add(1, <args>)
-  command! -nargs=* PlugInstall call s:install(<f-args>)
-  command! -nargs=* PlugUpdate  call s:update(<f-args>)
-  command! -nargs=0 -bang PlugClean call s:clean('<bang>' == '!')
-  command! -nargs=0 PlugUpgrade if s:upgrade() | execute "source ". s:me | endif
-  command! -nargs=0 PlugStatus  call s:status()
+  silent! delcommand PlugInstall
+  silent! delcommand PlugUpdate
+  silent! delcommand PlugClean
+  silent! delcommand PlugUpgrade
+  silent! delcommand PlugStatus
+  command! -nargs=+ Plug call s:add(1, <args>)
 
   return 1
 endfunction
 
 function! plug#end()
+  if !exists(':Plug')
+    return
+  endif
+
   let keys = keys(g:plugs)
   while !empty(keys)
     let keys = keys(s:extend(keys))
@@ -101,6 +105,14 @@ function! plug#end()
       execute "set rtp+=".rtp.'after'
     endif
   endfor
+
+  delcommand Plug
+  command! -nargs=* PlugInstall call s:install(<f-args>)
+  command! -nargs=* PlugUpdate  call s:update(<f-args>)
+  command! -nargs=0 -bang PlugClean call s:clean('<bang>' == '!')
+  command! -nargs=0 PlugUpgrade if s:upgrade() | execute "source ". s:me | endif
+  command! -nargs=0 PlugStatus  call s:status()
+
   filetype plugin indent on
   syntax on
 endfunction
