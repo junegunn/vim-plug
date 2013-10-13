@@ -1,0 +1,169 @@
+Execute (initialize):
+  Save '&rtp', 'g:plug_home', '$MYVIMRC'
+
+  let vader = fnamemodify(globpath(&rtp, 'autoload/vader.vim'), ':h:h')
+  let plug  = fnamemodify(globpath(&rtp, 'autoload/plug.vim'), ':h:h')
+  set rtp=$HOME/.vim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,$HOME/.vim/after
+  execute 'set rtp^='.vader
+  execute 'set rtp^='.plug
+  let basertp = &rtp
+  echom &rtp
+
+  silent! unlet g:plugs
+  silent! unlet g:plug_home
+
+  set t_Co=256
+  colo default
+
+  let g:vimrc_reloaded = 0
+  let vimrc    = tempname()
+  call writefile(['let g:vimrc_reloaded += 1'], vimrc)
+  let $MYVIMRC = vimrc
+
+Execute (plug#begin()):
+  let temp_plugged = tempname()
+  call plug#begin(temp_plugged)
+
+  AssertEqual 0, len(g:plugs)
+  AssertEqual temp_plugged, g:plug_home
+  AssertEqual basertp, &rtp
+
+Execute (Plug command):
+  " Git repo with branch
+  Plug 'junegunn/seoul256.vim', 'no-t_co'
+  AssertEqual 'https://git:@github.com/junegunn/seoul256.vim.git', g:plugs['seoul256.vim'].uri
+  AssertEqual join([temp_plugged, 'seoul256.vim/'], '/'), g:plugs['seoul256.vim'].dir
+  AssertEqual 'no-t_co', g:plugs['seoul256.vim'].branch
+
+  " Git URI
+  Plug 'git@github.com:junegunn/vim-emoji.git'
+  AssertEqual 'git@github.com:junegunn/vim-emoji.git', g:plugs['vim-emoji'].uri
+  AssertEqual 'master', g:plugs['vim-emoji'].branch
+  AssertEqual join([temp_plugged, 'vim-emoji/'], '/'), g:plugs['vim-emoji'].dir
+
+  " vim-scripts/
+  Plug 'beauty256'
+  AssertEqual 'https://git:@github.com/vim-scripts/beauty256.git', g:plugs.beauty256.uri
+  AssertEqual 'master', g:plugs.beauty256.branch
+
+  AssertEqual 3, len(g:plugs)
+
+Execute (Plug command with dictionary option):
+  Plug 'junegunn/seoul256.vim', { 'branch': 'no-t_co', 'rtp': '././' }
+  AssertEqual join([temp_plugged, 'seoul256.vim/'], '/'), g:plugs['seoul256.vim'].dir
+  AssertEqual '././', g:plugs['seoul256.vim'].rtp
+
+  AssertEqual 3, len(g:plugs)
+
+Execute (PlugStatus before installation):
+  PlugStatus
+  AssertEqual 3, len(filter(getline(1, line('$')), 'v:val =~ "Not found"'))
+  q
+
+Execute (PlugClean before installation):
+  PlugClean
+  AssertEqual 1, len(filter(getline(1, line('$')), 'v:val =~ "Already clean"'))
+  q
+
+Execute (plug#end() updates &rtp):
+  call plug#end()
+  Assert len(&rtp) > len(basertp)
+
+Execute (Yet, plugins are not available):
+  Assert empty(globpath(&rtp, 'autoload/emoji.vim'))
+
+Execute (PlugInstall):
+  PlugInstall
+  AssertEqual 1, g:vimrc_reloaded
+  q
+
+Execute (Plugin available after installation):
+  Assert !empty(globpath(&rtp, 'autoload/emoji.vim'))
+
+Execute (PlugClean after installation):
+  PlugClean
+  AssertEqual 1, len(filter(getline(1, line('$')), 'v:val =~ "Already clean"'))
+  q
+
+Execute (PlugStatus after installation):
+  PlugStatus
+  AssertEqual 3, len(filter(getline(1, line('$')), 'v:val =~ "OK"'))
+  q
+
+Execute (Change branch of seoul256.vim):
+  call plug#begin()
+  Plug 'junegunn/seoul256.vim'
+  Plug 'git@github.com:junegunn/vim-emoji.git'
+  call plug#end()
+
+Execute (PlugStatus):
+  PlugStatus
+  %y
+  q
+  normal! P
+  %sort
+  g/^$/d
+
+Expect:
+  - seoul256.vim: (x) Invalid branch: no-t_co. Try PlugUpdate.
+  - vim-emoji: OK
+  Finished. 1 error(s).
+
+# TODO: does not work due to inputsave()
+# Do (PlugClean):
+#   :PlugClean\<Enter>y\<Enter>
+#   ggyG
+#   q
+#   PGdd
+
+Execute (PlugClean! to remove seoul256.vim):
+  PlugClean!
+  AssertEqual 1, len(filter(getline(1, line('$')), 'v:val =~ "Removed"'))
+  q
+
+Execute (Change GIT URI of vim-emoji):
+  call plug#begin()
+  Plug 'junegunn/seoul256.vim'
+  Plug 'junegunn/vim-emoji'
+  call plug#end()
+
+Execute (PlugStatus):
+  PlugStatus
+  %y
+  q
+  normal! P
+  %sort
+  g/^$/d
+
+Expect:
+  - seoul256.vim: (x) Not found. Try PlugInstall.
+  - vim-emoji: (x) Invalid remote: git@github.com:junegunn/vim-emoji.git. Try PlugClean.
+  Finished. 2 error(s).
+
+Execute (PlugClean! to remove vim-emoji):
+  PlugClean!
+  AssertEqual 1, len(filter(getline(1, line('$')), 'v:val =~ "Removed"'))
+  q
+
+Execute (PlugUpdate to install both again):
+  PlugUpdate
+  AssertEqual 2, len(filter(getline(1, line('$')), 'v:val =~ "Cloning into"'))
+  AssertEqual 2, g:vimrc_reloaded
+  q
+
+Execute (PlugUpdate only to find out plugins are up-to-date):
+  PlugUpdate
+  AssertEqual 2, len(filter(getline(1, line('$')), 'v:val =~ "Already up-to-date"'))
+  AssertEqual 3, g:vimrc_reloaded
+  q
+
+Execute (Rollback):
+  call system('rm -rf '.temp_plugged)
+
+  unlet g:plugs
+  unlet g:plug_home
+  unlet temp_plugged
+  unlet g:vimrc_reloaded
+
+  Restore
+  source $MYVIMRC
