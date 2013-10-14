@@ -19,4 +19,6 @@ Test cases for the following features are currently missing:
 - Timeout or interrupt cleaning up git processes
 - User prompt in PlugClean command
 - Automatic dependency resolution using Plugfile
+- Single-threaded installer
+- Windows support
 
