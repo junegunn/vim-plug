@@ -1,5 +1,5 @@
-Execute (initialize):
-  Save '&rtp', 'g:plug_home', '$MYVIMRC'
+Execute (Initialize test environment):
+  Save &rtp, g:plug_home, $MYVIMRC
 
   let vader = fnamemodify(globpath(&rtp, 'autoload/vader.vim'), ':h:h')
   let plug  = fnamemodify(globpath(&rtp, 'autoload/plug.vim'), ':h:h')
@@ -7,7 +7,6 @@ Execute (initialize):
   execute 'set rtp^='.vader
   execute 'set rtp^='.plug
   let basertp = &rtp
-  echom &rtp
 
   silent! unlet g:plugs
   silent! unlet g:plug_home
@@ -20,15 +19,25 @@ Execute (initialize):
   call writefile(['let g:vimrc_reloaded += 1'], vimrc)
   let $MYVIMRC = vimrc
 
-Execute (plug#begin()):
+Execute (plug#begin() without path argument):
+  call plug#begin()
+  AssertEqual split(&rtp, ',')[0].'/plugged', g:plug_home
+  unlet g:plug_home
+
+Execute (plug#begin(path)):
   let temp_plugged = tempname()
-  call plug#begin(temp_plugged)
+  call plug#begin(temp_plugged.'/')
+  Assert g:plug_home !~ '[/\\]$', 'Trailing / should be stripped from g:plug_home'
 
   AssertEqual 0, len(g:plugs)
   AssertEqual temp_plugged, g:plug_home
   AssertEqual basertp, &rtp
 
-Execute (Plug command):
+Execute (Subsequent plug#begin() calls will reuse g:plug_home):
+  call plug#begin()
+  AssertEqual temp_plugged, g:plug_home
+
+Execute (Test Plug command):
   " Git repo with branch
   Plug 'junegunn/seoul256.vim', 'no-t_co'
   AssertEqual 'https://git:@github.com/junegunn/seoul256.vim.git', g:plugs['seoul256.vim'].uri
@@ -119,6 +128,8 @@ Expect:
 Execute (PlugClean! to remove seoul256.vim):
   PlugClean!
   AssertEqual 1, len(filter(getline(1, line('$')), 'v:val =~ "Removed"'))
+  Assert empty(globpath(&rtp, 'colors/seoul256.vim'))
+  Assert !empty(globpath(&rtp, 'autoload/emoji.vim'))
   q
 
 Execute (Change GIT URI of vim-emoji):
@@ -143,12 +154,16 @@ Expect:
 Execute (PlugClean! to remove vim-emoji):
   PlugClean!
   AssertEqual 1, len(filter(getline(1, line('$')), 'v:val =~ "Removed"'))
+  Assert empty(globpath(&rtp, 'colors/seoul256.vim'))
+  Assert empty(globpath(&rtp, 'autoload/emoji.vim'))
   q
 
 Execute (PlugUpdate to install both again):
   PlugUpdate
   AssertEqual 2, len(filter(getline(1, line('$')), 'v:val =~ "Cloning into"'))
   AssertEqual 2, g:vimrc_reloaded
+  Assert !empty(globpath(&rtp, 'colors/seoul256.vim')), 'seoul256.vim should be found'
+  Assert !empty(globpath(&rtp, 'autoload/emoji.vim')), 'vim-emoji should be found'
   q
 
 Execute (PlugUpdate only to find out plugins are up-to-date):
@@ -157,13 +172,13 @@ Execute (PlugUpdate only to find out plugins are up-to-date):
   AssertEqual 3, g:vimrc_reloaded
   q
 
-Execute (Rollback):
+Execute (Cleanup):
   call system('rm -rf '.temp_plugged)
 
   unlet g:plugs
   unlet g:plug_home
-  unlet temp_plugged
   unlet g:vimrc_reloaded
+  unlet temp_plugged vader plug basertp
 
   Restore
   source $MYVIMRC

@@ -58,8 +58,9 @@ let s:is_win = has('win32') || has('win64')
 let s:me = expand('<sfile>:p')
 
 function! plug#begin(...)
-  let home = a:0 > 0 ? fnamemodify(a:1, ':p') :
-        \ get(g:, 'plug_home', split(&rtp, ',')[0].'/plugged')
+  let home = s:path(
+        \ a:0 > 0 ? fnamemodify(a:1, ':p') :
+        \ get(g:, 'plug_home', split(&rtp, ',')[0].'/plugged'))
   if !isdirectory(home)
     try
       call mkdir(home, 'p')
