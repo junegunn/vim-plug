@@ -32,7 +32,7 @@ curl -fLo ~/.vim/autoload/plug.vim https://raw.github.com/junegunn/vim-plug/mast
 Edit your .vimrc
 
 ```vim
-call plug#begin()
+call plug#begin('~/.vim/plugged')
 
 Plug 'junegunn/seoul256.vim'
 Plug 'junegunn/vim-easy-align'
@@ -48,11 +48,11 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 
 ### Plugin directory
 
-By default, plugins are installed in `plugged` directory under the first path in
-runtimepath at the point when `plug#begin()` is called. This is usually
-`~/.vim/plugged` (or `$HOME/vimfiles/plugged` on Windows) given that you didn't
-touch runtimepath before the call. You can explicitly set the location of the
-plugins with `plug#begin(path)` call.
+If you omit the path argument to `plug#begin()`, plugins are installed in
+`plugged` directory under the first path in `runtimepath` at the point when
+`plug#begin()` is called. This is usually `~/.vim/plugged` (or
+`$HOME/vimfiles/plugged` on Windows) given that you didn't touch runtimepath
+before the call.
 
 ### Commands
 
