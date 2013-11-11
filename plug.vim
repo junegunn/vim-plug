@@ -96,7 +96,6 @@ function! plug#end()
     let keys = keys(s:extend(keys))
   endwhile
 
-  set nocompatible
   filetype off
   for plug in values(g:plugs)
     let rtp = s:rtp(plug)
