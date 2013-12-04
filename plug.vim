@@ -179,11 +179,13 @@ function! s:syntax()
   syntax region plug2 start=/\%2l/ end=/\%3l/ contains=ALL
   syn match plugNumber /[0-9]\+[0-9.]*/ containedin=plug1 contained
   syn match plugBracket /[[\]]/ containedin=plug2 contained
+  syn match plugX /x/ containedin=plug2 contained
   syn match plugDash /^-/
   syn match plugName /\(^- \)\@<=[^:]*/
   syn match plugError /^- [^:]\+: (x).*/
   hi def link plug1       Title
   hi def link plug2       Repeat
+  hi def link plugX       Exception
   hi def link plugBracket Structure
   hi def link plugNumber  Number
   hi def link plugDash    Special
@@ -229,13 +231,12 @@ function! s:assign_name()
 endfunction
 
 function! s:finish()
-  call append(line('$'), '')
-  call append(line('$'), 'Finishing ... ')
+  call append(3, '- Finishing ... ')
   redraw
   call s:apply()
   call s:syntax()
-  call setline(line('$'), getline(line('$')) . 'Done!')
-  normal! G
+  call setline(4, getline(4) . 'Done!')
+  normal! gg
 endfunction
 
 function! s:update_impl(pull, args)
@@ -271,10 +272,10 @@ function! s:extend(names)
   return filter(copy(g:plugs), '!has_key(prev, v:key)')
 endfunction
 
-function! s:update_progress(pull, cnt, total)
+function! s:update_progress(pull, cnt, bar, total)
   call setline(1, (a:pull ? 'Updating' : 'Installing').
         \ " plugins (".a:cnt."/".a:total.")")
-  call s:progress_bar(2, a:cnt, a:total)
+  call s:progress_bar(2, a:bar, a:total)
   normal! 2G
   redraw
 endfunction
@@ -285,6 +286,7 @@ function! s:update_serial(pull)
   let todo  = copy(g:plugs)
   let total = len(todo)
   let done  = {}
+  let bar   = ''
 
   while !empty(todo)
     for [name, spec] in items(todo)
@@ -317,14 +319,15 @@ function! s:update_serial(pull)
       if error
         let result = '(x) ' . result
       endif
+      let bar .= error ? 'x' : '='
       call append(3, '- ' . name . ': ' . result)
-      call s:update_progress(a:pull, len(done), total)
+      call s:update_progress(a:pull, len(done), bar, total)
     endfor
 
     if !empty(s:extend(keys(todo)))
       let todo = filter(copy(g:plugs), '!has_key(done, v:key)')
       let total += len(todo)
-      call s:update_progress(a:pull, len(done), total)
+      call s:update_progress(a:pull, len(done), bar, total)
     else
       break
     endif
@@ -349,6 +352,7 @@ function! s:update_parallel(pull, threads)
   cd    = iswin ? 'cd /d' : 'cd'
   done  = {}
   tot   = 0
+  bar   = ''
   skip  = 'Already installed'
   mtx   = Mutex.new
   take1 = proc { mtx.synchronize { running && all.shift } }
@@ -356,12 +360,13 @@ function! s:update_parallel(pull, threads)
     cnt = done.length
     tot = VIM::evaluate('len(g:plugs)') || tot
     $curbuf[1] = "#{pull ? 'Updating' : 'Installing'} plugins (#{cnt}/#{tot})"
-    $curbuf[2] = '[' + ('=' * cnt).ljust(tot) + ']'
+    $curbuf[2] = '[' + bar.ljust(tot) + ']'
     VIM::command('normal! 2G')
     VIM::command('redraw') unless iswin
   }
   log = proc { |name, result, ok|
     mtx.synchronize do
+      bar += ok ? '=' : 'x'
       done[name] = true
       result = '(x) ' + result unless ok
       result = "- #{name}: #{result}"
@@ -479,8 +484,8 @@ function! s:glob_dir(path)
   return map(filter(split(globpath(a:path, '**'), '\n'), 'isdirectory(v:val)'), 's:dirpath(v:val)')
 endfunction
 
-function! s:progress_bar(line, cnt, total)
-  call setline(a:line, '[' . s:lpad(repeat('=', a:cnt), a:total) . ']')
+function! s:progress_bar(line, bar, total)
+  call setline(a:line, '[' . s:lpad(a:bar, a:total) . ']')
 endfunction
 
 function! s:git_valid(spec, cd)
@@ -524,7 +529,7 @@ function! s:clean(force)
       call add(dirs, spec.dir)
     endif
     let cnt += 1
-    call s:progress_bar(2, cnt, total)
+    call s:progress_bar(2, repeat('=', cnt), total)
     redraw
   endfor
 
