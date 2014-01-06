@@ -182,7 +182,7 @@ function! s:syntax()
   syn match plugX /x/ containedin=plug2 contained
   syn match plugDash /^-/
   syn match plugName /\(^- \)\@<=[^:]*/
-  syn match plugError /^- [^:]\+: (x).*/
+  syn match plugError /^x.*/
   hi def link plug1       Title
   hi def link plug2       Repeat
   hi def link plugX       Exception
@@ -316,11 +316,8 @@ function! s:update_serial(pull)
         let error = v:shell_error != 0
       endif
       cd -
-      if error
-        let result = '(x) ' . result
-      endif
       let bar .= error ? 'x' : '='
-      call append(3, '- ' . name . ': ' . result)
+      call append(3, printf('%s %s: %s', error ? 'x' : '-', name, result))
       call s:update_progress(a:pull, len(done), bar, total)
     endfor
 
@@ -368,8 +365,7 @@ function! s:update_parallel(pull, threads)
     mtx.synchronize do
       bar += ok ? '=' : 'x'
       done[name] = true
-      result = '(x) ' + result unless ok
-      result = "- #{name}: #{result}"
+      result = (ok ? '- ' : 'x ') << [name, result].join(': ')
       $curbuf.append 3, result
       logh.call
     end
@@ -620,25 +616,21 @@ function! s:status()
   call s:prepare()
   call append(0, 'Checking plugins')
 
-  let errs = 0
+  let ecnt = 0
   for [name, spec] in items(g:plugs)
-    let err = 'OK'
     if isdirectory(spec.dir)
       execute 'cd '.spec.dir
       let [valid, msg] = s:git_valid(spec, 0)
-      if !valid
-        let err = '(x) '. msg
-      endif
       cd -
     else
-      let err = '(x) Not found. Try PlugInstall.'
+      let [valid, msg] = [0, 'Not found. Try PlugInstall.']
     endif
-    let errs += err != 'OK'
-    call append(2, printf('- %s: %s', name, err))
+    let ecnt += !valid
+    call append(2, printf('%s %s: %s', valid ? '-' : 'x', name, msg))
     call cursor(3, 1)
     redraw
   endfor
-  call setline(1, 'Finished. '.errs.' error(s).')
+  call setline(1, 'Finished. '.ecnt.' error(s).')
 endfunction
 
 let &cpo = s:cpo_save
