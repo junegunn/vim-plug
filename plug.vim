@@ -484,6 +484,12 @@ function! s:progress_bar(line, bar, total)
   call setline(a:line, '[' . s:lpad(a:bar, a:total) . ']')
 endfunction
 
+function! s:compare_git_uri(a, b)
+  let a = substitute(a:a, 'git:@', '', '')
+  let b = substitute(a:b, 'git:@', '', '')
+  return a ==# b
+endfunction
+
 function! s:git_valid(spec, cd)
   let ret = 1
   let msg = 'OK'
@@ -491,7 +497,7 @@ function! s:git_valid(spec, cd)
     if a:cd | execute "cd " . a:spec.dir | endif
     let remote = s:system("git config remote.origin.url")
 
-    if remote != a:spec.uri
+    if !s:compare_git_uri(remote, a:spec.uri)
       let msg = 'Invalid remote: ' . remote . '. Try PlugClean.'
       let ret = 0
     else
@@ -631,6 +637,7 @@ function! s:status()
     redraw
   endfor
   call setline(1, 'Finished. '.ecnt.' error(s).')
+  normal! gg
 endfunction
 
 let &cpo = s:cpo_save
