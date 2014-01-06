@@ -183,6 +183,7 @@ function! s:syntax()
   syn match plugDash /^-/
   syn match plugName /\(^- \)\@<=[^:]*/
   syn match plugError /^x.*/
+  syn keyword Function PlugInstall PlugStatus PlugUpdate PlugClean
   hi def link plug1       Title
   hi def link plug2       Repeat
   hi def link plugX       Exception
@@ -197,8 +198,8 @@ function! s:lpad(str, len)
   return a:str . repeat(' ', a:len - len(a:str))
 endfunction
 
-function! s:system(cmd)
-  let lines = split(system(a:cmd), '\n')
+function! s:lastline(msg)
+  let lines = split(a:msg, '\n')
   return get(lines, -1, '')
 endfunction
 
@@ -293,10 +294,10 @@ function! s:update_serial(pull)
       let done[name] = 1
       if isdirectory(spec.dir)
         execute 'cd '.spec.dir
-        let [valid, msg] = s:git_valid(spec, 0)
+        let [valid, msg] = s:git_valid(spec, 0, 0)
         if valid
           let result = a:pull ?
-            \ s:system(
+            \ system(
             \ printf('git checkout -q %s 2>&1 && git pull origin %s 2>&1',
             \   spec.branch, spec.branch)) : 'Already installed'
           let error = a:pull ? v:shell_error != 0 : 0
@@ -310,14 +311,14 @@ function! s:update_serial(pull)
         endif
         execute 'cd '.base
         let d = shellescape(substitute(spec.dir, '[\/]\+$', '', ''))
-        let result = s:system(
+        let result = system(
               \ printf('git clone --recursive %s -b %s %s 2>&1',
               \ shellescape(spec.uri), shellescape(spec.branch), d))
         let error = v:shell_error != 0
       endif
       cd -
       let bar .= error ? 'x' : '='
-      call append(3, printf('%s %s: %s', error ? 'x' : '-', name, result))
+      call append(3, s:format_message(!error, name, result))
       call s:update_progress(a:pull, len(done), bar, total)
     endfor
 
@@ -365,8 +366,17 @@ function! s:update_parallel(pull, threads)
     mtx.synchronize do
       bar += ok ? '=' : 'x'
       done[name] = true
-      result = (ok ? '- ' : 'x ') << [name, result].join(': ')
-      $curbuf.append 3, result
+      result =
+        if ok
+          ["- #{name}: #{result.lines.to_a.last.strip}"]
+        elsif result =~ /^Interrupted|^Timeout/
+          ["x #{name}: #{result}"]
+        else
+          ["x #{name}"] + result.lines.map { |l| "    " << l }
+        end
+      result.each_with_index do |line, offset|
+        $curbuf.append 3 + offset, line.chomp
+      end
       logh.call
     end
   }
@@ -430,24 +440,29 @@ function! s:update_parallel(pull, threads)
               if File.directory? dir
                 ret, data = bt.call "#{cd} #{dir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url"
                 current_uri = data.lines.to_a.last
-                if ret && current_uri == uri
+                if !ret
+                  if data =~ /^Interrupted|^Timeout/
+                    [false, data]
+                  else
+                    [false, [data.chomp, "PlugClean required."].join($/)]
+                  end
+                elsif current_uri.sub(/git:@/, '') != uri.sub(/git:@/, '')
+                  [false, ["Invalid URI: #{current_uri}",
+                           "Expected:    #{uri}",
+                           "PlugClean required."].join($/)]
+                else
                   if pull
                     bt.call "#{cd} #{dir} && git checkout -q #{branch} 2>&1 && git pull origin #{branch} 2>&1"
                   else
                     [true, skip]
                   end
-                elsif current_uri =~ /^Interrupted|^Timeout/
-                  [false, current_uri]
-                else
-                  [false, "PlugClean required: #{current_uri}"]
                 end
               else
                 FileUtils.mkdir_p(base)
                 d = dir.sub(%r{[\\/]+$}, '')
                 bt.call "#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{d} 2>&1"
               end
-            result = result.lines.to_a.last
-            log.call name, (result && result.strip), ok
+            log.call name, result, ok
           end
         } if running
       end
@@ -490,22 +505,33 @@ function! s:compare_git_uri(a, b)
   return a ==# b
 endfunction
 
-function! s:git_valid(spec, cd)
+function! s:format_message(ok, name, message)
+  if a:ok
+    return [printf('- %s: %s', a:name, s:lastline(a:message))]
+  else
+    let lines = map(split(a:message, '\n'), '"    ".v:val')
+    return extend([printf('x %s:', a:name)], lines)
+  endif
+endfunction
+
+function! s:git_valid(spec, check_branch, cd)
   let ret = 1
   let msg = 'OK'
   if isdirectory(a:spec.dir)
     if a:cd | execute "cd " . a:spec.dir | endif
-    let remote = s:system("git config remote.origin.url")
-
-    if !s:compare_git_uri(remote, a:spec.uri)
-      let msg = 'Invalid remote: ' . remote . '. Try PlugClean.'
+    let result = split(system("git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url"), '\n')
+    let remote = result[-1]
+    if v:shell_error != 0
+      let msg = join([remote, "PlugClean required."], "\n")
       let ret = 0
-    else
-      let branch = s:system('git rev-parse --abbrev-ref HEAD')
-      if v:shell_error != 0
-        let msg = 'Invalid git repository. Try PlugClean.'
-        let ret = 0
-      elseif a:spec.branch != branch
+    elseif !s:compare_git_uri(remote, a:spec.uri)
+      let msg = join(['Invalid URI: '.remote,
+                    \ 'Expected:    '.a:spec.uri,
+                    \ "PlugClean required."], "\n")
+      let ret = 0
+    elseif a:check_branch
+      let branch = result[0]
+      if a:spec.branch != branch
         let msg = 'Invalid branch: '.branch.'. Try PlugUpdate.'
         let ret = 0
       endif
@@ -527,7 +553,7 @@ function! s:clean(force)
   let dirs = []
   let [cnt, total] = [0, len(g:plugs)]
   for spec in values(g:plugs)
-    if s:git_valid(spec, 1)[0]
+    if s:git_valid(spec, 0, 1)[0]
       call add(dirs, spec.dir)
     endif
     let cnt += 1
@@ -626,13 +652,13 @@ function! s:status()
   for [name, spec] in items(g:plugs)
     if isdirectory(spec.dir)
       execute 'cd '.spec.dir
-      let [valid, msg] = s:git_valid(spec, 0)
+      let [valid, msg] = s:git_valid(spec, 1, 0)
       cd -
     else
       let [valid, msg] = [0, 'Not found. Try PlugInstall.']
     endif
     let ecnt += !valid
-    call append(2, printf('%s %s: %s', valid ? '-' : 'x', name, msg))
+    call append(2, s:format_message(valid, name, msg))
     call cursor(3, 1)
     redraw
   endfor

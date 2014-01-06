@@ -114,9 +114,32 @@ Execute (PlugStatus):
   g/^$/d
 
 Expect:
-  - seoul256.vim: (x) Invalid branch: no-t_co. Try PlugUpdate.
+      Invalid branch: no-t_co. Try PlugUpdate.
   - vim-emoji: OK
   Finished. 1 error(s).
+  x seoul256.vim:
+
+Execute (Change URI of seoul256.vim):
+  call plug#begin()
+  Plug 'junegunn.choi/seoul256.vim'
+  Plug 'git@github.com:junegunn/vim-emoji.git'
+  call plug#end()
+
+Execute (PlugStatus):
+  PlugStatus
+  %y
+  q
+  normal! P
+  %sort
+  g/^$/d
+
+Expect:
+      Expected:    https://git:@github.com/junegunn.choi/seoul256.vim.git
+      Invalid URI: https://git:@github.com/junegunn/seoul256.vim.git
+      PlugClean required.
+  - vim-emoji: OK
+  Finished. 1 error(s).
+  x seoul256.vim:
 
 # TODO: does not work due to inputsave()
 # Do (PlugClean):
@@ -147,9 +170,13 @@ Execute (PlugStatus):
   g/^$/d
 
 Expect:
-  - seoul256.vim: (x) Not found. Try PlugInstall.
-  - vim-emoji: (x) Invalid remote: git@github.com:junegunn/vim-emoji.git. Try PlugClean.
+      Expected:    https://git:@github.com/junegunn/vim-emoji.git
+      Invalid URI: git@github.com:junegunn/vim-emoji.git
+      Not found. Try PlugInstall.
+      PlugClean required.
   Finished. 2 error(s).
+  x seoul256.vim:
+  x vim-emoji:
 
 Execute (PlugClean! to remove vim-emoji):
   PlugClean!

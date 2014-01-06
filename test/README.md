@@ -8,7 +8,7 @@ Test cases for vim-plug
 ### Run
 
 ```vim
-:Vader*
+:e workflow.vader | Vader
 ```
 
 ### TODO
