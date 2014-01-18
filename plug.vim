@@ -91,6 +91,10 @@ function! plug#begin(...)
 endfunction
 
 function! plug#end()
+  if !exists('g:plugs')
+    echoerr 'Call plug#begin() first'
+    return
+  endif
   let keys = keys(g:plugs)
   while !empty(keys)
     let keys = keys(s:extend(keys))
