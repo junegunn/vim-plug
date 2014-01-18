@@ -8,8 +8,8 @@ Execute (Initialize test environment):
   execute 'set rtp^='.plug
   let basertp = &rtp
 
-  silent! unlet g:plugs
-  silent! unlet g:plug_home
+  unlet! g:plugs
+  unlet! g:plug_home
 
   set t_Co=256
   colo default
@@ -19,10 +19,29 @@ Execute (Initialize test environment):
   call writefile(['let g:vimrc_reloaded += 1'], vimrc)
   let $MYVIMRC = vimrc
 
+Execute (plug#end() before plug#begin() should fail):
+  try
+    call plug#end()
+    Assert 0, 'should not reach here'
+  catch
+    Assert stridx(v:exception, 'Call plug#begin() first') >= 0
+  endtry
+
 Execute (plug#begin() without path argument):
   call plug#begin()
   AssertEqual split(&rtp, ',')[0].'/plugged', g:plug_home
   unlet g:plug_home
+
+Execute (plug#begin() without path argument with empty &rtp):
+  let save_rtp = &rtp
+  set rtp=
+  try
+    call plug#begin()
+    Assert 0, 'should not reach here'
+  catch
+    Assert stridx(v:exception, 'Unable to determine plug home') >= 0, 'Got: '.v:exception
+  endtry
+  let &rtp = save_rtp
 
 Execute (plug#begin(path)):
   let temp_plugged = tempname()
@@ -205,7 +224,7 @@ Execute (Cleanup):
   unlet g:plugs
   unlet g:plug_home
   unlet g:vimrc_reloaded
-  unlet temp_plugged vader plug basertp
+  unlet temp_plugged vader plug basertp save_rtp
 
   Restore
   source $MYVIMRC

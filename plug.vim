@@ -61,9 +61,17 @@ let s:is_win = has('win32') || has('win64')
 let s:me = expand('<sfile>:p')
 
 function! plug#begin(...)
-  let home = s:path(
-        \ a:0 > 0 ? fnamemodify(a:1, ':p') :
-        \ get(g:, 'plug_home', split(&rtp, ',')[0].'/plugged'))
+  if a:0 > 0
+    let home = s:path(fnamemodify(a:1, ':p'))
+  elseif exists('g:plug_home')
+    let home = s:path(g:plug_home)
+  elseif !empty(&rtp)
+    let home = s:path(split(&rtp, ',')[0]) . '/plugged'
+  else
+    echoerr "Unable to determine plug home. Try calling plug#begin() with a path argument."
+    return
+  endif
+
   if !isdirectory(home)
     try
       call mkdir(home, 'p')
