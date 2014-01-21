@@ -89,7 +89,7 @@ Resolution](https://github.com/junegunn/vim-plug/wiki/Dependency-Resolution).
 - [Writing my own Vim plugin manager](http://junegunn.kr/2013/09/writing-my-own-vim-plugin-manager)
 - [Thoughts on Vim plugin dependency](http://junegunn.kr/2013/09/thoughts-on-vim-plugin-dependency)
 
-### Troubleshooting
+### FAQ/Troubleshooting
 
 #### Plugins are not installed/updated in parallel
 
@@ -118,6 +118,23 @@ removed that version of Ruby.
 [Please let me know](https://github.com/junegunn/vim-plug/issues) if you can't
 resolve the problem. In the meantime, you can set `g:plug_threads` to 1, so that
 Ruby installer is not used at all.
+
+#### Freezing plugin version with commit hash
+
+vim-plug does not allow you to freeze the version of a plugin with its commit
+hash. This is by design. I don't believe a user of a plugin should be looking
+at its individual commits. Instead, one should be choosing the right version
+using release tags or versioned branches (e.g. 1.2.3, stable, devel, etc.)
+
+```vim
+Plug 'junegunn/vim-easy-align', '2.9.2'
+```
+
+If the repository doesn't come with such tags or branches, you should think of
+it as "unstable" or "in development", and always use its latest revision.
+
+If you really must choose a certain untagged revision, consider forking the
+repository.
 
 ### Regarding feature request
 
