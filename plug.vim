@@ -117,7 +117,7 @@ function! plug#end()
         if cmd =~ '^<Plug>.\+'
           if empty(mapcheck(cmd))
             execute printf(
-            \ "noremap %s :call <SID>lod_map(%s, %s)<CR>", cmd, string(cmd), string(plug))
+            \ "noremap <silent> %s :call <SID>lod_map(%s, %s)<CR>", cmd, string(cmd), string(plug))
           endif
         elseif !exists(':'.cmd)
           execute printf(
