@@ -13,6 +13,8 @@ Somewhere between [Pathogen](https://github.com/tpope/vim-pathogen) and
 - Parallel installation/update (requires
   [+ruby](http://junegunn.kr/2013/09/installing-vim-with-ruby-support/))
 - Smallest possible feature set
+- Branch/tag support
+- On-demand loading
 - Dependency resolution using `Plugfile` (experimental)
 
 ### Cons.
@@ -36,6 +38,7 @@ call plug#begin('~/.vim/plugged')
 
 Plug 'junegunn/seoul256.vim'
 Plug 'junegunn/vim-easy-align'
+Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
 " Plug 'user/repo1', 'branch_or_tag'
 " Plug 'user/repo2', { 'rtp': 'vim/plugin/dir', 'branch': 'devel' }
 " Plug 'git@github.com:junegunn/vim-github-dashboard.git'
@@ -77,6 +80,16 @@ before the call.
 call plug#begin()
 Plug 'tpope/vim-sensible'
 call plug#end()
+```
+
+### On-demand loading of plugins
+
+```vim
+" NERD tree will be loaded on the first invocation of NERDTreeToggle command
+Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
+
+" Multiple commands
+Plug 'junegunn/vim-github-dashboard', { 'on': ['GHDashboard', 'GHActivity'] }
 ```
 
 ### Dependency resolution
