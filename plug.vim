@@ -115,8 +115,10 @@ function! plug#end()
       let commands = type(plug.on) == 1 ? [plug.on] : plug.on
       for cmd in commands
         if cmd =~ '^<Plug>.\+'
-          execute printf(
-          \ "noremap %s :call <SID>lod_map(%s, %s)<CR>", cmd, string(cmd), string(plug))
+          if empty(mapcheck(cmd))
+            execute printf(
+            \ "noremap %s :call <SID>lod_map(%s, %s)<CR>", cmd, string(cmd), string(plug))
+          endif
         elseif !exists(':'.cmd)
           execute printf(
           \ "command! -nargs=* -bang %s call s:lod_cmd(%s, '<bang>', <q-args>, %s)",
