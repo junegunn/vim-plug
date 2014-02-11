@@ -114,9 +114,12 @@ function! plug#end()
     if has_key(plug, 'on')
       let commands = type(plug.on) == 1 ? [plug.on] : plug.on
       for cmd in commands
-        if !exists(':'.cmd)
+        if cmd =~ '^<Plug>.\+'
           execute printf(
-          \ "command! -nargs=* -bang %s call s:lod(%s, '<bang>', <q-args>, %s)",
+          \ "noremap %s :call <SID>lod_map(%s, %s)<CR>", cmd, string(cmd), string(plug))
+        elseif !exists(':'.cmd)
+          execute printf(
+          \ "command! -nargs=* -bang %s call s:lod_cmd(%s, '<bang>', <q-args>, %s)",
           \ cmd, string(cmd), string(plug))
         endif
       endfor
@@ -143,8 +146,7 @@ function! s:add_rtp(rtp)
   endif
 endfunction
 
-function! s:lod(cmd, bang, args, plug)
-  execute 'delc '.a:cmd
+function! s:lod(plug)
   let rtp = s:rtp(a:plug)
   call s:add_rtp(rtp)
   for dir in ['plugin', 'after']
@@ -152,7 +154,26 @@ function! s:lod(cmd, bang, args, plug)
       execute 'source '.vim
     endfor
   endfor
+endfunction
+
+function! s:lod_cmd(cmd, bang, args, plug)
+  execute 'delc '.a:cmd
+  call s:lod(a:plug)
   execute printf("%s%s %s", a:cmd, a:bang, a:args)
+endfunction
+
+function! s:lod_map(map, plug)
+  execute 'unmap '.a:map
+  call s:lod(a:plug)
+  let extra = ''
+  while 1
+    let c = getchar(0)
+    if c == 0
+      break
+    endif
+    let extra .= nr2char(c)
+  endwhile
+  call feedkeys(substitute(a:map, '^<Plug>', "\<Plug>", '') . extra)
 endfunction
 
 function! s:add(...)
