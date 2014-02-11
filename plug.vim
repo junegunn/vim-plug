@@ -115,9 +115,12 @@ function! plug#end()
       let commands = type(plug.on) == 1 ? [plug.on] : plug.on
       for cmd in commands
         if cmd =~ '^<Plug>.\+'
-          if empty(mapcheck(cmd))
-            execute printf(
-            \ "noremap <silent> %s :call <SID>lod_map(%s, %s)<CR>", cmd, string(cmd), string(plug))
+          if empty(mapcheck(cmd)) && empty(mapcheck(cmd, 'i'))
+            for [mode, prefix] in [['i', "<C-O>"], ['', '']]
+              execute printf(
+              \ "%snoremap <silent> %s %s:call <SID>lod_map(%s, %s)<CR>",
+              \ mode, cmd, prefix, string(cmd), string(plug))
+            endfor
           endif
         elseif !exists(':'.cmd)
           execute printf(
@@ -166,6 +169,7 @@ endfunction
 
 function! s:lod_map(map, plug)
   execute 'unmap '.a:map
+  execute 'iunmap '.a:map
   call s:lod(a:plug)
   let extra = ''
   while 1
