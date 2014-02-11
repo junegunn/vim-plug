@@ -1,0 +1,19 @@
+#!/bin/bash
+
+cd $(dirname $BASH_SOURCE)
+cd ..
+PLUG_SRC=$(pwd)/plug.vim
+cd - > /dev/null
+
+export VADER_RTP=$TMPDIR/vader-rtp
+vim -e +Vader -c ':call writefile([fnamemodify(globpath(&rtp, "autoload/vader.vim"), ":h:h")], $VADER_RTP)' +q
+
+MINI_VIMRC=$TMPDIR/mini-vimrc
+cat > $MINI_VIMRC << EOF
+let \$MYVIMRC = '$MINI_VIMRC'
+set nocompatible
+set rtp=$(cat $VADER_RTP)
+source $PLUG_SRC
+EOF
+
+vim -u $MINI_VIMRC +Vader*
