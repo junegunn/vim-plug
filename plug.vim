@@ -717,9 +717,7 @@ function! s:status()
   let ecnt = 0
   for [name, spec] in items(g:plugs)
     if isdirectory(spec.dir)
-      execute 'cd '.spec.dir
-      let [valid, msg] = s:git_valid(spec, 1, 0)
-      cd -
+      let [valid, msg] = s:git_valid(spec, 1, 1)
     else
       let [valid, msg] = [0, 'Not found. Try PlugInstall.']
     endif
