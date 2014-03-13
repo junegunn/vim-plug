@@ -132,6 +132,15 @@ removed that version of Ruby.
 resolve the problem. In the meantime, you can set `g:plug_threads` to 1, so that
 Ruby installer is not used at all.
 
+#### Errors on fish shell
+
+If vim-plug doesn't work correctly on fish shell, you might need to add `set
+shell=/bin/sh` to your .vimrc.
+
+Refer to the following links for the details:
+- http://badsimplicity.com/vim-fish-e484-cant-open-file-tmpvrdnvqe0-error/
+- https://github.com/junegunn/vim-plug/issues/12
+
 #### Freezing plugin version with commit hash
 
 vim-plug does not allow you to freeze the version of a plugin with its commit
