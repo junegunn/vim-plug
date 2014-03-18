@@ -363,7 +363,7 @@ function! s:update_serial(pull)
         let [valid, msg] = s:git_valid(spec, 0, 0)
         if valid
           let result = a:pull ?
-            \ system(
+            \ s:system(
             \ printf('git checkout -q %s 2>&1 && git pull origin %s 2>&1',
             \   spec.branch, spec.branch)) : 'Already installed'
           let error = a:pull ? v:shell_error != 0 : 0
@@ -377,7 +377,7 @@ function! s:update_serial(pull)
         endif
         execute 'cd '.base
         let d = shellescape(substitute(spec.dir, '[\/]\+$', '', ''))
-        let result = system(
+        let result = s:system(
               \ printf('git clone --recursive %s -b %s %s 2>&1',
               \ shellescape(spec.uri), shellescape(spec.branch), d))
         let error = v:shell_error != 0
@@ -580,12 +580,16 @@ function! s:format_message(ok, name, message)
   endif
 endfunction
 
+function! s:system(cmd)
+  return system(s:is_win ? '('.a:cmd.')' : a:cmd)
+endfunction
+
 function! s:git_valid(spec, check_branch, cd)
   let ret = 1
   let msg = 'OK'
   if isdirectory(a:spec.dir)
     if a:cd | execute "cd " . a:spec.dir | endif
-    let result = split(system("git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url"), '\n')
+    let result = split(s:system("git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url"), '\n')
     let remote = result[-1]
     if v:shell_error != 0
       let msg = join([remote, "PlugClean required."], "\n")
