@@ -376,10 +376,11 @@ function! s:update_serial(pull)
           call mkdir(base, 'p')
         endif
         execute 'cd '.base
-        let d = shellescape(substitute(spec.dir, '[\/]\+$', '', ''))
         let result = s:system(
               \ printf('git clone --recursive %s -b %s %s 2>&1',
-              \ shellescape(spec.uri), shellescape(spec.branch), d))
+              \ s:shellesc(spec.uri),
+              \ s:shellesc(spec.branch),
+              \ s:shellesc(substitute(spec.dir, '[\/]\+$', '', ''))))
         let error = v:shell_error != 0
       endif
       cd -
@@ -557,6 +558,10 @@ function! s:dirpath(path)
   endif
 endfunction
 
+function! s:shellesc(arg)
+  return '"'.substitute(a:arg, '"', '\\"', 'g').'"'
+endfunction
+
 function! s:glob_dir(path)
   return map(filter(split(globpath(a:path, '**'), '\n'), 'isdirectory(v:val)'), 's:dirpath(v:val)')
 endfunction
@@ -674,8 +679,8 @@ endfunction
 
 function! s:upgrade()
   if executable('curl')
-    let mee = shellescape(s:me)
-    let new = shellescape(s:me . '.new')
+    let mee = s:shellesc(s:me)
+    let new = s:shellesc(s:me . '.new')
     echo "Downloading ". s:plug_source
     redraw
     let mv = s:is_win ? 'move /Y' : 'mv -f'
