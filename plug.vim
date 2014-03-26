@@ -144,10 +144,14 @@ function! s:rtp(spec)
   return rtp
 endfunction
 
+function! s:esc(path)
+  return substitute(a:path, ' ', '\\ ', 'g')
+endfunction
+
 function! s:add_rtp(rtp)
-  execute "set rtp^=".a:rtp
+  execute "set rtp^=".s:esc(a:rtp)
   if isdirectory(a:rtp.'after')
-    execute "set rtp+=".a:rtp.'after'
+    execute "set rtp+=".s:esc(a:rtp.'after')
   endif
 endfunction
 
@@ -330,7 +334,7 @@ function! s:extend(names)
     for name in a:names
       let plugfile = s:rtp(g:plugs[name]) . s:plug_file
       if filereadable(plugfile)
-        execute "source ". plugfile
+        execute "source ". s:esc(plugfile)
       endif
     endfor
   finally
@@ -359,13 +363,13 @@ function! s:update_serial(pull)
     for [name, spec] in items(todo)
       let done[name] = 1
       if isdirectory(spec.dir)
-        execute 'cd '.spec.dir
+        execute 'cd '.s:esc(spec.dir)
         let [valid, msg] = s:git_valid(spec, 0, 0)
         if valid
           let result = a:pull ?
             \ s:system(
             \ printf('git checkout -q %s 2>&1 && git pull origin %s 2>&1',
-            \   spec.branch, spec.branch)) : 'Already installed'
+            \   s:shellesc(spec.branch), s:shellesc(spec.branch))) : 'Already installed'
           let error = a:pull ? v:shell_error != 0 : 0
         else
           let result = msg
@@ -403,6 +407,10 @@ endfunction
 
 function! s:update_parallel(pull, threads)
   ruby << EOF
+  def esc arg
+    %["#{arg.gsub('"', '\"')}"]
+  end
+
   st    = Time.now
   require 'thread'
   require 'fileutils'
@@ -503,8 +511,10 @@ function! s:update_parallel(pull, threads)
           while pair = take1.call
             name = pair.first
             dir, uri, branch = pair.last.values_at *%w[dir uri branch]
+            branch = esc branch
             ok, result =
               if File.directory? dir
+                dir = esc dir
                 ret, data = bt.call "#{cd} #{dir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url"
                 current_uri = data.lines.to_a.last
                 if !ret
@@ -526,7 +536,7 @@ function! s:update_parallel(pull, threads)
                 end
               else
                 FileUtils.mkdir_p(base)
-                d = dir.sub(%r{[\\/]+$}, '')
+                d = esc dir.sub(%r{[\\/]+$}, '')
                 bt.call "#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{d} 2>&1"
               end
             log.call name, result, ok
@@ -593,7 +603,7 @@ function! s:git_valid(spec, check_branch, cd)
   let ret = 1
   let msg = 'OK'
   if isdirectory(a:spec.dir)
-    if a:cd | execute "cd " . a:spec.dir | endif
+    if a:cd | execute "cd " . s:esc(a:spec.dir) | endif
     let result = split(s:system("git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url"), '\n')
     let remote = result[-1]
     if v:shell_error != 0
@@ -666,7 +676,7 @@ function! s:clean(force)
     if yes
       for dir in todo
         if isdirectory(dir)
-          call system((s:is_win ? 'rmdir /S /Q ' : 'rm -rf ') . dir)
+          call system((s:is_win ? 'rmdir /S /Q ' : 'rm -rf ') . s:shellesc(dir))
         endif
       endfor
       call append(line('$'), 'Removed.')
