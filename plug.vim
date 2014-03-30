@@ -88,6 +88,8 @@ function! plug#begin(...)
 
   let g:plug_home = home
   let g:plugs = {}
+  " we want to keep track of the order plugins where registered.
+  let g:plugs_order = []
 
   command! -nargs=+ Plug        call s:add(1, <args>)
   command! -nargs=* PlugInstall call s:install(<f-args>)
@@ -110,7 +112,12 @@ function! plug#end()
   endwhile
 
   filetype off
-  for plug in values(g:plugs)
+  " we want to make sure the plugin directories are added to rtp in the same
+  " order that they are registered with the Plug command. since the s:add_rtp
+  " function uses ^= to add plugin directories to the front of the rtp, we
+  " need to loop through the plugins in reverse
+  for name in reverse(copy(g:plugs_order))
+    let plug = g:plugs[name]
     if has_key(plug, 'on')
       let commands = type(plug.on) == 1 ? [plug.on] : plug.on
       for cmd in commands
@@ -221,6 +228,7 @@ function! s:add(...)
   let dir  = s:dirpath( fnamemodify(join([g:plug_home, name], '/'), ':p') )
   let spec = extend(opts, { 'dir': dir, 'uri': uri })
   let g:plugs[name] = spec
+  let g:plugs_order += [name]
 endfunction
 
 function! s:install(...)
