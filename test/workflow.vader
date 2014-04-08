@@ -136,6 +136,7 @@ Expect:
       Invalid branch: no-t_co. Try PlugUpdate.
   - vim-emoji: OK
   Finished. 1 error(s).
+  [==]
   x seoul256.vim:
 
 Execute (Change URI of seoul256.vim):
@@ -158,6 +159,7 @@ Expect:
       PlugClean required.
   - vim-emoji: OK
   Finished. 1 error(s).
+  [==]
   x seoul256.vim:
 
 # TODO: does not work due to inputsave()
@@ -194,6 +196,7 @@ Expect:
       Not found. Try PlugInstall.
       PlugClean required.
   Finished. 2 error(s).
+  [==]
   x seoul256.vim:
   x vim-emoji:
 
