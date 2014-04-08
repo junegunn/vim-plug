@@ -741,17 +741,21 @@ endfunction
 function! s:status()
   call s:prepare()
   call append(0, 'Checking plugins')
+  call append(1, '')
 
   let ecnt = 0
+  let [cnt, total] = [0, len(g:plugs)]
   for [name, spec] in items(g:plugs)
     if isdirectory(spec.dir)
       let [valid, msg] = s:git_valid(spec, 1, 1)
     else
       let [valid, msg] = [0, 'Not found. Try PlugInstall.']
     endif
+    let cnt += 1
     let ecnt += !valid
-    call append(2, s:format_message(valid, name, msg))
-    call cursor(3, 1)
+    call s:progress_bar(2, repeat('=', cnt), total)
+    call append(3, s:format_message(valid, name, msg))
+    normal! 2G
     redraw
   endfor
   call setline(1, 'Finished. '.ecnt.' error(s).')
