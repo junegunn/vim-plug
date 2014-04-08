@@ -261,7 +261,7 @@ function! s:syntax()
   syn match plugX /x/ containedin=plug2 contained
   syn match plugDash /^-/
   syn match plugName /\(^- \)\@<=[^:]*/
-  syn match plugRelDate /([^)]\+)$/
+  syn match plugRelDate /([^)/+-]\{3,})$/
   syn match plugSha /^  [0-9a-z]\{7}/
   syn match plugError /^x.*/
   syn keyword Function PlugInstall PlugStatus PlugUpdate PlugClean
@@ -773,6 +773,7 @@ function! s:diff()
   call s:prepare()
   call append(0, 'Collecting updated changes ...')
 
+  let cnt = 0
   for [k, v] in items(g:plugs)
     if !isdirectory(v.dir)
       continue
@@ -784,13 +785,19 @@ function! s:diff()
       call append(1, '')
       call append(2, '- '.k.':')
       call append(3, map(split(diff, '\n'), '"  ". v:val'))
+      let cnt += 1
       normal! gg
       redraw
     endif
     cd -
   endfor
 
-  call setline(1, 'Updated changes:')
+  if cnt == 0
+    call setline(1, 'No update.')
+  else
+    call setline(1, 'Updated changes:')
+  endif
+  normal! gg
 endfunction
 
 let &cpo = s:cpo_save
