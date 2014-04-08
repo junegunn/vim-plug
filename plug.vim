@@ -793,11 +793,7 @@ function! s:diff()
     cd -
   endfor
 
-  if cnt == 0
-    call setline(1, 'No update.')
-  else
-    call setline(1, 'Updated changes:')
-  endif
+  call setline(1, cnt == 0 ? 'No update.' : 'Updated changes:')
   normal! gg
 endfunction
 
