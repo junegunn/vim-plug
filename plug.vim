@@ -651,6 +651,7 @@ function! s:clean(force)
     endif
     let cnt += 1
     call s:progress_bar(2, repeat('=', cnt), total)
+    normal! 2G
     redraw
   endfor
 
