@@ -254,15 +254,16 @@ endfunction
 
 function! s:syntax()
   syntax clear
-  syntax region plug1 start=/\%1l/ end=/\%2l/ contains=ALL
-  syntax region plug2 start=/\%2l/ end=/\%3l/ contains=ALL
-  syn match plugNumber /[0-9]\+[0-9.]*/ containedin=plug1 contained
-  syn match plugBracket /[[\]]/ containedin=plug2 contained
-  syn match plugX /x/ containedin=plug2 contained
+  syntax region plug1 start=/\%1l/ end=/\%2l/ contains=plugNumber
+  syntax region plug2 start=/\%2l/ end=/\%3l/ contains=plugBracket,plugX
+  syn match plugNumber /[0-9]\+[0-9.]*/ contained
+  syn match plugBracket /[[\]]/ contained
+  syn match plugX /x/ contained
   syn match plugDash /^-/
   syn match plugName /\(^- \)\@<=[^:]*/
-  syn match plugRelDate /([^)/+-]\{3,})$/
-  syn match plugSha /^  [0-9a-z]\{7}/
+  syn match plugCommit /^  [0-9a-z]\{7} .*/ contains=plugRelDate,plugSha
+  syn match plugSha /^  [0-9a-z]\{7}/ contained
+  syn match plugRelDate /([^)]*)$/ contained
   syn match plugError /^x.*/
   syn keyword Function PlugInstall PlugStatus PlugUpdate PlugClean
   hi def link plug1       Title
