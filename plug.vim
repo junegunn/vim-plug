@@ -97,6 +97,7 @@ function! plug#begin(...)
   command! -nargs=0 -bang PlugClean call s:clean('<bang>' == '!')
   command! -nargs=0 PlugUpgrade if s:upgrade() | execute "source ". s:me | endif
   command! -nargs=0 PlugStatus  call s:status()
+  command! -nargs=0 PlugDiff    call s:diff()
 
   return 1
 endfunction
@@ -260,6 +261,8 @@ function! s:syntax()
   syn match plugX /x/ containedin=plug2 contained
   syn match plugDash /^-/
   syn match plugName /\(^- \)\@<=[^:]*/
+  syn match plugRelDate /([^)]\+)$/
+  syn match plugSha /^  [0-9a-z]\{7}/
   syn match plugError /^x.*/
   syn keyword Function PlugInstall PlugStatus PlugUpdate PlugClean
   hi def link plug1       Title
@@ -270,6 +273,8 @@ function! s:syntax()
   hi def link plugDash    Special
   hi def link plugName    Label
   hi def link plugError   Error
+  hi def link plugRelDate Comment
+  hi def link plugSha     Identifier
 endfunction
 
 function! s:lpad(str, len)
@@ -287,7 +292,9 @@ function! s:prepare()
     %d
   else
     vertical topleft new
-    noremap <silent> <buffer> q :q<cr>
+    nnoremap <silent> <buffer> q :q<cr>
+    nnoremap <silent> <buffer> D :PlugDiff<cr>
+    nnoremap <silent> <buffer> S :PlugStatus<cr>
     let b:plug = 1
     let s:plug_win = winnr()
     call s:assign_name()
@@ -760,6 +767,30 @@ function! s:status()
   endfor
   call setline(1, 'Finished. '.ecnt.' error(s).')
   normal! gg
+endfunction
+
+function! s:diff()
+  call s:prepare()
+  call append(0, 'Collecting updated changes ...')
+
+  for [k, v] in items(g:plugs)
+    if !isdirectory(v.dir)
+      continue
+    endif
+
+    execute 'cd '.substitute(v.dir, ' ', '\\ ', 'g')
+    let diff = system('git log --pretty=format:"%h %s (%cr)" "HEAD@{0}...HEAD@{1}"')
+    if !v:shell_error && !empty(diff)
+      call append(1, '')
+      call append(2, '- '.k.':')
+      call append(3, map(split(diff, '\n'), '"  ". v:val'))
+      normal! gg
+      redraw
+    endif
+    cd -
+  endfor
+
+  call setline(1, 'Updated changes:')
 endfunction
 
 let &cpo = s:cpo_save

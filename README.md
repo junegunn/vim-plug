@@ -66,6 +66,7 @@ before the call.
 | PlugClean[!]           | Remove unused directories (bang version will clean without prompt) |
 | PlugUpgrade            | Upgrade vim-plug itself                                            |
 | PlugStatus             | Check the status of plugins                                        |
+| PlugDiff               | See the updated changes from the previous PlugUpdate               |
 
 ### Options for parallel installer
 
@@ -73,6 +74,12 @@ before the call.
 | ---------------- | ------- | ---------------------------------  |
 | `g:plug_threads` | 16      | Default number of threads to use   |
 | `g:plug_timeout` | 60      | Time limit of each task in seconds |
+
+### Keybindings
+
+- `D` - `PlugDiff`
+- `S` - `PlugStatus`
+- `q` - Close the window
 
 ### Example: A small [sensible](https://github.com/tpope/vim-sensible) Vim configuration
 
