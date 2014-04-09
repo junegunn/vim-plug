@@ -780,7 +780,7 @@ function! s:diff()
       continue
     endif
 
-    execute 'cd '.substitute(v.dir, ' ', '\\ ', 'g')
+    execute 'cd '.s:esc(v.dir)
     let diff = system('git log --pretty=format:"%h %s (%cr)" "HEAD@{0}...HEAD@{1}"')
     if !v:shell_error && !empty(diff)
       call append(1, '')
