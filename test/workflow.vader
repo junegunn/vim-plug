@@ -13,6 +13,7 @@ Execute (Initialize test environment):
 
   set t_Co=256
   colo default
+  pclose
 
   let g:vimrc_reloaded = 0
   let vimrc    = tempname()
@@ -215,10 +216,84 @@ Execute (PlugUpdate to install both again):
   Assert !empty(globpath(&rtp, 'autoload/emoji.vim')), 'vim-emoji should be found'
   q
 
-Execute (PlugUpdate only to find out plugins are up-to-date):
+Execute (PlugUpdate only to find out plugins are up-to-date, D key to check):
   PlugUpdate
   AssertEqual 2, len(filter(getline(1, line('$')), 'v:val =~ "Already up-to-date"'))
   AssertEqual 3, g:vimrc_reloaded
+  normal D
+  AssertEqual 'No updates.', getline(1)
+  q
+
+Execute (PlugDiff - 'No updates.'):
+  PlugDiff
+  AssertEqual 'No updates.', getline(1)
+  q
+
+Execute (Rollback recent updates, PlugUpdate, then PlugDiff):
+  for repo in ['seoul256.vim', 'vim-emoji']
+    call system(printf('cd %s/%s && git reset HEAD^^ --hard', g:plug_home, repo))
+  endfor
+  PlugUpdate
+
+  " Now we have updates
+  normal D
+  AssertEqual 'Last update:', getline(1)
+
+  " Preview commit
+  silent! wincmd P
+  AssertEqual 0, &previewwindow
+
+  " ]] motion
+  execute 'normal ]]'
+  let lnum = line('.')
+  AssertEqual 3, col('.')
+
+  " Open commit preview
+  execute "normal j\<cr>"
+  wincmd P
+  AssertEqual 1, &previewwindow
+  AssertEqual 'git', &filetype
+
+  " Back to plug window
+  wincmd p
+
+  " ]] motion
+  execute 'normal $]]'
+  AssertEqual lnum + 4, line('.')
+  AssertEqual 3, col('.')
+
+  " [[ motion
+  execute 'normal 0[['
+  AssertEqual lnum, line('.')
+  AssertEqual 3, col('.')
+
+  " q will close preview window as well
+  normal q
+
+  " We no longer have preview window
+  silent! wincmd P
+  AssertEqual 0, &previewwindow
+
+  " q should not close preview window if it's already open
+  pedit
+  PlugDiff
+  execute "normal ]]j\<cr>"
+  normal q
+
+  silent! wincmd P
+  AssertEqual 1, &previewwindow
+  pclose
+
+Execute (Plug window in a new tab):
+  PlugDiff
+  tab new new-tab
+  set buftype=nofile
+  PlugUpdate
+  normal D
+  AssertEqual 'No updates.', getline(1)
+  q
+  AssertEqual 'new-tab', expand('%')
+  q
   q
 
 Execute (Cleanup):
@@ -227,7 +302,7 @@ Execute (Cleanup):
   unlet g:plugs
   unlet g:plug_home
   unlet g:vimrc_reloaded
-  unlet temp_plugged vader plug basertp save_rtp
+  unlet temp_plugged vader plug basertp save_rtp repo lnum
 
   Restore
   source $MYVIMRC

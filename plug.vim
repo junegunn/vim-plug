@@ -57,7 +57,7 @@ set cpo&vim
 
 let s:plug_source = 'https://raw.github.com/junegunn/vim-plug/master/plug.vim'
 let s:plug_file = 'Plugfile'
-let s:plug_win = 0
+let s:plug_buf = -1
 let s:is_win = has('win32') || has('win64')
 let s:me = expand('<sfile>:p')
 
@@ -262,7 +262,7 @@ function! s:syntax()
   syn match plugDash /^-/
   syn match plugName /\(^- \)\@<=[^:]*/
   syn match plugCommit /^  [0-9a-z]\{7} .*/ contains=plugRelDate,plugSha
-  syn match plugSha /^  [0-9a-z]\{7}/ contained
+  syn match plugSha /\(^  \)\@<=[0-9a-z]\{7}/ contained
   syn match plugRelDate /([^)]*)$/ contained
   syn match plugError /^x.*/
   syn keyword Function PlugInstall PlugStatus PlugUpdate PlugClean
@@ -288,18 +288,27 @@ function! s:lastline(msg)
 endfunction
 
 function! s:prepare()
-  execute s:plug_win . 'wincmd w'
-  if exists('b:plug')
+  if bufexists(s:plug_buf)
+    let winnr = bufwinnr(s:plug_buf)
+    if winnr < 0
+      vertical topleft new
+      execute 'buffer ' . s:plug_buf
+    else
+      execute winnr . 'wincmd w'
+    endif
     %d
   else
     vertical topleft new
-    nnoremap <silent> <buffer> q :q<cr>
-    nnoremap <silent> <buffer> D :PlugDiff<cr>
-    nnoremap <silent> <buffer> S :PlugStatus<cr>
-    let b:plug = 1
-    let s:plug_win = winnr()
+    nnoremap <silent> <buffer> q  :if b:plug_preview==1<bar>pc<bar>endif<bar>q<cr>
+    nnoremap <silent> <buffer> D  :PlugDiff<cr>
+    nnoremap <silent> <buffer> S  :PlugStatus<cr>
+    nnoremap <silent> <buffer> ]] :silent! call <SID>section('')<cr>
+    nnoremap <silent> <buffer> [[ :silent! call <SID>section('b')<cr>
+    let b:plug_preview = -1
+    let s:plug_buf = winbufnr(0)
     call s:assign_name()
   endif
+  silent! unmap <buffer> <cr>
   setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap cursorline
   setf vim-plug
   call s:syntax()
@@ -324,6 +333,8 @@ function! s:finish()
   call s:syntax()
   call setline(4, getline(4) . 'Done!')
   normal! gg
+  redraw
+  echo "Press 'D' to see the updated changes."
 endfunction
 
 function! s:update_impl(pull, args)
@@ -770,9 +781,54 @@ function! s:status()
   normal! gg
 endfunction
 
+function! s:is_preview_window_open()
+  silent! wincmd P
+  if &previewwindow
+    wincmd p
+    return 1
+  endif
+  return 0
+endfunction
+
+function! s:preview_commit()
+  if b:plug_preview < 0
+    let b:plug_preview = !s:is_preview_window_open()
+  endif
+
+  let sha = matchstr(getline('.'), '\(^  \)\@<=[0-9a-z]\{7}')
+  if !empty(sha)
+    let lnum = line('.')
+    while lnum > 1
+      let lnum -= 1
+      let line = getline(lnum)
+      let name = matchstr(line, '\(^- \)\@<=[^:]\+')
+      if !empty(name)
+        let dir = g:plugs[name].dir
+        if isdirectory(dir)
+          execute 'cd '.s:esc(dir)
+          execute 'pedit '.sha
+          wincmd P
+          setlocal filetype=git buftype=nofile nobuflisted
+          execute 'silent read !git show '.sha
+          normal! ggdd
+          wincmd p
+          cd -
+        endif
+        break
+      endif
+    endwhile
+  endif
+endfunction
+
+function! s:section(flags)
+  call search('\(^- \)\@<=.', a:flags)
+endfunction
+
 function! s:diff()
   call s:prepare()
   call append(0, 'Collecting updated changes ...')
+  normal! gg
+  redraw
 
   let cnt = 0
   for [k, v] in items(g:plugs)
@@ -794,6 +850,7 @@ function! s:diff()
   endfor
 
   call setline(1, cnt == 0 ? 'No updates.' : 'Last update:')
+  nnoremap <silent> <buffer> <cr> :silent! call <SID>preview_commit()<cr>
   normal! gg
 endfunction
 
