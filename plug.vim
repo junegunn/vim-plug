@@ -70,7 +70,7 @@ function! plug#begin(...)
     let home = s:path(split(&rtp, ',')[0]) . '/plugged'
   else
     echoerr "Unable to determine plug home. Try calling plug#begin() with a path argument."
-    return
+    return 0
   endif
 
   if !isdirectory(home)
