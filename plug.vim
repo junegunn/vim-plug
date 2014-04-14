@@ -326,7 +326,7 @@ function! s:assign_name()
   silent! execute "f ".fnameescape(name)
 endfunction
 
-function! s:finish()
+function! s:finish(pull)
   call append(3, '- Finishing ... ')
   redraw
   call s:apply()
@@ -334,7 +334,9 @@ function! s:finish()
   call setline(4, getline(4) . 'Done!')
   normal! gg
   redraw
-  echo "Press 'D' to see the updated changes."
+  if a:pull
+    echo "Press 'D' to see the updated changes."
+  endif
 endfunction
 
 function! s:update_impl(pull, args)
@@ -351,7 +353,7 @@ function! s:update_impl(pull, args)
   else
     call s:update_serial(a:pull)
   endif
-  call s:finish()
+  call s:finish(a:pull)
 endfunction
 
 function! s:extend(names)
