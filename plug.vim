@@ -296,7 +296,7 @@ function! s:prepare()
     else
       execute winnr . 'wincmd w'
     endif
-    %d
+    silent %d _
   else
     vertical topleft new
     nnoremap <silent> <buffer> q  :if b:plug_preview==1<bar>pc<bar>endif<bar>q<cr>
