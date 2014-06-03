@@ -397,7 +397,7 @@ function! s:update_serial(pull)
         if valid
           let result = a:pull ?
             \ s:system(
-            \ printf('git checkout -q %s 2>&1 && git pull origin %s 2>&1',
+            \ printf('git checkout -q %s 2>&1 && git pull origin %s 2>&1 && git submodule update --init --recursive 2>&1',
             \   s:shellesc(spec.branch), s:shellesc(spec.branch))) : 'Already installed'
           let error = a:pull ? v:shell_error != 0 : 0
         else
@@ -410,7 +410,7 @@ function! s:update_serial(pull)
         endif
         execute 'cd '.base
         let result = s:system(
-              \ printf('git clone --recursive %s -b %s %s 2>&1',
+              \ printf('git clone --recursive %s -b %s %s 2>&1 && git submodule update --init --recursive 2>&1',
               \ s:shellesc(spec.uri),
               \ s:shellesc(spec.branch),
               \ s:shellesc(substitute(spec.dir, '[\/]\+$', '', ''))))
@@ -558,7 +558,7 @@ function! s:update_parallel(pull, threads)
                            "PlugClean required."].join($/)]
                 else
                   if pull
-                    bt.call "#{cd} #{dir} && git checkout -q #{branch} 2>&1 && git pull origin #{branch} 2>&1"
+                    bt.call "#{cd} #{dir} && git checkout -q #{branch} 2>&1 && git pull origin #{branch} 2>&1 && git submodule update --init --recursive 2>&1"
                   else
                     [true, skip]
                   end
@@ -566,7 +566,7 @@ function! s:update_parallel(pull, threads)
               else
                 FileUtils.mkdir_p(base)
                 d = esc dir.sub(%r{[\\/]+$}, '')
-                bt.call "#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{d} 2>&1"
+                bt.call "#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{d} 2>&1 && git submodule update --init --recursive 2>&1"
               end
             log.call name, result, ok
           end
