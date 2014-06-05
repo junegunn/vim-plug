@@ -410,10 +410,11 @@ function! s:update_serial(pull)
         endif
         execute 'cd '.base
         let result = s:system(
-              \ printf('git clone --recursive %s -b %s %s 2>&1 && git submodule update --init --recursive 2>&1',
+              \ printf('git clone --recursive %s -b %s %s 2>&1 && cd %s && git submodule update --init --recursive 2>&1',
               \ s:shellesc(spec.uri),
               \ s:shellesc(spec.branch),
-              \ s:shellesc(substitute(spec.dir, '[\/]\+$', '', ''))))
+              \ s:shellesc(substitute(spec.dir, '[\/]\+$', '', '')),
+              \ s:shellesc(spec.dir)))
         let error = v:shell_error != 0
       endif
       cd -
@@ -566,7 +567,7 @@ function! s:update_parallel(pull, threads)
               else
                 FileUtils.mkdir_p(base)
                 d = esc dir.sub(%r{[\\/]+$}, '')
-                bt.call "#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{d} 2>&1 && git submodule update --init --recursive 2>&1"
+                bt.call "#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{d} 2>&1 && cd #{esc dir} && git submodule update --init --recursive 2>&1"
               end
             log.call name, result, ok
           end
