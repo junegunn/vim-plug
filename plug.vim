@@ -58,6 +58,7 @@ set cpo&vim
 let s:plug_source = 'https://raw.github.com/junegunn/vim-plug/master/plug.vim'
 let s:plug_file = 'Plugfile'
 let s:plug_buf = -1
+let s:loaded = {}
 let s:is_win = has('win32') || has('win64')
 let s:me = expand('<sfile>:p')
 
@@ -102,6 +103,10 @@ function! plug#begin(...)
   return 1
 endfunction
 
+function! s:to_a(v)
+  return type(a:v) == 3 ? a:v : [a:v]
+endfunction
+
 function! plug#end()
   if !exists('g:plugs')
     echoerr 'Call plug#begin() first'
@@ -112,6 +117,13 @@ function! plug#end()
     let keys = keys(s:extend(keys))
   endwhile
 
+  if exists('#PlugLOD')
+    augroup PlugLOD
+      autocmd!
+    augroup END
+    augroup! PlugLOD
+  endif
+
   filetype off
   " we want to make sure the plugin directories are added to rtp in the same
   " order that they are registered with the Plug command. since the s:add_rtp
@@ -119,8 +131,13 @@ function! plug#end()
   " need to loop through the plugins in reverse
   for name in reverse(copy(g:plugs_order))
     let plug = g:plugs[name]
+    if !has_key(plug, 'on') && !has_key(plug, 'for')
+      call s:add_rtp(s:rtp(plug))
+      continue
+    endif
+
     if has_key(plug, 'on')
-      let commands = type(plug.on) == 1 ? [plug.on] : plug.on
+      let commands = s:to_a(plug.on)
       for cmd in commands
         if cmd =~ '^<Plug>.\+'
           if empty(mapcheck(cmd)) && empty(mapcheck(cmd, 'i'))
@@ -136,8 +153,16 @@ function! plug#end()
           \ cmd, string(cmd), string(plug))
         endif
       endfor
-    else
-      call s:add_rtp(s:rtp(plug))
+    endif
+
+    if has_key(plug, 'for')
+      for vim in split(globpath(s:rtp(plug), 'ftdetect/**/*.vim'), '\n')
+        execute 'source '.vim
+      endfor
+      augroup PlugLOD
+        execute printf('autocmd FileType %s call <SID>lod_ft(%s, %s)',
+              \ join(s:to_a(plug.for), ','), string(name), string(plug))
+      augroup END
     endif
   endfor
   filetype plugin indent on
@@ -163,26 +188,34 @@ function! s:add_rtp(rtp)
   endif
 endfunction
 
-function! s:lod(plug)
+function! s:lod(plug, types)
   let rtp = s:rtp(a:plug)
   call s:add_rtp(rtp)
-  for dir in ['plugin', 'ftdetect', 'after']
+  for dir in a:types
     for vim in split(globpath(rtp, dir.'/**/*.vim'), '\n')
       execute 'source '.vim
     endfor
   endfor
 endfunction
 
+function! s:lod_ft(name, plug)
+  if has_key(s:loaded, a:name)
+    return
+  endif
+  call s:lod(a:plug, ['plugin', 'after'])
+  let s:loaded[a:name] = 1
+endfunction
+
 function! s:lod_cmd(cmd, bang, args, plug)
   execute 'delc '.a:cmd
-  call s:lod(a:plug)
+  call s:lod(a:plug, ['plugin', 'ftdetect', 'after'])
   execute printf("%s%s %s", a:cmd, a:bang, a:args)
 endfunction
 
 function! s:lod_map(map, plug)
   execute 'unmap '.a:map
   execute 'iunmap '.a:map
-  call s:lod(a:plug)
+  call s:lod(a:plug, ['plugin', 'ftdetect', 'after'])
   let extra = ''
   while 1
     let c = getchar(0)
