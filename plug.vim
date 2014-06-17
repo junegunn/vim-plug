@@ -166,8 +166,8 @@ endfunction
 function! s:lod(plug)
   let rtp = s:rtp(a:plug)
   call s:add_rtp(rtp)
-  for dir in ['plugin', 'after']
-    for vim in split(globpath(rtp, dir.'/*.vim'), '\n')
+  for dir in ['plugin', 'ftdetect', 'after']
+    for vim in split(globpath(rtp, dir.'/**/*.vim'), '\n')
       execute 'source '.vim
     endfor
   endfor
