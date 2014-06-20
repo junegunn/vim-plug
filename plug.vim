@@ -149,7 +149,7 @@ function! plug#end()
           endif
         elseif !exists(':'.cmd)
           execute printf(
-          \ "command! -nargs=* -bang %s call s:lod_cmd(%s, '<bang>', <q-args>, %s)",
+          \ "command! -nargs=* -range -bang %s call s:lod_cmd(%s, '<bang>', <line1>, <line2>, <q-args>, %s)",
           \ cmd, string(cmd), string(plug))
         endif
       endfor
@@ -206,10 +206,10 @@ function! s:lod_ft(name, plug)
   let s:loaded[a:name] = 1
 endfunction
 
-function! s:lod_cmd(cmd, bang, args, plug)
+function! s:lod_cmd(cmd, bang, l1, l2, args, plug)
   execute 'delc '.a:cmd
   call s:lod(a:plug, ['plugin', 'ftdetect', 'after'])
-  execute printf("%s%s %s", a:cmd, a:bang, a:args)
+  execute printf("%s%s%s %s", (a:l1 == a:l2 ? '' : (a:l1.','.a:l2)), a:cmd, a:bang, a:args)
 endfunction
 
 function! s:lod_map(map, plug)
