@@ -92,7 +92,7 @@ function! plug#begin(...)
   " we want to keep track of the order plugins where registered.
   let g:plugs_order = []
 
-  command! -nargs=+ Plug        call s:add(1, <args>)
+  command! -nargs=+ -bar Plug   call s:add(1, <args>)
   command! -nargs=* PlugInstall call s:install(<f-args>)
   command! -nargs=* PlugUpdate  call s:update(<f-args>)
   command! -nargs=0 -bang PlugClean call s:clean('<bang>' == '!')
