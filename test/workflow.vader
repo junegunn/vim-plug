@@ -296,6 +296,62 @@ Execute (Plug window in a new tab):
   q
   q
 
+**********************************************************************
+~ On-demand loading / Partial installation/update ~
+**********************************************************************
+
+Execute (Trying to execute on-demand commands when plugin is not installed):
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align', { 'on': ['EasyAlign', 'LiveEasyAlign'] }
+  call plug#end()
+
+  Assert exists(':EasyAlign')
+  Assert exists(':LiveEasyAlign')
+  AssertThrows EasyAlign
+  AssertThrows LiveEasyAlign
+  Assert !exists(':EasyAlign')
+  Assert !exists(':LiveEasyAlign')
+
+Execute (New set of plugins):
+  call plug#begin()
+  Plug 'junegunn/vim-fnr' " Depends on vim-pseudocl
+  Plug 'junegunn/vim-easy-align', { 'on': 'EasyAlign' }
+  Plug 'junegunn/vim-redis',      { 'for': 'redis' }
+  call plug#end()
+
+Execute (Check commands):
+  Assert !exists(':FNR'),          'FNR command should not be found'
+  Assert !exists(':RedisExecute'), 'RedisExecute command should not be found'
+
+Execute (Partial PlugInstall):
+  PlugInstall vim-fnr vim-easy-align
+  PlugInstall vim-fnr vim-easy-align 1
+  q
+
+Given (Unaligned code):
+  a=1
+  aa=2
+
+Execute (Check installed plugins):
+  Assert exists(':FNR'),           'FNR command should be found'
+  Assert exists(':EasyAlign'),     'EasyAlign command should be found'
+  Assert !exists(':RedisExecute'), 'RedisExecute command still should not be found'
+  %EasyAlign=
+
+Expect (Aligned code):
+  a  = 1
+  aa = 2
+
+Given (nothing):
+Execute (Partial PlugUpdate):
+  PlugUpdate vim-redis
+  q
+
+Execute (On-demand loading based on filetypes):
+  Assert !exists(':RedisExecute'), 'RedisExecute command still should not be found'
+  set ft=redis
+  Assert exists(':RedisExecute'), 'RedisExecute command is now found'
+
 Execute (Cleanup):
   call system('rm -rf '.temp_plugged)
 
