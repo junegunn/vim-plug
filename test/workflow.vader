@@ -328,11 +328,7 @@ Execute (Partial PlugInstall):
   PlugInstall vim-fnr vim-easy-align 1
   q
 
-Execute (TODO Check dependent plugin):
-^ It is a known issue that when a dependent plugin is installed, it is not
-^ immediately added to runtimepath. It only becomes available when
-^ plug#end() is called.
-
+Execute (Check dependent plugin):
   Assert &rtp =~ 'pseudocl', &rtp
 
 Given (Unaligned code):

@@ -406,10 +406,14 @@ function! s:update_impl(pull, args) abort
   normal! 2G
   redraw
 
+  let len = len(g:plugs)
   if has('ruby') && threads > 1
     call s:update_parallel(a:pull, todo, threads)
   else
     call s:update_serial(a:pull, todo)
+  endif
+  if len(g:plugs) > len
+    call plug#end()
   endif
   call s:finish(a:pull)
 endfunction
