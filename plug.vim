@@ -58,7 +58,6 @@ set cpo&vim
 let s:plug_source = 'https://raw.github.com/junegunn/vim-plug/master/plug.vim'
 let s:plug_file = 'Plugfile'
 let s:plug_buf = -1
-let s:loaded = {}
 let s:is_win = has('win32') || has('win64')
 let s:me = expand('<sfile>:p')
 
@@ -123,6 +122,7 @@ function! plug#end()
     augroup END
     augroup! PlugLOD
   endif
+  let lod = {}
 
   filetype off
   " we want to make sure the plugin directories are added to rtp in the same
@@ -159,11 +159,20 @@ function! plug#end()
       for vim in split(globpath(s:rtp(plug), 'ftdetect/**/*.vim'), '\n')
         execute 'source '.vim
       endfor
-      augroup PlugLOD
-        execute printf('autocmd FileType %s call <SID>lod_ft(%s, %s)',
-              \ join(s:to_a(plug.for), ','), string(name), string(plug))
-      augroup END
+      for key in s:to_a(plug.for)
+        if !has_key(lod, key)
+          let lod[key] = []
+        endif
+        call add(lod[key], name)
+      endfor
     endif
+  endfor
+
+  for [key, names] in items(lod)
+    augroup PlugLOD
+      execute printf('autocmd FileType %s call <SID>lod_ft(%s, %s)',
+            \ key, string(key), string(reverse(names)))
+    augroup END
   endfor
   filetype plugin indent on
   syntax on
@@ -198,12 +207,12 @@ function! s:lod(plug, types)
   endfor
 endfunction
 
-function! s:lod_ft(name, plug)
-  if has_key(s:loaded, a:name)
-    return
-  endif
-  call s:lod(a:plug, ['plugin', 'after'])
-  let s:loaded[a:name] = 1
+function! s:lod_ft(pat, names)
+  for name in a:names
+    call s:lod(g:plugs[name], ['plugin', 'after'])
+  endfor
+  execute 'autocmd! PlugLOD FileType ' . a:pat
+  let &l:filetype = &l:filetype
 endfunction
 
 function! s:lod_cmd(cmd, bang, l1, l2, args, plug)
