@@ -134,7 +134,7 @@ Execute (PlugStatus):
   g/^$/d
 
 Expect:
-      Invalid branch: no-t_co. Try PlugUpdate.
+      Invalid branch/tag: no-t_co. Try PlugUpdate.
   - vim-emoji: OK
   Finished. 1 error(s).
   [==]
