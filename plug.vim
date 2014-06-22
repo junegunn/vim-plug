@@ -124,15 +124,6 @@ function! plug#end()
   endif
 
   filetype off
-  if exists('#filetypeplugin') &&
-        \ !empty(filter(values(g:plugs), 'has_key(v:val, "for")'))
-    unlet! g:did_load_ftplugin
-    augroup filetypeplugin
-      autocmd!
-    augroup END
-    augroup! filetypeplugin
-  endif
-
   " we want to make sure the plugin directories are added to rtp in the same
   " order that they are registered with the Plug command. since the s:add_rtp
   " function uses ^= to add plugin directories to the front of the rtp, we
