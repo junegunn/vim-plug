@@ -203,7 +203,6 @@ function! s:lod_ft(name, plug)
     return
   endif
   call s:lod(a:plug, ['plugin', 'after'])
-  let &l:filetype = &l:filetype
   let s:loaded[a:name] = 1
 endfunction
 
