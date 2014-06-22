@@ -58,6 +58,7 @@ set cpo&vim
 let s:plug_source = 'https://raw.github.com/junegunn/vim-plug/master/plug.vim'
 let s:plug_file = 'Plugfile'
 let s:plug_buf = -1
+let s:loaded = {}
 let s:is_win = has('win32') || has('win64')
 let s:me = expand('<sfile>:p')
 
@@ -158,10 +159,9 @@ function! plug#end()
       for vim in split(globpath(s:rtp(plug), 'ftdetect/**/*.vim'), '\n')
         execute 'source '.vim
       endfor
-      let pat = join(s:to_a(plug.for), ',')
       augroup PlugLOD
-        execute printf('autocmd FileType %s call <SID>lod_ft(%s, %s, %s)',
-              \ pat, string(pat), string(name), string(plug))
+        execute printf('autocmd FileType %s call <SID>lod_ft(%s, %s)',
+              \ join(s:to_a(plug.for), ','), string(name), string(plug))
       augroup END
     endif
   endfor
@@ -198,10 +198,13 @@ function! s:lod(plug, types)
   endfor
 endfunction
 
-function! s:lod_ft(pat, name, plug)
+function! s:lod_ft(name, plug)
+  if has_key(s:loaded, a:name)
+    return
+  endif
   call s:lod(a:plug, ['plugin', 'after'])
-  execute 'autocmd! PlugLOD FileType ' . a:pat
   let &l:filetype = &l:filetype
+  let s:loaded[a:name] = 1
 endfunction
 
 function! s:lod_cmd(cmd, bang, l1, l2, args, plug)
