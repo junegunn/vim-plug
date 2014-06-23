@@ -1,0 +1,12 @@
+language: vim
+
+before_script: |
+  hg clone https://code.google.com/p/vim/
+  cd vim
+  ./configure --with-features=huge --enable-rubyinterp
+  make
+  sudo make install
+  cd -
+
+script: |
+  test/run !
