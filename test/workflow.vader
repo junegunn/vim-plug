@@ -15,6 +15,15 @@ Execute (Initialize test environment):
   colo default
   pclose
 
+  function! PlugStatusSorted()
+    PlugStatus
+    %y
+    q
+    normal! P
+    %sort
+    g/^$/d
+  endfunction
+
   let g:vimrc_reloaded = 0
   let vimrc    = tempname()
   call writefile(['let g:vimrc_reloaded += 1'], vimrc)
@@ -64,6 +73,12 @@ Execute (Test Plug command):
   AssertEqual join([temp_plugged, 'seoul256.vim/'], '/'), g:plugs['seoul256.vim'].dir
   AssertEqual 'no-t_co', g:plugs['seoul256.vim'].branch
 
+  " Git repo with tag
+  Plug 'junegunn/goyo.vim', '1.5.3'
+  AssertEqual 'https://git:@github.com/junegunn/goyo.vim.git', g:plugs['goyo.vim'].uri
+  AssertEqual join([temp_plugged, 'goyo.vim/'], '/'), g:plugs['goyo.vim'].dir
+  AssertEqual '1.5.3', g:plugs['goyo.vim'].branch
+
   " Git URI
   Plug 'git@github.com:junegunn/vim-emoji.git'
   AssertEqual 'git@github.com:junegunn/vim-emoji.git', g:plugs['vim-emoji'].uri
@@ -75,18 +90,20 @@ Execute (Test Plug command):
   AssertEqual 'https://git:@github.com/vim-scripts/beauty256.git', g:plugs.beauty256.uri
   AssertEqual 'master', g:plugs.beauty256.branch
 
-  AssertEqual 3, len(g:plugs)
+  AssertEqual 4, len(g:plugs)
 
 Execute (Plug command with dictionary option):
+  Log string(g:plugs)
   Plug 'junegunn/seoul256.vim', { 'branch': 'no-t_co', 'rtp': '././' }
   AssertEqual join([temp_plugged, 'seoul256.vim/'], '/'), g:plugs['seoul256.vim'].dir
   AssertEqual '././', g:plugs['seoul256.vim'].rtp
 
-  AssertEqual 3, len(g:plugs)
+  Log string(g:plugs)
+  AssertEqual 4, len(g:plugs)
 
 Execute (PlugStatus before installation):
   PlugStatus
-  AssertEqual 3, len(filter(getline(1, line('$')), 'v:val =~ "Not found"'))
+  AssertEqual 4, len(filter(getline(1, line('$')), 'v:val =~ "Not found"'))
   q
 
 Execute (PlugClean before installation):
@@ -116,8 +133,32 @@ Execute (PlugClean after installation):
 
 Execute (PlugStatus after installation):
   PlugStatus
-  AssertEqual 3, len(filter(getline(1, line('$')), 'v:val =~ "OK"'))
+  AssertEqual 4, len(filter(getline(1, line('$')), 'v:val =~ "OK"'))
   q
+
+Execute (Change tag of goyo.vim):
+  call plug#begin()
+  Plug 'junegunn/goyo.vim'
+  call plug#end()
+
+Execute (PlugStatus):
+  call PlugStatusSorted()
+
+Expect:
+      Invalid branch/tag: 1.5.3 (expected: master). Try PlugUpdate.
+  Finished. 1 error(s).
+  [=]
+  x goyo.vim:
+
+Execute (PlugUpdate to set the right branch):
+  PlugUpdate
+  call PlugStatusSorted()
+  AssertEqual 2, g:vimrc_reloaded
+
+Expect:
+  - goyo.vim: OK
+  Finished. 0 error(s).
+  [=]
 
 Execute (Change branch of seoul256.vim):
   call plug#begin()
@@ -126,15 +167,10 @@ Execute (Change branch of seoul256.vim):
   call plug#end()
 
 Execute (PlugStatus):
-  PlugStatus
-  %y
-  q
-  normal! P
-  %sort
-  g/^$/d
+  call PlugStatusSorted()
 
 Expect:
-      Invalid branch/tag: no-t_co. Try PlugUpdate.
+      Invalid branch/tag: no-t_co (expected: master). Try PlugUpdate.
   - vim-emoji: OK
   Finished. 1 error(s).
   [==]
@@ -147,12 +183,7 @@ Execute (Change URI of seoul256.vim):
   call plug#end()
 
 Execute (PlugStatus):
-  PlugStatus
-  %y
-  q
-  normal! P
-  %sort
-  g/^$/d
+  call PlugStatusSorted()
 
 Expect:
       Expected:    https://git:@github.com/junegunn.choi/seoul256.vim.git
@@ -172,6 +203,8 @@ Expect:
 
 Execute (PlugClean! to remove seoul256.vim):
   PlugClean!
+  " Three removed, emoji left
+  AssertEqual 3, len(filter(getline(1, line('$')), 'v:val =~ "^- "'))
   AssertEqual 1, len(filter(getline(1, line('$')), 'v:val =~ "Removed"'))
   Assert empty(globpath(&rtp, 'colors/seoul256.vim'))
   Assert !empty(globpath(&rtp, 'autoload/emoji.vim'))
@@ -184,12 +217,7 @@ Execute (Change GIT URI of vim-emoji):
   call plug#end()
 
 Execute (PlugStatus):
-  PlugStatus
-  %y
-  q
-  normal! P
-  %sort
-  g/^$/d
+  call PlugStatusSorted()
 
 Expect:
       Expected:    https://git:@github.com/junegunn/vim-emoji.git
@@ -203,6 +231,7 @@ Expect:
 
 Execute (PlugClean! to remove vim-emoji):
   PlugClean!
+  AssertEqual 1, len(filter(getline(1, line('$')), 'v:val =~ "^- "'))
   AssertEqual 1, len(filter(getline(1, line('$')), 'v:val =~ "Removed"'))
   Assert empty(globpath(&rtp, 'colors/seoul256.vim'))
   Assert empty(globpath(&rtp, 'autoload/emoji.vim'))
@@ -211,7 +240,7 @@ Execute (PlugClean! to remove vim-emoji):
 Execute (PlugUpdate to install both again):
   PlugUpdate
   AssertEqual 2, len(filter(getline(1, line('$')), 'v:val =~ "Cloning into"'))
-  AssertEqual 2, g:vimrc_reloaded
+  AssertEqual 3, g:vimrc_reloaded
   Assert !empty(globpath(&rtp, 'colors/seoul256.vim')), 'seoul256.vim should be found'
   Assert !empty(globpath(&rtp, 'autoload/emoji.vim')), 'vim-emoji should be found'
   q
@@ -219,7 +248,7 @@ Execute (PlugUpdate to install both again):
 Execute (PlugUpdate only to find out plugins are up-to-date, D key to check):
   PlugUpdate
   AssertEqual 2, len(filter(getline(1, line('$')), 'v:val =~ "Already up-to-date"'))
-  AssertEqual 3, g:vimrc_reloaded
+  AssertEqual 4, g:vimrc_reloaded
   normal D
   AssertEqual 'No updates.', getline(1)
   q
@@ -362,6 +391,7 @@ Execute (Cleanup):
   unlet g:plug_home
   unlet g:vimrc_reloaded
   unlet temp_plugged vader plug basertp save_rtp repo lnum
+  delf PlugStatusSorted
 
   Restore
   source $MYVIMRC

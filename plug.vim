@@ -713,13 +713,13 @@ function! s:git_valid(spec, check_branch, cd)
       let ret = 0
     elseif a:check_branch
       let branch = result[0]
-      let tag = a:spec.branch ==# 'master' ? '' :
-            \ s:system_chomp('git describe --exact-match --tags HEAD 2>&1')
-      if a:spec.branch != branch && a:spec.branch != tag
-        let msg = 'Invalid branch/tag: ' .
-              \ ((empty(tag) || tag ==# 'HEAD') ? branch : tag) .
-              \ '. Try PlugUpdate.'
-        let ret = 0
+      if a:spec.branch !=# branch
+        let tag = s:system_chomp('git describe --exact-match --tags HEAD 2>&1')
+        if a:spec.branch !=# tag
+          let msg = printf('Invalid branch/tag: %s (expected: %s). Try PlugUpdate.',
+                \ (empty(tag) ? branch : tag), a:spec.branch)
+          let ret = 0
+        endif
       endif
     endif
     if a:cd | cd - | endif
