@@ -80,8 +80,8 @@ Execute (Test Plug command):
   AssertEqual '1.5.3', g:plugs['goyo.vim'].branch
 
   " Git URI
-  Plug 'git@github.com:junegunn/vim-emoji.git'
-  AssertEqual 'git@github.com:junegunn/vim-emoji.git', g:plugs['vim-emoji'].uri
+  Plug 'https://bitbucket.org/junegunn/vim-emoji.git'
+  AssertEqual 'https://bitbucket.org/junegunn/vim-emoji.git', g:plugs['vim-emoji'].uri
   AssertEqual 'master', g:plugs['vim-emoji'].branch
   AssertEqual join([temp_plugged, 'vim-emoji/'], '/'), g:plugs['vim-emoji'].dir
 
@@ -163,7 +163,7 @@ Expect:
 Execute (Change branch of seoul256.vim):
   call plug#begin()
   Plug 'junegunn/seoul256.vim'
-  Plug 'git@github.com:junegunn/vim-emoji.git'
+  Plug 'https://bitbucket.org/junegunn/vim-emoji.git'
   call plug#end()
 
 Execute (PlugStatus):
@@ -179,7 +179,7 @@ Expect:
 Execute (Change URI of seoul256.vim):
   call plug#begin()
   Plug 'junegunn.choi/seoul256.vim'
-  Plug 'git@github.com:junegunn/vim-emoji.git'
+  Plug 'https://bitbucket.org/junegunn/vim-emoji.git'
   call plug#end()
 
 Execute (PlugStatus):
@@ -221,7 +221,7 @@ Execute (PlugStatus):
 
 Expect:
       Expected:    https://git:@github.com/junegunn/vim-emoji.git
-      Invalid URI: git@github.com:junegunn/vim-emoji.git
+      Invalid URI: https://bitbucket.org/junegunn/vim-emoji.git
       Not found. Try PlugInstall.
       PlugClean required.
   Finished. 2 error(s).
