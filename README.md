@@ -6,7 +6,7 @@ A single-file Vim plugin manager.
 Somewhere between [Pathogen](https://github.com/tpope/vim-pathogen) and
 [Vundle](https://github.com/gmarik/vundle), but with faster parallel installer.
 
-![](https://raw.github.com/junegunn/vim-plug/master/gif/vim-plug.gif)
+![](https://raw.github.com/junegunn/i/master/vim-plug/vim-plug.gif)
 
 ### Pros.
 
