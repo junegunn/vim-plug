@@ -1,5 +1,5 @@
 Execute (Initialize test environment):
-  Save &rtp, g:plug_home, $MYVIMRC
+  Save &rtp, g:plugs, g:plug_home, $MYVIMRC
 
   let vader = fnamemodify(globpath(&rtp, 'autoload/vader.vim'), ':h:h')
   let plug  = fnamemodify(globpath(&rtp, 'autoload/plug.vim'), ':h:h')
@@ -394,4 +394,3 @@ Execute (Cleanup):
   delf PlugStatusSorted
 
   Restore
-  source $MYVIMRC

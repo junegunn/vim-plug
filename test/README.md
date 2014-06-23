@@ -7,8 +7,10 @@ Test cases for vim-plug
 
 ### Run
 
-```vim
-:e workflow.vader | Vader
+```
+./run
+
+./run !
 ```
 
 ### TODO
@@ -18,7 +20,6 @@ Test cases for the following features are currently missing:
 - Output formatting
 - Timeout or interrupt cleaning up git processes
 - User prompt in PlugClean command
-- Automatic dependency resolution using Plugfile
 - Single-threaded installer
 - Windows support
 

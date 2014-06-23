@@ -5,15 +5,18 @@ cd ..
 PLUG_SRC=$(pwd)/plug.vim
 cd - > /dev/null
 
-export VADER_RTP=$TMPDIR/vader-rtp
-vim -e +Vader -c ':call writefile([fnamemodify(globpath(&rtp, "autoload/vader.vim"), ":h:h")], $VADER_RTP)' +q
+if [ ! -d vader.vim ]; then
+  git clone https://github.com/junegunn/vader.vim.git
+fi
 
-MINI_VIMRC=$TMPDIR/mini-vimrc
-cat > $MINI_VIMRC << EOF
-let \$MYVIMRC = '$MINI_VIMRC'
-set nocompatible
-set rtp=$(cat $VADER_RTP)
+cat > /tmp/mini-vimrc << VIMRC
+set rtp+=vader.vim
 source $PLUG_SRC
-EOF
+VIMRC
 
-vim -u $MINI_VIMRC +Vader*
+if [ "$1" = '!' ]; then
+  /usr/local/bin/vim -Nu /tmp/mini-vimrc -c 'Vader! workflow.vader' > /dev/null
+else
+  /usr/local/bin/vim -Nu /tmp/mini-vimrc -c 'Vader workflow.vader'
+fi
+
