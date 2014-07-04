@@ -212,7 +212,7 @@ function! s:lod_ft(pat, names)
     call s:lod(g:plugs[name], ['plugin', 'after'])
   endfor
   execute 'autocmd! PlugLOD FileType ' . a:pat
-  let &l:filetype = &l:filetype
+  silent! doautocmd filetypeplugin FileType
 endfunction
 
 function! s:lod_cmd(cmd, bang, l1, l2, args, plug)
