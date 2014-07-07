@@ -141,10 +141,11 @@ function! plug#end()
       for cmd in commands
         if cmd =~ '^<Plug>.\+'
           if empty(mapcheck(cmd)) && empty(mapcheck(cmd, 'i'))
-            for [mode, prefix] in [['i', "<C-O>"], ['', '']]
+            for [mode, map_prefix, key_prefix] in
+                  \ [['i', "<C-O>", ''], ['n', '', ''], ['v', '', 'gv'], ['o', '', '']]
               execute printf(
-              \ "%snoremap <silent> %s %s:call <SID>lod_map(%s, %s)<CR>",
-              \ mode, cmd, prefix, string(cmd), string(plug))
+              \ "%snoremap <silent> %s %s:call <SID>lod_map(%s, %s, '%s')<CR>",
+              \ mode, cmd, map_prefix, string(cmd), string(plug), key_prefix)
             endfor
           endif
         elseif !exists(':'.cmd)
@@ -221,7 +222,7 @@ function! s:lod_cmd(cmd, bang, l1, l2, args, plug)
   execute printf("%s%s%s %s", (a:l1 == a:l2 ? '' : (a:l1.','.a:l2)), a:cmd, a:bang, a:args)
 endfunction
 
-function! s:lod_map(map, plug)
+function! s:lod_map(map, plug, prefix)
   execute 'unmap '.a:map
   execute 'iunmap '.a:map
   call s:lod(a:plug, ['plugin', 'ftdetect', 'after'])
@@ -233,7 +234,7 @@ function! s:lod_map(map, plug)
     endif
     let extra .= nr2char(c)
   endwhile
-  call feedkeys(substitute(a:map, '^<Plug>', "\<Plug>", '') . extra)
+  call feedkeys(a:prefix . substitute(a:map, '^<Plug>', "\<Plug>", '') . extra)
 endfunction
 
 function! s:add(...)
