@@ -145,13 +145,13 @@ function! plug#end()
                   \ [['i', "<C-O>", ''], ['n', '', ''], ['v', '', 'gv'], ['o', '', '']]
               execute printf(
               \ "%snoremap <silent> %s %s:<C-U>call <SID>lod_map(%s, %s, '%s')<CR>",
-              \ mode, cmd, map_prefix, string(cmd), string(plug), key_prefix)
+              \ mode, cmd, map_prefix, string(cmd), string(name), key_prefix)
             endfor
           endif
         elseif !exists(':'.cmd)
           execute printf(
           \ "command! -nargs=* -range -bang %s call s:lod_cmd(%s, '<bang>', <line1>, <line2>, <q-args>, %s)",
-          \ cmd, string(cmd), string(plug))
+          \ cmd, string(cmd), string(name))
         endif
       endfor
     endif
@@ -216,16 +216,16 @@ function! s:lod_ft(pat, names)
   silent! doautocmd filetypeplugin FileType
 endfunction
 
-function! s:lod_cmd(cmd, bang, l1, l2, args, plug)
+function! s:lod_cmd(cmd, bang, l1, l2, args, name)
   execute 'delc '.a:cmd
-  call s:lod(a:plug, ['plugin', 'ftdetect', 'after'])
+  call s:lod(g:plugs[a:name], ['plugin', 'ftdetect', 'after'])
   execute printf("%s%s%s %s", (a:l1 == a:l2 ? '' : (a:l1.','.a:l2)), a:cmd, a:bang, a:args)
 endfunction
 
-function! s:lod_map(map, plug, prefix)
+function! s:lod_map(map, name, prefix)
   execute 'unmap '.a:map
   execute 'iunmap '.a:map
-  call s:lod(a:plug, ['plugin', 'ftdetect', 'after'])
+  call s:lod(g:plugs[a:name], ['plugin', 'ftdetect', 'after'])
   let extra = ''
   while 1
     let c = getchar(0)
