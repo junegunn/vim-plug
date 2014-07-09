@@ -179,13 +179,32 @@ function! plug#end()
   syntax on
 endfunction
 
-function! s:rtp(spec)
-  let rtp = s:dirpath(a:spec.dir . get(a:spec, 'rtp', ''))
-  if s:is_win
-    let rtp = substitute(rtp, '\\*$', '', '')
-  endif
-  return rtp
-endfunction
+if s:is_win
+  function! s:rtp(spec)
+    let rtp = s:dirpath(a:spec.dir . get(a:spec, 'rtp', ''))
+    return substitute(rtp, '\\*$', '', '')
+  endfunction
+
+  function! s:path(path)
+    return substitute(substitute(a:path, '/', '\', 'g'), '[/\\]*$', '', '')
+  endfunction
+
+  function! s:dirpath(path)
+    return s:path(a:path) . '\'
+  endfunction
+else
+  function! s:rtp(spec)
+    return s:dirpath(a:spec.dir . get(a:spec, 'rtp', ''))
+  endfunction
+
+  function! s:path(path)
+    return substitute(a:path, '[/\\]*$', '', '')
+  endfunction
+
+  function! s:dirpath(path)
+    return s:path(a:path) . '/'
+  endfunction
+endif
 
 function! s:esc(path)
   return substitute(a:path, ' ', '\\ ', 'g')
@@ -258,6 +277,9 @@ function! s:add(...)
     return
   endif
 
+  let name = substitute(split(plugin, '/')[-1], '\.git$', '', '')
+  if !force && has_key(g:plugs, name) | return | endif
+
   if plugin =~ ':'
     let uri = plugin
   else
@@ -266,9 +288,6 @@ function! s:add(...)
     endif
     let uri = 'https://git:@github.com/' . plugin . '.git'
   endif
-
-  let name = substitute(split(plugin, '/')[-1], '\.git$', '', '')
-  if !force && has_key(g:plugs, name) | return | endif
 
   let dir  = s:dirpath( fnamemodify(join([g:plug_home, name], '/'), ':p') )
   let spec = extend(opts, { 'dir': dir, 'uri': uri })
@@ -646,20 +665,6 @@ function! s:update_parallel(pull, todo, threads)
   watcher.kill
   $curbuf[1] = "Updated. Elapsed time: #{"%.6f" % (Time.now - st)} sec."
 EOF
-endfunction
-
-function! s:path(path)
-  return substitute(s:is_win ? substitute(a:path, '/', '\', 'g') : a:path,
-        \ '[/\\]*$', '', '')
-endfunction
-
-function! s:dirpath(path)
-  let path = s:path(a:path)
-  if s:is_win
-    return path !~ '\\$' ? path.'\' : path
-  else
-    return path !~ '/$' ? path.'/' : path
-  endif
 endfunction
 
 function! s:shellesc(arg)
