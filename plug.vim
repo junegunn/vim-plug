@@ -193,8 +193,9 @@ endfunction
 
 function! s:add_rtp(rtp)
   execute "set rtp^=".s:esc(a:rtp)
-  if isdirectory(a:rtp.'after')
-    execute "set rtp+=".s:esc(a:rtp.'after')
+  let after = globpath(a:rtp, 'after')
+  if isdirectory(after)
+    execute "set rtp+=".s:esc(after)
   endif
 endfunction
 
@@ -424,7 +425,7 @@ function! s:extend(names)
   try
     command! -nargs=+ Plug call s:add(0, <args>)
     for name in a:names
-      let plugfile = s:rtp(g:plugs[name]) . s:plug_file
+      let plugfile = globpath(s:rtp(g:plugs[name]), s:plug_file)
       if filereadable(plugfile)
         execute "source ". s:esc(plugfile)
       endif
