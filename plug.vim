@@ -323,11 +323,7 @@ function! s:syntax()
   syn match plugBracket /[[\]]/ contained
   syn match plugX /x/ contained
   syn match plugDash /^-/
-  syn match plugPlus /^+/
-  syn match plugStar /^*/
   syn match plugName /\(^- \)\@<=[^:]*/
-  syn match plugInstall /\(^+ \)\@<=[^:]*/
-  syn match plugUpdate /\(^* \)\@<=[^:]*/
   syn match plugCommit /^  [0-9a-z]\{7} .*/ contains=plugRelDate,plugSha
   syn match plugSha /\(^  \)\@<=[0-9a-z]\{7}/ contained
   syn match plugRelDate /([^)]*)$/ contained
@@ -338,15 +334,8 @@ function! s:syntax()
   hi def link plugX       Exception
   hi def link plugBracket Structure
   hi def link plugNumber  Number
-
   hi def link plugDash    Special
-  hi def link plugPlus    Constant
-  hi def link plugStar    Boolean
-
   hi def link plugName    Label
-  hi def link plugInstall Function
-  hi def link plugUpdate  Type
-
   hi def link plugError   Error
   hi def link plugRelDate Comment
   hi def link plugSha     Identifier
@@ -440,21 +429,7 @@ function! s:update_impl(pull, args) abort
 
   let len = len(g:plugs)
   if has('ruby') && threads > 1
-    try
-      call s:update_parallel(a:pull, todo, threads)
-    catch
-      let lines = getline(4, '$')
-      let printed = {}
-      silent 4,$d
-      for line in lines
-        let name = get(matchlist(line, '^. \([^:]\+\):'), 1, '')
-        if empty(name) || !has_key(printed, name)
-          let printed[name] = 1
-          call append('$', line)
-        endif
-      endfor
-      echoerr v:exception
-    endtry
+    call s:update_parallel(a:pull, todo, threads)
   else
     call s:update_serial(a:pull, todo)
   endif
@@ -516,6 +491,7 @@ function! s:update_serial(pull, todo)
         if !isdirectory(base)
           call mkdir(base, 'p')
         endif
+        execute 'cd '.base
         let result = s:system(
               \ printf('git clone --recursive %s -b %s %s 2>&1 && cd %s && git submodule update --init --recursive 2>&1',
               \ s:shellesc(spec.uri),
@@ -544,23 +520,6 @@ endfunction
 
 function! s:update_parallel(pull, todo, threads)
   ruby << EOF
-  module PlugStream
-    SEP = ["\r", "\n", nil]
-    def get_line
-      buffer = ''
-      loop do
-        char = readchar rescue return
-        if SEP.include? char
-          buffer << $/
-          break
-        else
-          buffer << char
-        end
-      end
-      buffer
-    end
-  end unless defined?(PlugStream)
-
   def esc arg
     %["#{arg.gsub('"', '\"')}"]
   end
@@ -576,67 +535,55 @@ function! s:update_parallel(pull, todo, threads)
   all   = VIM::evaluate('copy(a:todo)')
   limit = VIM::evaluate('get(g:, "plug_timeout", 60)')
   nthr  = VIM::evaluate('a:threads').to_i
-  maxy  = VIM::evaluate('winheight(".")').to_i
   cd    = iswin ? 'cd /d' : 'cd'
+  done  = {}
   tot   = 0
   bar   = ''
   skip  = 'Already installed'
   mtx   = Mutex.new
   take1 = proc { mtx.synchronize { running && all.shift } }
   logh  = proc {
-    cnt = $curbuf[2][1...-1].strip.length
+    cnt = done.length
     tot = VIM::evaluate('len(a:todo)') || tot
     $curbuf[1] = "#{pull ? 'Updating' : 'Installing'} plugins (#{cnt}/#{tot})"
     $curbuf[2] = '[' + bar.ljust(tot) + ']'
     VIM::command('normal! 2G')
     VIM::command('redraw') unless iswin
   }
-  where = proc { |name| (1..($curbuf.length)).find { |l| $curbuf[l] =~ /^[-+x*] #{name}:/ } }
-  log   = proc { |name, result, type|
+  log = proc { |name, result, ok|
     mtx.synchronize do
-      ing  = ![true, false].include?(type)
-      bar += type ? '=' : 'x' unless ing
-      b = case type
-          when :install  then '+' when :update then '*'
-          when true, nil then '-' else 'x' end
+      bar += ok ? '=' : 'x'
+      done[name] = true
       result =
-        if type || type.nil?
-          ["#{b} #{name}: #{result.lines.to_a.last}"]
+        if ok
+          ["- #{name}: #{result.lines.to_a.last.strip}"]
         elsif result =~ /^Interrupted|^Timeout/
-          ["#{b} #{name}: #{result}"]
+          ["x #{name}: #{result}"]
         else
-          ["#{b} #{name}"] + result.lines.map { |l| "    " << l }
+          ["x #{name}"] + result.lines.map { |l| "    " << l }
         end
-      if lnum = where.call(name)
-        $curbuf.delete lnum
-        lnum = 4 if ing && lnum > maxy
-      end
       result.each_with_index do |line, offset|
-        $curbuf.append (lnum || 4) - 1 + offset, line.gsub(/\e\[./, '').chomp
+        $curbuf.append 3 + offset, line.chomp
       end
       logh.call
     end
   }
-  bt = proc { |cmd, name, type|
+  bt = proc { |cmd|
     begin
       fd = nil
-      data = ''
-      if iswin
-        Timeout::timeout(limit) do
+      Timeout::timeout(limit) do
+        if iswin
           tmp = VIM::evaluate('tempname()')
           system("#{cmd} > #{tmp}")
           data = File.read(tmp).chomp
           File.unlink tmp rescue nil
+        else
+          fd = IO.popen(cmd)
+          data = fd.read.chomp
+          fd.close
         end
-      else
-        fd = IO.popen(cmd).extend(PlugStream)
-        while line = Timeout::timeout(limit) { fd.get_line }
-          data << line
-          log.call name, line.chomp, type if name
-        end
-        fd.close
+        [$? == 0, data]
       end
-      [$? == 0, data.chomp]
     rescue Timeout::Error, Interrupt => e
       if fd && !fd.closed?
         pids = [fd.pid]
@@ -669,7 +616,6 @@ function! s:update_parallel(pull, todo, threads)
     main.kill
   }
 
-  progress = iswin ? '' : '--progress'
   until all.empty?
     names = all.keys
     [names.length, nthr].min.times do
@@ -679,11 +625,10 @@ function! s:update_parallel(pull, todo, threads)
             name = pair.first
             dir, uri, branch = pair.last.values_at *%w[dir uri branch]
             branch = esc branch
-            subm = "git submodule update --init --recursive 2>&1"
             ok, result =
               if File.directory? dir
                 dir = esc dir
-                ret, data = bt.call "#{cd} #{dir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url", nil, nil
+                ret, data = bt.call "#{cd} #{dir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url"
                 current_uri = data.lines.to_a.last
                 if !ret
                   if data =~ /^Interrupted|^Timeout/
@@ -697,8 +642,7 @@ function! s:update_parallel(pull, todo, threads)
                            "PlugClean required."].join($/)]
                 else
                   if pull
-                    log.call name, 'Updating ...', :update
-                    bt.call "#{cd} #{dir} && git checkout -q #{branch} 2>&1 && (git pull origin #{branch} #{progress} 2>&1 && #{subm})", name, :update
+                    bt.call "#{cd} #{dir} && git checkout -q #{branch} 2>&1 && git pull origin #{branch} 2>&1 && git submodule update --init --recursive 2>&1"
                   else
                     [true, skip]
                   end
@@ -706,8 +650,7 @@ function! s:update_parallel(pull, todo, threads)
               else
                 FileUtils.mkdir_p(base)
                 d = esc dir.sub(%r{[\\/]+$}, '')
-                log.call name, 'Installing ...', :install
-                bt.call "(git clone #{progress} --recursive #{uri} -b #{branch} #{d} 2>&1 && cd #{esc dir} && #{subm})", name, :install
+                bt.call "#{cd} #{base} && git clone --recursive #{uri} -b #{branch} #{d} 2>&1 && cd #{esc dir} && git submodule update --init --recursive 2>&1"
               end
             log.call name, result, ok
           end
