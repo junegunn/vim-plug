@@ -239,7 +239,7 @@ Execute (PlugClean! to remove vim-emoji):
 
 Execute (PlugUpdate to install both again):
   PlugUpdate
-  AssertEqual 2, len(filter(getline(1, line('$')), 'v:val =~ "Cloning into"'))
+  AssertEqual 2, len(filter(getline(1, line('$')), 'v:val =~ "^- [^:]*:"'))
   AssertEqual 3, g:vimrc_reloaded
   Assert !empty(globpath(&rtp, 'colors/seoul256.vim')), 'seoul256.vim should be found'
   Assert !empty(globpath(&rtp, 'autoload/emoji.vim')), 'vim-emoji should be found'
