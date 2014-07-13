@@ -550,7 +550,7 @@ function! s:update_parallel(pull, todo, threads)
       buffer = ''
       loop do
         char = readchar rescue return
-        if SEP.include? char
+        if SEP.include? char.chr
           buffer << $/
           break
         else
@@ -612,7 +612,7 @@ function! s:update_parallel(pull, todo, threads)
         lnum = 4 if ing && lnum > maxy
       end
       result.each_with_index do |line, offset|
-        $curbuf.append (lnum || 4) - 1 + offset, line.gsub(/\e\[./, '').chomp
+        $curbuf.append((lnum || 4) - 1 + offset, line.gsub(/\e\[./, '').chomp)
       end
       logh.call
     end
@@ -647,7 +647,7 @@ function! s:update_parallel(pull, todo, threads)
           children = pids
           until children.empty?
             children = children.map { |pid|
-              `pgrep -P #{pid}`.lines.map(&:chomp)
+              `pgrep -P #{pid}`.lines.map { |l| l.chomp }
             }.flatten
             pids += children
           end
@@ -717,7 +717,7 @@ function! s:update_parallel(pull, todo, threads)
         } if running
       end
     end
-    threads.each(&:join)
+    threads.each { |t| t.join }
     mtx.synchronize { threads.clear }
     all.merge!(VIM::evaluate("s:extend(#{names.inspect})") || {})
     logh.call
