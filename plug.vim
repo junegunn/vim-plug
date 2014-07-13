@@ -717,7 +717,7 @@ function! s:update_parallel(pull, todo, threads)
         } if running
       end
     end
-    threads.each { |t| t.join }
+    threads.each { |t| t.join rescue nil }
     mtx.synchronize { threads.clear }
     all.merge!(VIM::evaluate("s:extend(#{names.inspect})") || {})
     logh.call
