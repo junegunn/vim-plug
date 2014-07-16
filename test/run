@@ -9,13 +9,19 @@ if [ ! -d vader.vim ]; then
   git clone https://github.com/junegunn/vader.vim.git
 fi
 
+rm -rf fzf
+if [ ! -d fzf-staged ]; then
+  git clone https://github.com/junegunn/fzf.git fzf-staged
+fi
+
 cat > /tmp/mini-vimrc << VIMRC
 set rtp+=vader.vim
 source $PLUG_SRC
 VIMRC
 
 if [ "$1" = '!' ]; then
-  /usr/local/bin/vim -Nu /tmp/mini-vimrc -c 'Vader! workflow.vader' > /dev/null
+  /usr/local/bin/vim -Nu /tmp/mini-vimrc -c 'Vader! workflow.vader' > /dev/null &&
+  /usr/local/bin/vim -Nu /tmp/mini-vimrc -c 'let g:plug_threads = 1 | Vader! workflow.vader' > /dev/null
 else
   /usr/local/bin/vim -Nu /tmp/mini-vimrc -c 'Vader workflow.vader'
 fi

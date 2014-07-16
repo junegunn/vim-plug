@@ -68,15 +68,21 @@ Execute (Subsequent plug#begin() calls will reuse g:plug_home):
 
 Execute (Test Plug command):
   " Git repo with branch
-  Plug 'junegunn/seoul256.vim', 'no-t_co'
+  Plug 'junegunn/seoul256.vim', 'yes-t_co'
   AssertEqual 'https://git:@github.com/junegunn/seoul256.vim.git', g:plugs['seoul256.vim'].uri
   AssertEqual join([temp_plugged, 'seoul256.vim/'], '/'), g:plugs['seoul256.vim'].dir
+  AssertEqual 'yes-t_co', g:plugs['seoul256.vim'].branch
+
+  Plug 'junegunn/seoul256.vim', { 'branch': 'no-t_co' } " Using branch option
   AssertEqual 'no-t_co', g:plugs['seoul256.vim'].branch
 
   " Git repo with tag
-  Plug 'junegunn/goyo.vim', '1.5.3'
+  Plug 'junegunn/goyo.vim', '1.5.2'
   AssertEqual 'https://git:@github.com/junegunn/goyo.vim.git', g:plugs['goyo.vim'].uri
   AssertEqual join([temp_plugged, 'goyo.vim/'], '/'), g:plugs['goyo.vim'].dir
+  AssertEqual '1.5.2', g:plugs['goyo.vim'].branch
+
+  Plug 'junegunn/goyo.vim', { 'tag': '1.5.3' } " Using tag option
   AssertEqual '1.5.3', g:plugs['goyo.vim'].branch
 
   " Git URI
@@ -103,12 +109,12 @@ Execute (Plug command with dictionary option):
 
 Execute (PlugStatus before installation):
   PlugStatus
-  AssertEqual 4, len(filter(getline(1, line('$')), 'v:val =~ "Not found"'))
+  AssertEqual 4, len(filter(getline(1, '$'), 'v:val =~ "Not found"'))
   q
 
 Execute (PlugClean before installation):
   PlugClean
-  AssertEqual 1, len(filter(getline(1, line('$')), 'v:val =~ "Already clean"'))
+  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "Already clean"'))
   q
 
 Execute (plug#end() updates &rtp):
@@ -128,12 +134,12 @@ Execute (Plugin available after installation):
 
 Execute (PlugClean after installation):
   PlugClean
-  AssertEqual 1, len(filter(getline(1, line('$')), 'v:val =~ "Already clean"'))
+  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "Already clean"'))
   q
 
 Execute (PlugStatus after installation):
   PlugStatus
-  AssertEqual 4, len(filter(getline(1, line('$')), 'v:val =~ "OK"'))
+  AssertEqual 4, len(filter(getline(1, '$'), 'v:val =~ "OK"'))
   q
 
 Execute (Change tag of goyo.vim):
@@ -204,8 +210,8 @@ Expect:
 Execute (PlugClean! to remove seoul256.vim):
   PlugClean!
   " Three removed, emoji left
-  AssertEqual 3, len(filter(getline(1, line('$')), 'v:val =~ "^- "'))
-  AssertEqual 1, len(filter(getline(1, line('$')), 'v:val =~ "Removed"'))
+  AssertEqual 3, len(filter(getline(1, '$'), 'v:val =~ "^- "'))
+  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "Removed"'))
   Assert empty(globpath(&rtp, 'colors/seoul256.vim'))
   Assert !empty(globpath(&rtp, 'autoload/emoji.vim'))
   q
@@ -231,15 +237,15 @@ Expect:
 
 Execute (PlugClean! to remove vim-emoji):
   PlugClean!
-  AssertEqual 1, len(filter(getline(1, line('$')), 'v:val =~ "^- "'))
-  AssertEqual 1, len(filter(getline(1, line('$')), 'v:val =~ "Removed"'))
+  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "^- "'))
+  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "Removed"'))
   Assert empty(globpath(&rtp, 'colors/seoul256.vim'))
   Assert empty(globpath(&rtp, 'autoload/emoji.vim'))
   q
 
 Execute (PlugUpdate to install both again):
   PlugUpdate
-  AssertEqual 2, len(filter(getline(1, line('$')), 'v:val =~ "^- [^:]*:"'))
+  AssertEqual 2, len(filter(getline(1, '$'), 'v:val =~ "^- [^:]*:"'))
   AssertEqual 3, g:vimrc_reloaded
   Assert !empty(globpath(&rtp, 'colors/seoul256.vim')), 'seoul256.vim should be found'
   Assert !empty(globpath(&rtp, 'autoload/emoji.vim')), 'vim-emoji should be found'
@@ -247,7 +253,7 @@ Execute (PlugUpdate to install both again):
 
 Execute (PlugUpdate only to find out plugins are up-to-date, D key to check):
   PlugUpdate
-  AssertEqual 2, len(filter(getline(1, line('$')), 'v:val =~ "Already up-to-date"'))
+  AssertEqual 2, len(filter(getline(1, '$'), 'v:val =~ "Already up-to-date"'))
   AssertEqual 4, g:vimrc_reloaded
   normal D
   AssertEqual 'No updates.', getline(1)
@@ -354,7 +360,9 @@ Execute (Check commands):
 
 Execute (Partial PlugInstall):
   PlugInstall vim-fnr vim-easy-align
+  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "vim-pseudocl"'))
   PlugInstall vim-fnr vim-easy-align 1
+  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "vim-pseudocl"'))
   q
 
 Execute (Check dependent plugin):
@@ -384,13 +392,140 @@ Execute (On-demand loading based on filetypes):
   set ft=redis
   Assert exists(':RedisExecute'), 'RedisExecute command is now found'
 
+**********************************************************************
+~ Local (unmanaged) plugins
+**********************************************************************
+
+Execute (Add unmanaged plugin):
+  let fzf = fnamemodify(g:vader_file, ':h') . '/fzf'
+  Log fzf
+
+  call plug#begin()
+  Plug fzf, { 'on': 'SomeCommand' }
+  call plug#end()
+
+  " Check uri field
+  Assert !has_key(g:plugs.fzf, 'uri'), 'Should not have uri field'
+
+  " Check dir field
+  AssertEqual fzf.'/', g:plugs.fzf.dir
+
+  " Trailing slashes and backslashes should be stripped
+  for suffix in ['///', '/\/\/']
+    call plug#begin()
+    Plug fzf.suffix, { 'on': 'SomeCommand' }
+    call plug#end()
+
+    " Check dir field
+    AssertEqual fzf.'/', g:plugs.fzf.dir
+  endfor
+
+Execute (Plug block for following tests):
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align'
+  Plug fzf, { 'on': 'SomeCommand' }
+  call plug#end()
+  " Remove plugins from previous tests
+  PlugClean!
+
+Execute (PlugInstall will only install vim-easy-align):
+  PlugInstall
+  Log getline(1, '$')
+  AssertEqual 0, len(filter(getline(1, '$'), 'v:val =~ "fzf"'))
+  q
+
+Execute (PlugUpdate will only update vim-easy-align):
+  PlugUpdate
+  Log getline(1, '$')
+  AssertEqual 0, len(filter(getline(1, '$'), 'v:val =~ "fzf"'))
+  q
+
+Execute (PlugClean should not care about unmanaged plugins):
+  PlugClean
+  Log getline(1, '$')
+  AssertEqual 0, len(filter(getline(1, '$'), 'v:val =~ "fzf"'))
+  q
+
+Execute (PlugStatus should point out that the plugin is missing):
+  PlugStatus
+  Log getline(1, '$')
+  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "x fzf"'))
+  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "Not found"'))
+  q
+
+Execute (Deploy unmanaged plugin):
+  Assert !exists(':FZF'), ':FZF command should not exist'
+  call rename('fzf-staged', 'fzf')
+
+Execute (PlugUpdate still should not care):
+  PlugUpdate
+  Log getline(1, '$')
+  AssertEqual 0, len(filter(getline(1, '$'), 'v:val =~ "fzf"'))
+  q
+
+Execute (PlugStatus with no error):
+  PlugStatus
+  Log getline(1, '$')
+  AssertEqual 0, len(filter(getline(1, '$'), 'v:val =~ "x fzf"'))
+  AssertEqual 0, len(filter(getline(1, '$'), 'v:val =~ "Not found"'))
+  q
+
+Execute (Check &rtp after SomeCommand):
+  Log &rtp
+  Assert &rtp !~ 'fzf'
+  silent! SomeCommand
+  Assert &rtp =~ 'fzf'
+
+Execute (Common parent):
+  call plug#begin()
+  Plug 'junegunn/vim-pseudocl'
+  Plug 'junegunn/vim-fnr'
+  Plug 'junegunn/vim-oblique'
+  call plug#end()
+
+  PlugInstall
+  Log getline(1, '$')
+  AssertEqual 1, len(filter(getline(1, '$'), 'v:val == "[===]"'))
+  q
+
+**********************************************************************
+~ Frozen plugins
+**********************************************************************
+
+Execute (Frozen plugin are not installed nor updated):
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align', { 'frozen': 1 }
+  call plug#end()
+
+  redir => output
+  silent PlugInstall
+  redir END
+  Assert output =~ 'No plugin to install'
+
+  redir => output
+  silent PlugUpdate
+  redir END
+  Assert output =~ 'No plugin to update'
+
+Execute (But you can still install it if the name is given as the argument):
+  PlugInstall vim-easy-align
+  Log getline(1, '$')
+  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "vim-easy-align"'))
+  q
+
+  PlugUpdate vim-easy-align
+  Log getline(1, '$')
+  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "vim-easy-align"'))
+  q
+
 Execute (Cleanup):
   call system('rm -rf '.temp_plugged)
+  call rename('fzf', 'fzf-staged')
 
   unlet g:plugs
   unlet g:plug_home
   unlet g:vimrc_reloaded
-  unlet temp_plugged vader plug basertp save_rtp repo lnum
+  unlet temp_plugged vader plug basertp save_rtp repo lnum fzf
   delf PlugStatusSorted
 
   Restore

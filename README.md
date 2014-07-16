@@ -44,6 +44,7 @@ Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 " Plug 'user/repo1', 'branch_or_tag'
 " Plug 'user/repo2', { 'rtp': 'vim/plugin/dir', 'branch': 'devel' }
 " Plug 'git@github.com:junegunn/vim-github-dashboard.git'
+" Plug '/my/local/vim/plugin'
 " ...
 
 call plug#end()
@@ -69,6 +70,16 @@ before the call.
 | PlugUpgrade                       | Upgrade vim-plug itself                                            |
 | PlugStatus                        | Check the status of plugins                                        |
 | PlugDiff                          | See the updated changes from the previous PlugUpdate               |
+
+### `Plug` options
+
+| Option         | Description                                                          |
+| -------------- | -------------------------------------------------------------------- |
+| `branch`/`tag` | Branch or tag of the repository to use                               |
+| `rtp`          | Subdirectory that contains Vim plugin                                |
+| `on`           | On-demand loading: Commands or <Plug>-mappings                       |
+| `for`          | On-demand loading: File types                                        |
+| `frozen`       | Do not install/update plugin unless explicitly given as the argument |
 
 ### Options for parallel installer
 
