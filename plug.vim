@@ -175,6 +175,7 @@ function! plug#end()
             \ key, string(key), string(reverse(names)))
     augroup END
   endfor
+  call s:reorg_rtp()
   filetype plugin indent on
   syntax on
 endfunction
@@ -218,6 +219,17 @@ function! s:add_rtp(rtp)
   endif
 endfunction
 
+function! s:reorg_rtp()
+  if !empty(s:first_rtp)
+    execute 'set rtp-='.s:first_rtp
+    execute 'set rtp^='.s:first_rtp
+  endif
+  if s:last_rtp !=# s:first_rtp
+    execute 'set rtp-='.s:last_rtp
+    execute 'set rtp+='.s:last_rtp
+  endif
+endfunction
+
 function! s:lod(plug, types)
   let rtp = s:rtp(a:plug)
   call s:add_rtp(rtp)
@@ -232,6 +244,7 @@ function! s:lod_ft(pat, names)
   for name in a:names
     call s:lod(g:plugs[name], ['plugin', 'after'])
   endfor
+  call s:reorg_rtp()
   execute 'autocmd! PlugLOD FileType ' . a:pat
   silent! doautocmd filetypeplugin FileType
 endfunction
@@ -239,6 +252,7 @@ endfunction
 function! s:lod_cmd(cmd, bang, l1, l2, args, name)
   execute 'delc '.a:cmd
   call s:lod(g:plugs[a:name], ['plugin', 'ftdetect', 'after'])
+  call s:reorg_rtp()
   execute printf("%s%s%s %s", (a:l1 == a:l2 ? '' : (a:l1.','.a:l2)), a:cmd, a:bang, a:args)
 endfunction
 
@@ -246,6 +260,7 @@ function! s:lod_map(map, name, prefix)
   execute 'unmap '.a:map
   execute 'iunmap '.a:map
   call s:lod(g:plugs[a:name], ['plugin', 'ftdetect', 'after'])
+  call s:reorg_rtp()
   let extra = ''
   while 1
     let c = getchar(0)
@@ -1028,6 +1043,9 @@ function! s:diff()
   nnoremap <silent> <buffer> <cr> :silent! call <SID>preview_commit()<cr>
   normal! gg
 endfunction
+
+let s:first_rtp = s:esc(get(split(&rtp, ','), 0, ''))
+let s:last_rtp = s:esc(get(split(&rtp, ','), -1, ''))
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

@@ -1,6 +1,9 @@
 Execute (Initialize test environment):
   Save &rtp, g:plugs, g:plug_home, $MYVIMRC
 
+  let first_rtp = split(&rtp, ',')[0]
+  let last_rtp  = split(&rtp, ',')[-1]
+
   let vader = fnamemodify(globpath(&rtp, 'autoload/vader.vim'), ':h:h')
   let plug  = fnamemodify(globpath(&rtp, 'autoload/plug.vim'), ':h:h')
   set rtp=$HOME/.vim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,$HOME/.vim/after
@@ -120,6 +123,8 @@ Execute (PlugClean before installation):
 Execute (plug#end() updates &rtp):
   call plug#end()
   Assert len(&rtp) > len(basertp)
+  AssertEqual first_rtp, split(&rtp, ',')[0]
+  AssertEqual last_rtp, split(&rtp, ',')[-1]
 
 Execute (Yet, plugins are not available):
   Assert empty(globpath(&rtp, 'autoload/emoji.vim'))
@@ -367,6 +372,8 @@ Execute (Partial PlugInstall):
 
 Execute (Check dependent plugin):
   Assert &rtp =~ 'pseudocl', &rtp
+  AssertEqual first_rtp, split(&rtp, ',')[0]
+  AssertEqual last_rtp, split(&rtp, ',')[-1]
 
 Given (Unaligned code):
   a=1
@@ -475,6 +482,8 @@ Execute (Check &rtp after SomeCommand):
   Assert &rtp !~ 'fzf'
   silent! SomeCommand
   Assert &rtp =~ 'fzf'
+  AssertEqual first_rtp, split(&rtp, ',')[0]
+  AssertEqual last_rtp, split(&rtp, ',')[-1]
 
 Execute (Common parent):
   call plug#begin()
