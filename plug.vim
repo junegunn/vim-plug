@@ -335,7 +335,7 @@ function! s:apply()
   for spec in values(g:plugs)
     let docd = join([spec.dir, 'doc'], '/')
     if isdirectory(docd)
-      execute "helptags ". join([spec.dir, 'doc'], '/')
+      silent! execute "helptags ". join([spec.dir, 'doc'], '/')
     endif
   endfor
   runtime! plugin/*.vim
