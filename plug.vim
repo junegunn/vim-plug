@@ -1022,7 +1022,7 @@ function! s:diff()
 
   let cnt = 0
   for [k, v] in items(g:plugs)
-    if !isdirectory(v.dir)
+    if !isdirectory(v.dir) || !s:is_managed(k)
       continue
     endif
 
