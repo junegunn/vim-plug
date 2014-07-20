@@ -705,6 +705,15 @@ function! s:update_parallel(pull, todo, threads)
     threads.each { |t| t.join rescue nil }
     main.kill
   }
+  refresh = Thread.new {
+    while true
+      mtx.synchronize do
+        break unless running
+        VIM::command('normal! a')
+      end
+      sleep 0.2
+    end
+  } if VIM::evaluate('has("mac") && has("gui_running")') == 1
 
   processed = Set.new
   progress = iswin ? '' : '--progress'
@@ -762,6 +771,7 @@ function! s:update_parallel(pull, todo, threads)
     all.merge!(extended)
     logh.call
   end
+  refresh.kill if refresh
   watcher.kill
   $curbuf[1] = "Updated. Elapsed time: #{"%.6f" % (Time.now - st)} sec."
 EOF
