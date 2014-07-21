@@ -716,7 +716,7 @@ function! s:update_parallel(pull, todo, threads)
     while true
       mtx.synchronize do
         break unless running
-        VIM::command('normal! a')
+        VIM::command('noautocmd normal! a')
       end
       sleep 0.2
     end
