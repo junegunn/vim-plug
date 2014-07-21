@@ -58,6 +58,7 @@ set cpo&vim
 let s:plug_source = 'https://raw.github.com/junegunn/vim-plug/master/plug.vim'
 let s:plug_file = 'Plugfile'
 let s:plug_buf = -1
+let s:mac_gui = has('mac') && has('gui_running')
 let s:is_win = has('win32') || has('win64')
 let s:me = expand('<sfile>:p')
 
@@ -474,6 +475,10 @@ function! s:update_impl(pull, args) abort
   let len = len(g:plugs)
   if has('ruby') && threads > 1
     try
+      let imd = &imd
+      if s:mac_gui
+        set noimd
+      endif
       call s:update_parallel(a:pull, todo, threads)
     catch
       let lines = getline(4, '$')
@@ -487,6 +492,8 @@ function! s:update_impl(pull, args) abort
         endif
       endfor
       echoerr v:exception
+    finally
+      let &imd = imd
     endtry
   else
     call s:update_serial(a:pull, todo)
@@ -713,7 +720,7 @@ function! s:update_parallel(pull, todo, threads)
       end
       sleep 0.2
     end
-  } if VIM::evaluate('has("mac") && has("gui_running")') == 1
+  } if VIM::evaluate('s:mac_gui') == 1
 
   processed = Set.new
   progress = iswin ? '' : '--progress'
