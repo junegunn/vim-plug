@@ -693,7 +693,15 @@ function! s:update_parallel(pull, todo, threads)
         pids.each { |pid| Process.kill 'TERM', pid.to_i rescue nil }
         fd.close
       end
-      retry if e.is_a?(Timeout::Error) && tried < tries
+      if e.is_a?(Timeout::Error) && tried < tries
+        3.downto(1) do |countdown|
+          s = countdown > 1 ? 's' : ''
+          log.call name, "Timeout. Will retry in #{countdown} second#{s} ...", type
+          sleep 1
+        end
+        log.call name, 'Retrying ...', type
+        retry
+      end
       [false, e.is_a?(Interrupt) ? "Interrupted!" : "Timeout!"]
     end
   }
