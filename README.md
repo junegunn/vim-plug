@@ -84,10 +84,11 @@ before the call.
 
 ### Options for parallel installer
 
-| Flag             | Default | Description                        |
-| ---------------- | ------- | ---------------------------------  |
-| `g:plug_threads` | 16      | Default number of threads to use   |
-| `g:plug_timeout` | 60      | Time limit of each task in seconds |
+| Flag             | Default | Description                          |
+| ---------------- | ------- | ------------------------------------ |
+| `g:plug_threads` | 16      | Default number of threads to use     |
+| `g:plug_timeout` | 60      | Time limit of each task in seconds   |
+| `g:plug_retries` | 2       | Number of retries in case of timeout |
 
 ### Keybindings
 

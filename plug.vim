@@ -617,6 +617,7 @@ function! s:update_parallel(pull, todo, threads)
   base  = VIM::evaluate('g:plug_home')
   all   = VIM::evaluate('copy(a:todo)')
   limit = VIM::evaluate('get(g:, "plug_timeout", 60)')
+  tries = VIM::evaluate('get(g:, "plug_retries", 2)') + 1
   nthr  = VIM::evaluate('a:threads').to_i
   maxy  = VIM::evaluate('winheight(".")').to_i
   cd    = iswin ? 'cd /d' : 'cd'
@@ -659,11 +660,14 @@ function! s:update_parallel(pull, todo, threads)
     end
   }
   bt = proc { |cmd, name, type|
+    tried = timeout = 0
     begin
+      tried += 1
+      timeout += limit
       fd = nil
       data = ''
       if iswin
-        Timeout::timeout(limit) do
+        Timeout::timeout(timeout) do
           tmp = VIM::evaluate('tempname()')
           system("#{cmd} > #{tmp}")
           data = File.read(tmp).chomp
@@ -673,7 +677,7 @@ function! s:update_parallel(pull, todo, threads)
         fd = IO.popen(cmd).extend(PlugStream)
         first_line = true
         log_prob = 1.0 / nthr
-        while line = Timeout::timeout(limit) { fd.get_line }
+        while line = Timeout::timeout(timeout) { fd.get_line }
           data << line
           log.call name, line.chomp, type if name && (first_line || rand < log_prob)
           first_line = false
@@ -695,6 +699,15 @@ function! s:update_parallel(pull, todo, threads)
         end
         pids.each { |pid| Process.kill 'TERM', pid.to_i rescue nil }
         fd.close
+      end
+      if e.is_a?(Timeout::Error) && tried < tries
+        3.downto(1) do |countdown|
+          s = countdown > 1 ? 's' : ''
+          log.call name, "Timeout. Will retry in #{countdown} second#{s} ...", type
+          sleep 1
+        end
+        log.call name, 'Retrying ...', type
+        retry
       end
       [false, e.is_a?(Interrupt) ? "Interrupted!" : "Timeout!"]
     end
