@@ -40,26 +40,24 @@ call plug#begin('~/.vim/plugged')
 " Make sure you use single quotes
 Plug 'junegunn/seoul256.vim'
 Plug 'junegunn/vim-easy-align'
+
+" On-demand loading
 Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
 Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
-" Plug 'user/repo1', 'branch_or_tag'
-" Plug 'user/repo2', { 'rtp': 'vim/plugin/dir', 'branch': 'devel' }
-" Plug 'git@github.com:junegunn/vim-github-dashboard.git'
-" Plug '/my/local/vim/plugin'
-" ...
+
+" Using git URL
+Plug 'https://github.com/junegunn/vim-github-dashboard.git'
+
+" Plugin options
+Plug 'nsf/gocode', { 'tag': 'go.weekly.2012-03-13', 'rtp': 'vim' }
+
+" Locally-managed plugin
+Plug '~/.fzf'
 
 call plug#end()
 ```
 
 Reload .vimrc and `:PlugInstall` to install plugins.
-
-### Plugin directory
-
-If you omit the path argument to `plug#begin()`, plugins are installed in
-`plugged` directory under the first path in `runtimepath` at the point when
-`plug#begin()` is called. This is usually `~/.vim/plugged` (or
-`$HOME/vimfiles/plugged` on Windows) given that you didn't touch runtimepath
-before the call.
 
 ### Commands
 
@@ -94,6 +92,7 @@ before the call.
 
 - `D` - `PlugDiff`
 - `S` - `PlugStatus`
+- `R` - Retry failed update or installation tasks
 - `q` - Close the window
 
 ### Example: A small [sensible](https://github.com/tpope/vim-sensible) Vim configuration
