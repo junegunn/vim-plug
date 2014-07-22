@@ -27,6 +27,12 @@ Execute (Initialize test environment):
     g/^$/d
   endfunction
 
+  function! AssertExpect(bang, pat, cnt)
+    let op = a:bang ? '==' : '=~'
+    AssertEqual a:cnt, len(filter(getline(1, '$'), "v:val ".op." '".a:pat."'"))
+  endfunction
+  command! -nargs=+ -bang AssertExpect call AssertExpect('<bang>' == '!', <args>)
+
   let g:vimrc_reloaded = 0
   let vimrc    = tempname()
   call writefile(['let g:vimrc_reloaded += 1'], vimrc)
@@ -112,12 +118,12 @@ Execute (Plug command with dictionary option):
 
 Execute (PlugStatus before installation):
   PlugStatus
-  AssertEqual 4, len(filter(getline(1, '$'), 'v:val =~ "Not found"'))
+  AssertExpect 'Not found', 4
   q
 
 Execute (PlugClean before installation):
   PlugClean
-  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "Already clean"'))
+  AssertExpect 'Already clean', 1
   q
 
 Execute (plug#end() updates &rtp):
@@ -139,12 +145,13 @@ Execute (Plugin available after installation):
 
 Execute (PlugClean after installation):
   PlugClean
-  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "Already clean"'))
+  AssertExpect 'Already clean', 1
   q
 
 Execute (PlugStatus after installation):
   PlugStatus
-  AssertEqual 4, len(filter(getline(1, '$'), 'v:val =~ "OK"'))
+  Log getline(1, '$')
+  AssertExpect 'OK', 4
   q
 
 Execute (Change tag of goyo.vim):
@@ -215,8 +222,8 @@ Expect:
 Execute (PlugClean! to remove seoul256.vim):
   PlugClean!
   " Three removed, emoji left
-  AssertEqual 3, len(filter(getline(1, '$'), 'v:val =~ "^- "'))
-  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "Removed"'))
+  AssertExpect '^- ', 3
+  AssertExpect 'Removed', 1
   Assert empty(globpath(&rtp, 'colors/seoul256.vim'))
   Assert !empty(globpath(&rtp, 'autoload/emoji.vim'))
   q
@@ -242,15 +249,15 @@ Expect:
 
 Execute (PlugClean! to remove vim-emoji):
   PlugClean!
-  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "^- "'))
-  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "Removed"'))
+  AssertExpect '^- ', 1
+  AssertExpect 'Removed', 1
   Assert empty(globpath(&rtp, 'colors/seoul256.vim'))
   Assert empty(globpath(&rtp, 'autoload/emoji.vim'))
   q
 
 Execute (PlugUpdate to install both again):
   PlugUpdate
-  AssertEqual 2, len(filter(getline(1, '$'), 'v:val =~ "^- [^:]*:"'))
+  AssertExpect '^- [^:]*:', 2
   AssertEqual 3, g:vimrc_reloaded
   Assert !empty(globpath(&rtp, 'colors/seoul256.vim')), 'seoul256.vim should be found'
   Assert !empty(globpath(&rtp, 'autoload/emoji.vim')), 'vim-emoji should be found'
@@ -258,7 +265,7 @@ Execute (PlugUpdate to install both again):
 
 Execute (PlugUpdate only to find out plugins are up-to-date, D key to check):
   PlugUpdate
-  AssertEqual 2, len(filter(getline(1, '$'), 'v:val =~ "Already up-to-date"'))
+  AssertExpect 'Already up-to-date', 2
   AssertEqual 4, g:vimrc_reloaded
   normal D
   AssertEqual 'No updates.', getline(1)
@@ -365,9 +372,9 @@ Execute (Check commands):
 
 Execute (Partial PlugInstall):
   PlugInstall vim-fnr vim-easy-align
-  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "vim-pseudocl"'))
+  AssertExpect 'vim-pseudocl', 1
   PlugInstall vim-fnr vim-easy-align 1
-  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "vim-pseudocl"'))
+  AssertExpect 'vim-pseudocl', 1
   q
 
 Execute (Check dependent plugin):
@@ -438,26 +445,26 @@ Execute (Plug block for following tests):
 Execute (PlugInstall will only install vim-easy-align):
   PlugInstall
   Log getline(1, '$')
-  AssertEqual 0, len(filter(getline(1, '$'), 'v:val =~ "fzf"'))
+  AssertExpect 'fzf', 0
   q
 
 Execute (PlugUpdate will only update vim-easy-align):
   PlugUpdate
   Log getline(1, '$')
-  AssertEqual 0, len(filter(getline(1, '$'), 'v:val =~ "fzf"'))
+  AssertExpect 'fzf', 0
   q
 
 Execute (PlugClean should not care about unmanaged plugins):
   PlugClean
   Log getline(1, '$')
-  AssertEqual 0, len(filter(getline(1, '$'), 'v:val =~ "fzf"'))
+  AssertExpect 'fzf', 0
   q
 
 Execute (PlugStatus should point out that the plugin is missing):
   PlugStatus
   Log getline(1, '$')
-  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "x fzf"'))
-  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "Not found"'))
+  AssertExpect 'x fzf', 1
+  AssertExpect 'Not found', 1
   q
 
 Execute (Deploy unmanaged plugin):
@@ -467,14 +474,14 @@ Execute (Deploy unmanaged plugin):
 Execute (PlugUpdate still should not care):
   PlugUpdate
   Log getline(1, '$')
-  AssertEqual 0, len(filter(getline(1, '$'), 'v:val =~ "fzf"'))
+  AssertExpect 'fzf', 0
   q
 
 Execute (PlugStatus with no error):
   PlugStatus
   Log getline(1, '$')
-  AssertEqual 0, len(filter(getline(1, '$'), 'v:val =~ "x fzf"'))
-  AssertEqual 0, len(filter(getline(1, '$'), 'v:val =~ "Not found"'))
+  AssertExpect 'x fzf', 0
+  AssertExpect 'Not found', 0
   q
 
 Execute (Check &rtp after SomeCommand):
@@ -494,7 +501,7 @@ Execute (Common parent):
 
   PlugInstall
   Log getline(1, '$')
-  AssertEqual 1, len(filter(getline(1, '$'), 'v:val == "[===]"'))
+  AssertExpect! '[===]', 1
   q
 
 **********************************************************************
@@ -527,6 +534,48 @@ Execute (But you can still install it if the name is given as the argument):
   AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "vim-easy-align"'))
   q
 
+**********************************************************************
+~ Retry
+**********************************************************************
+
+Execute (Retry failed tasks):
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align'
+  Plug 'junegunn/aaaaaaaaaaaaaa'
+  call plug#end()
+
+  PlugInstall
+  Log getline(1, '$')
+  AssertExpect 'x aaa', 1
+  AssertExpect '- vim-easy-align', 1
+  normal R
+  Log getline(1, '$')
+  AssertExpect 'x aaa', 1
+  AssertExpect '- vim-easy-align', 0
+  AssertExpect! '[x]', 1
+  q
+
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align'
+  Plug 'junegunn/aaaaaaaaaaaaaa'
+  Plug 'junegunn/bbbbbbbbbbbbbb'
+  Plug 'junegunn/cccccccccccccc'
+  call plug#end()
+
+  " Ruby installer
+  PlugUpdate
+  normal R
+  AssertExpect '- vim-easy-align', 0
+  AssertExpect! '[xxx]', 1
+  q
+
+  " Vim installer
+  PlugUpdate 1
+  normal R
+  AssertExpect '- vim-easy-align', 0
+  AssertExpect! '[xxx]', 1
+  q
+
 Execute (Cleanup):
   call system('rm -rf '.temp_plugged)
   call rename('fzf', 'fzf-staged')
@@ -536,5 +585,7 @@ Execute (Cleanup):
   unlet g:vimrc_reloaded
   unlet temp_plugged vader plug basertp save_rtp repo lnum fzf
   delf PlugStatusSorted
+  delf AssertExpect
+  delc AssertExpect
 
   Restore

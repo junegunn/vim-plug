@@ -403,6 +403,7 @@ function! s:prepare()
   else
     vertical topleft new
     nnoremap <silent> <buffer> q  :if b:plug_preview==1<bar>pc<bar>endif<bar>q<cr>
+    nnoremap <silent> <buffer> R  :silent! call <SID>retry()<cr>
     nnoremap <silent> <buffer> D  :PlugDiff<cr>
     nnoremap <silent> <buffer> S  :PlugStatus<cr>
     nnoremap <silent> <buffer> ]] :silent! call <SID>section('')<cr>
@@ -437,9 +438,22 @@ function! s:finish(pull)
   call setline(4, getline(4) . 'Done!')
   normal! gg
   redraw
-  if a:pull
-    echo "Press 'D' to see the updated changes."
+  let msgs = []
+  if !empty(s:prev_update.errors)
+    call add(msgs, "Press 'R' to retry.")
   endif
+  if a:pull
+    call add(msgs, "Press 'D' to see the updated changes.")
+  endif
+  echo join(msgs, ' ')
+endfunction
+
+function! s:retry()
+  if empty(s:prev_update.errors)
+    return
+  endif
+  call s:update_impl(s:prev_update.pull,
+        \ extend(copy(s:prev_update.errors), [s:prev_update.threads]))
 endfunction
 
 function! s:is_managed(name)
@@ -473,6 +487,7 @@ function! s:update_impl(pull, args) abort
   redraw
 
   let len = len(g:plugs)
+  let s:prev_update = { 'errors': [], 'pull': a:pull, 'threads': threads }
   if has('ruby') && threads > 1
     try
       let imd = &imd
@@ -566,6 +581,9 @@ function! s:update_serial(pull, todo)
         let error = v:shell_error != 0
       endif
       let bar .= error ? 'x' : '='
+      if error
+        call add(s:prev_update.errors, name)
+      endif
       call append(3, s:format_message(!error, name, result))
       call s:update_progress(a:pull, len(done), bar, total)
     endfor
@@ -640,7 +658,10 @@ function! s:update_parallel(pull, todo, threads)
       bar += type ? '=' : 'x' unless ing
       b = case type
           when :install  then '+' when :update then '*'
-          when true, nil then '-' else 'x' end
+          when true, nil then '-' else
+            VIM::command("call add(s:prev_update.errors, '#{name}')")
+            'x'
+          end
       result =
         if type || type.nil?
           ["#{b} #{name}: #{result.lines.to_a.last}"]
