@@ -502,11 +502,15 @@ function! s:update_impl(pull, args) abort
       for line in lines
         let name = get(matchlist(line, '^. \([^:]\+\):'), 1, '')
         if empty(name) || !has_key(printed, name)
-          let printed[name] = 1
           call append('$', line)
+          if !empty(name)
+            let printed[name] = 1
+            if line[0] == 'x' && index(s:prev_update.errors, name) < 0
+              call add(s:prev_update.errors, name)
+            end
+          endif
         endif
       endfor
-      echoerr v:exception
     finally
       let &imd = imd
     endtry
