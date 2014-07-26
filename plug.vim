@@ -71,6 +71,12 @@ let s:plug_buf = -1
 let s:mac_gui = has('gui_macvim') && has('gui_running')
 let s:is_win = has('win32') || has('win64')
 let s:me = expand('<sfile>:p')
+let s:TYPE = {
+\   'string': type(""),
+\   'list': type([]),
+\   'dict': type({}),
+\   'funcref': type(function("call"))
+\ }
 
 function! plug#begin(...)
   if a:0 > 0
@@ -114,7 +120,7 @@ function! plug#begin(...)
 endfunction
 
 function! s:to_a(v)
-  return type(a:v) == 3 ? a:v : [a:v]
+  return type(a:v) == s:TYPE.list ? a:v : [a:v]
 endfunction
 
 function! plug#end()
@@ -289,9 +295,9 @@ function! s:add(force, ...)
     let plugin = a:1
   elseif a:0 == 2
     let plugin = a:1
-    if type(a:2) == 1
+    if type(a:2) == s:TYPE.string
       let opts.branch = a:2
-    elseif type(a:2) == 4
+    elseif type(a:2) == s:TYPE.dict
       call extend(opts, a:2)
       if has_key(opts, 'tag')
         let opts.branch = remove(opts, 'tag')
@@ -452,10 +458,10 @@ function! s:do(pull, todo)
       \ !empty(s:system_chomp('git log --pretty=format:"%h" "HEAD...HEAD@{1}"')))
       call append(3, '- Post-update hook for '. name .' ... ')
       let type = type(spec.do)
-      if type == 1 " String
+      if type == s:TYPE.string
         call system(spec.do)
         let result = v:shell_error ? ('Exit status: '.v:shell_error) : 'Done!'
-      elseif type == 2 " Funcref
+      elseif type == s:TYPE.funcref
         try
           call spec.do()
           let result = 'Done!'
