@@ -459,8 +459,17 @@ function! s:do(pull, todo)
       call append(3, '- Post-update hook for '. name .' ... ')
       let type = type(spec.do)
       if type == s:TYPE.string
-        call system(spec.do)
-        let result = v:shell_error ? ('Exit status: '.v:shell_error) : 'Done!'
+        try
+          " FIXME: Escaping is incomplete. We could use shellescape with eval,
+          "        but it won't work on Windows.
+          let g:_plug_do = '!'.escape(spec.do, '#!%')
+          nnoremap <Plug>(plug-do) :execute g:_plug_do<cr><cr>
+          execute "normal \<Plug>(plug-do)"
+        finally
+          let result = v:shell_error ? ('Exit status: '.v:shell_error) : 'Done!'
+          unlet g:_plug_do
+          unmap <Plug>(plug-do)
+        endtry
       elseif type == s:TYPE.funcref
         try
           call spec.do()
