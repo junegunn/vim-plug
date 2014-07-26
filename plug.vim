@@ -604,15 +604,11 @@ function! s:update_serial(pull, todo)
         execute 'cd '.s:esc(spec.dir)
         let [valid, msg] = s:git_valid(spec, 0, 0)
         if valid
-          if a:pull
-            let result =
+          let result = a:pull ?
             \ s:system(
             \ printf('git checkout -q %s 2>&1 && git pull origin %s 2>&1 && git submodule update --init --recursive 2>&1',
-            \   s:shellesc(spec.branch), s:shellesc(spec.branch)))
-            let [result, error] = [result, v:shell_error != 0]
-          else
-            let [result, error] = ['Already installed', 0]
-          endif
+            \   s:shellesc(spec.branch), s:shellesc(spec.branch))) : 'Already installed'
+          let error = a:pull ? v:shell_error != 0 : 0
         else
           let result = msg
           let error = 1
