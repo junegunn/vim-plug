@@ -463,12 +463,10 @@ function! s:do(pull, todo)
           " FIXME: Escaping is incomplete. We could use shellescape with eval,
           "        but it won't work on Windows.
           let g:_plug_do = '!'.escape(spec.do, '#!%')
-          nnoremap <Plug>(plug-do) :execute g:_plug_do<cr><cr>
-          execute "normal \<Plug>(plug-do)"
+          execute "normal! :execute g:_plug_do\<cr>\<cr>"
         finally
           let result = v:shell_error ? ('Exit status: '.v:shell_error) : 'Done!'
           unlet g:_plug_do
-          unmap <Plug>(plug-do)
         endtry
       elseif type == s:TYPE.funcref
         try
