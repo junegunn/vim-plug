@@ -444,6 +444,9 @@ endfunction
 
 function! s:do(pull, todo)
   for [name, spec] in items(a:todo)
+    if !isdirectory(spec.dir)
+      continue
+    endif
     execute 'cd '.s:esc(spec.dir)
     if has_key(s:prev_update.new, name) || (a:pull &&
       \ !empty(s:system_chomp('git log --pretty=format:"%h" "HEAD...HEAD@{1}"')))
