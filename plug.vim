@@ -9,14 +9,24 @@
 "
 " Edit your .vimrc
 "
-"   call plug#begin()
+"   call plug#begin('~/.vim/plugged')
 "
+"   " Make sure you use single quotes
 "   Plug 'junegunn/seoul256.vim'
 "   Plug 'junegunn/vim-easy-align'
-"   Plug 'junegunn/goyo.vim', { 'on': 'Goyo' }
-"   " Plug 'user/repo1', 'branch_or_tag'
-"   " Plug 'user/repo2', { 'rtp': 'vim/plugin/dir', 'branch': 'branch_or_tag' }
-"   " ...
+"
+"   " On-demand loading
+"   Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
+"   Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
+"
+"   " Using git URL
+"   Plug 'https://github.com/junegunn/vim-github-dashboard.git'
+"
+"   " Plugin options
+"   Plug 'nsf/gocode', { 'tag': 'go.weekly.2012-03-13', 'rtp': 'vim' }
+"
+"   " Locally-managed plugin
+"   Plug '~/.fzf'
 "
 "   call plug#end()
 "
@@ -354,7 +364,8 @@ function! s:syntax()
   syn match plugDash /^-/
   syn match plugPlus /^+/
   syn match plugStar /^*/
-  syn match plugName /\(^- \)\@<=[^:]*/
+  syn match plugMessage /\(^- \)\@<=.*/
+  syn match plugName /\(^- \)\@<=[^ ]*:/
   syn match plugInstall /\(^+ \)\@<=[^:]*/
   syn match plugUpdate /\(^* \)\@<=[^:]*/
   syn match plugCommit /^  [0-9a-z]\{7} .*/ contains=plugRelDate,plugSha
@@ -372,6 +383,7 @@ function! s:syntax()
   hi def link plugPlus    Constant
   hi def link plugStar    Boolean
 
+  hi def link plugMessage Function
   hi def link plugName    Label
   hi def link plugInstall Function
   hi def link plugUpdate  Type
@@ -430,6 +442,32 @@ function! s:assign_name()
   silent! execute "f ".fnameescape(name)
 endfunction
 
+function! s:do(pull, todo)
+  for [name, spec] in items(a:todo)
+    execute 'cd '.s:esc(spec.dir)
+    if has_key(s:prev_update.new, name) || (a:pull &&
+      \ !empty(s:system_chomp('git log --pretty=format:"%h" "HEAD...HEAD@{1}"')))
+      call append(3, '- Post-update hook for '. name .' ... ')
+      let type = type(spec.do)
+      if type == 1 " String
+        call system(spec.do)
+        let result = v:shell_error ? ('Exit status: '.v:shell_error) : 'Done!'
+      elseif type == 2 " Funcref
+        try
+          call spec.do()
+          let result = 'Done!'
+        catch
+          let result = 'Error: ' . v:exception
+        endtry
+      else
+        let result = 'Error: Invalid type!'
+      endif
+      call setline(4, getline(4) . result)
+    endif
+    cd -
+  endfor
+endfunction
+
 function! s:finish(pull)
   call append(3, '- Finishing ... ')
   redraw
@@ -486,8 +524,11 @@ function! s:update_impl(pull, args) abort
   normal! 2G
   redraw
 
+  if !isdirectory(g:plug_home)
+    call mkdir(g:plug_home, 'p')
+  endif
   let len = len(g:plugs)
-  let s:prev_update = { 'errors': [], 'pull': a:pull, 'threads': threads }
+  let s:prev_update = { 'errors': [], 'pull': a:pull, 'new': {}, 'threads': threads }
   if has('ruby') && threads > 1
     try
       let imd = &imd
@@ -517,6 +558,7 @@ function! s:update_impl(pull, args) abort
   else
     call s:update_serial(a:pull, todo)
   endif
+  call s:do(a:pull, filter(copy(todo), 'has_key(v:val, "do")'))
   if len(g:plugs) > len
     call plug#end()
   endif
@@ -562,20 +604,21 @@ function! s:update_serial(pull, todo)
         execute 'cd '.s:esc(spec.dir)
         let [valid, msg] = s:git_valid(spec, 0, 0)
         if valid
-          let result = a:pull ?
+          if a:pull
+            let result =
             \ s:system(
             \ printf('git checkout -q %s 2>&1 && git pull origin %s 2>&1 && git submodule update --init --recursive 2>&1',
-            \   s:shellesc(spec.branch), s:shellesc(spec.branch))) : 'Already installed'
-          let error = a:pull ? v:shell_error != 0 : 0
+            \   s:shellesc(spec.branch), s:shellesc(spec.branch)))
+            let [result, error] = [result, v:shell_error != 0]
+          else
+            let [result, error] = ['Already installed', 0]
+          endif
         else
           let result = msg
           let error = 1
         endif
         cd -
       else
-        if !isdirectory(base)
-          call mkdir(base, 'p')
-        endif
         let result = s:system(
               \ printf('git clone --recursive %s -b %s %s 2>&1 && cd %s && git submodule update --init --recursive 2>&1',
               \ s:shellesc(spec.uri),
@@ -583,6 +626,7 @@ function! s:update_serial(pull, todo)
               \ s:shellesc(substitute(spec.dir, '[\/]\+$', '', '')),
               \ s:shellesc(spec.dir)))
         let error = v:shell_error != 0
+        if !error | let s:prev_update.new[name] = 1 | endif
       endif
       let bar .= error ? 'x' : '='
       if error
@@ -773,8 +817,9 @@ function! s:update_parallel(pull, todo, threads)
             dir, uri, branch = pair.last.values_at *%w[dir uri branch]
             branch = esc branch
             subm = "git submodule update --init --recursive 2>&1"
+            exists = File.directory? dir
             ok, result =
-              if File.directory? dir
+              if exists
                 dir = esc dir
                 ret, data = bt.call "#{cd} #{dir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url", nil, nil
                 current_uri = data.lines.to_a.last
@@ -797,11 +842,11 @@ function! s:update_parallel(pull, todo, threads)
                   end
                 end
               else
-                FileUtils.mkdir_p(base)
                 d = esc dir.sub(%r{[\\/]+$}, '')
                 log.call name, 'Installing ...', :install
                 bt.call "(git clone #{progress} --recursive #{uri} -b #{branch} #{d} 2>&1 && cd #{esc dir} && #{subm})", name, :install
               end
+            mtx.synchronize { VIM::command("let s:prev_update.new['#{name}'] = 1") } if !exists && ok
             log.call name, result, ok
           end
         } if running
@@ -1082,7 +1127,7 @@ function! s:diff()
     endif
 
     execute 'cd '.s:esc(v.dir)
-    let diff = system('git log --pretty=format:"%h %s (%cr)" "HEAD@{0}...HEAD@{1}"')
+    let diff = system('git log --pretty=format:"%h %s (%cr)" "HEAD...HEAD@{1}"')
     if !v:shell_error && !empty(diff)
       call append(1, '')
       call append(2, '- '.k.':')

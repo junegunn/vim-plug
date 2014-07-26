@@ -396,7 +396,7 @@ Expect (Aligned code):
   a  = 1
   aa = 2
 
-Given (nothing):
+Given:
 Execute (Partial PlugUpdate):
   PlugUpdate vim-redis
   q
@@ -576,6 +576,94 @@ Execute (Retry failed tasks):
   AssertExpect! '[xxx]', 1
   q
 
+**********************************************************************
+~ Post-update hook (`do` option)
+**********************************************************************
+
+Execute (Cleanup):
+  call plug#begin()
+  call plug#end()
+  PlugClean!
+
+Execute (On install):
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align', { 'do': 'touch installed' }
+  Plug 'junegunn/vim-pseudocl'
+  call plug#end()
+
+  PlugInstall
+  q
+
+  Assert filereadable(g:plugs['vim-easy-align'].dir.'/installed'),
+    \ 'vim-easy-align/installed should exist'
+  Assert !filereadable(g:plugs['vim-pseudocl'].dir.'/installed'),
+    \ 'vim-pseudocl/installed should not exist'
+
+Execute (On update):
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align', { 'do': 'touch updated' }
+  Plug 'junegunn/vim-pseudocl', { 'do': 'touch updated' }
+  call plug#end()
+
+  " Reset for updates
+  call system('cd '.g:plugs['vim-pseudocl'].dir.' && git reset --hard HEAD^')
+
+  PlugUpdate
+  Log getline(1, '$')
+  q
+
+  Assert !filereadable(g:plugs['vim-easy-align'].dir.'/updated'),
+    \ 'vim-easy-align/updated should not exist'
+  Assert filereadable(g:plugs['vim-pseudocl'].dir.'/updated'),
+    \ 'vim-pseudocl/updated should exist'
+
+Execute (When already installed):
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align', { 'do': 'touch installed2' }
+  Plug 'junegunn/vim-pseudocl', { 'do': 'touch installed2' }
+  call plug#end()
+
+  PlugInstall
+  q
+  Assert !filereadable(g:plugs['vim-easy-align'].dir.'/installed2'),
+    \ 'vim-easy-align/installed2 should not exist'
+  Assert !filereadable(g:plugs['vim-pseudocl'].dir.'/installed2'),
+    \ 'vim-pseudocl/installed2 should exist'
+
+Execute (When already updated):
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align', { 'do': 'touch updated2' }
+  Plug 'junegunn/vim-pseudocl', { 'do': 'touch updated2' }
+  call plug#end()
+
+  PlugUpdate
+  q
+  Assert !filereadable(g:plugs['vim-easy-align'].dir.'/updated2'),
+    \ 'vim-easy-align/updated2 should not exist'
+  Assert !filereadable(g:plugs['vim-pseudocl'].dir.'/updated2'),
+    \ 'vim-pseudocl/updated2 should exist'
+
+Execute (Using Funcref):
+  function! PlugUpdated()
+    call system('touch me')
+  endfunction
+
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align', { 'do': function('PlugUpdated') }
+  Plug 'junegunn/vim-pseudocl',   { 'do': function('PlugUpdated') }
+  call plug#end()
+
+  call system('cd '.g:plugs['vim-easy-align'].dir.' && git reset --hard HEAD^')
+  call system('rm -rf '.g:plugs['vim-pseudocl'].dir)
+
+  PlugUpdate
+  Log getline(1, '$')
+  q
+  Assert filereadable(g:plugs['vim-easy-align'].dir.'/me'),
+    \ 'vim-easy-align/me should exist'
+  Assert filereadable(g:plugs['vim-pseudocl'].dir.'/me'),
+    \ 'vim-pseudocl/me should exist'
+
 Execute (Cleanup):
   call system('rm -rf '.temp_plugged)
   call rename('fzf', 'fzf-staged')
@@ -586,6 +674,7 @@ Execute (Cleanup):
   unlet temp_plugged vader plug basertp save_rtp repo lnum fzf
   delf PlugStatusSorted
   delf AssertExpect
+  delf PlugUpdated
   delc AssertExpect
 
   Restore

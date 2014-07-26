@@ -76,6 +76,7 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 | -------------- | -------------------------------------------------------------------- |
 | `branch`/`tag` | Branch or tag of the repository to use                               |
 | `rtp`          | Subdirectory that contains Vim plugin                                |
+| `do`           | Post-update hook (string of funcref)                                 |
 | `on`           | On-demand loading: Commands or <Plug>-mappings                       |
 | `for`          | On-demand loading: File types                                        |
 | `frozen`       | Do not install/update plugin unless explicitly given as the argument |
