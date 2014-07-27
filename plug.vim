@@ -295,6 +295,7 @@ function! s:add(force, repo, ...)
     return
   endif
 
+  let exception = ''
   try
     let [name, spec] = s:build_plug_spec(a:repo, a:000)
 
@@ -310,9 +311,11 @@ function! s:add(force, repo, ...)
     let g:plugs[name] = spec
     let g:plugs_order += [name]
   catch
-    echoerr v:exception
-    return
+    let exception = v:exception
   endtry
+  if !empty(exception)
+    echoerr exception
+  endif
 endfunction
 
 function! s:build_plug_spec(repo, opts)
