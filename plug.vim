@@ -454,7 +454,8 @@ function! s:do(pull, todo)
       continue
     endif
     execute 'cd '.s:esc(spec.dir)
-    if has_key(s:prev_update.new, name) || (a:pull &&
+    let installed = has_key(s:prev_update.new, name)
+    if installed || (a:pull &&
       \ !empty(s:system_chomp('git log --pretty=format:"%h" "HEAD...HEAD@{1}"')))
       call append(3, '- Post-update hook for '. name .' ... ')
       let type = type(spec.do)
@@ -470,7 +471,7 @@ function! s:do(pull, todo)
         endtry
       elseif type == s:TYPE.funcref
         try
-          call spec.do()
+          call spec.do({ 'name': name, 'status': (installed ? 'installed' : 'updated') })
           let result = 'Done!'
         catch
           let result = 'Error: ' . v:exception

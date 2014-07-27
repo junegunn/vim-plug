@@ -644,8 +644,8 @@ Execute (When already updated):
     \ 'vim-pseudocl/updated2 should exist'
 
 Execute (Using Funcref):
-  function! PlugUpdated()
-    call system('touch me')
+  function! PlugUpdated(info)
+    call system('touch '. a:info.name . a:info.status . len(a:info))
   endfunction
 
   call plug#begin()
@@ -659,10 +659,10 @@ Execute (Using Funcref):
   PlugUpdate
   Log getline(1, '$')
   q
-  Assert filereadable(g:plugs['vim-easy-align'].dir.'/me'),
-    \ 'vim-easy-align/me should exist'
-  Assert filereadable(g:plugs['vim-pseudocl'].dir.'/me'),
-    \ 'vim-pseudocl/me should exist'
+  Assert filereadable(g:plugs['vim-easy-align'].dir.'/vim-easy-alignupdated2'),
+    \ 'vim-easy-align/vim-easy-alignupdated2 should exist'
+  Assert filereadable(g:plugs['vim-pseudocl'].dir.'/vim-pseudoclinstalled2'),
+    \ 'vim-pseudocl/vim-pseudoclinstalled2 should exist'
 
 Execute (Cleanup):
   call system('rm -rf '.temp_plugged)

@@ -129,11 +129,17 @@ In that case, use `do` option to describe the task to be performed.
 Plug 'Valloric/YouCompleteMe', { 'do': './install.sh' }
 ```
 
-If you need more control, you can pass a reference to a Vim function instead.
+If you need more control, you can pass a reference to a Vim function that
+takes a single argument.
 
 ```vim
-function! BuildYCM()
-  " ...
+function! BuildYCM(info)
+  " info is a dictionary with two fields
+  " - name: name of the plugin
+  " - status: 'installed' or 'updated'
+  if a:info.status == 'installed'
+    !./install.sh
+  endif
 endfunction
 
 Plug 'Valloric/YouCompleteMe', { 'do': function('BuildYCM') }
