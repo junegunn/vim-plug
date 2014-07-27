@@ -30,8 +30,8 @@
 "
 "   call plug#end()
 "
-" Then :PlugInstall to install plugins. (default: ~/.vim/plugged)
-" You can change the location of the plugins with plug#begin(path) call.
+" Then reload .vimrc and :PlugInstall to install plugins.
+" Visit https://github.com/junegunn/vim-plug for more information.
 "
 "
 " Copyright (c) 2014 Junegunn Choi

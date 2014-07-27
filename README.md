@@ -120,6 +120,42 @@ Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 Plug 'junegunn/vader.vim',  { 'on': 'Vader', 'for': 'vader' }
 ```
 
+### Post-installation/update hooks
+
+There are some plugins that require extra steps after installation or update.
+In that case, use `do` option to describe the task to be performed.
+
+```vim
+Plug 'Valloric/YouCompleteMe', { 'do': './install.sh' }
+```
+
+If you need more control, you can pass a reference to a Vim function instead.
+
+```vim
+function! BuildYCM()
+  " ...
+endfunction
+
+Plug 'Valloric/YouCompleteMe', { 'do': function('BuildYCM') }
+```
+
+Both forms of post-update hook are executed inside the directory of the plugin.
+
+Make sure to escape BARs when you write `do` option inline as they are
+mistakenly recognized as command separator for Plug command.
+
+```vim
+Plug 'junegunn/fzf', { 'do': 'yes \| ./install' }
+```
+
+But you can avoid the escaping if you extract the inline specification using a
+variable (or any Vimscript expression) as follows:
+
+```vim
+let g:fzf_install = 'yes | ./install'
+Plug 'junegunn/fzf', { 'do': g:fzf_install }
+```
+
 ### Dependency resolution
 
 See [Dependency
@@ -185,6 +221,13 @@ it as "unstable" or "in development", and always use its latest revision.
 
 If you really must choose a certain untagged revision, consider forking the
 repository.
+
+#### Migrating from other plugin managers
+
+vim-plug does not require any extra statement other than `plug#begin()` and
+`plug#end()`. You can remove `filetype off`, `filetype plugin indent on` and
+`syntax on` from your .vimrc as they are automatically handled by
+`plug#end()`.
 
 ### License
 
