@@ -77,7 +77,7 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 | `branch`/`tag` | Branch or tag of the repository to use                               |
 | `rtp`          | Subdirectory that contains Vim plugin                                |
 | `do`           | Post-update hook (string or funcref)                                 |
-| `on`           | On-demand loading: Commands or &lt;Plug&gt;-mappings                 |
+| `on`           | On-demand loading: Commands or `<Plug>`-mappings                     |
 | `for`          | On-demand loading: File types                                        |
 | `frozen`       | Do not install/update plugin unless explicitly given as the argument |
 
@@ -171,6 +171,7 @@ Resolution](https://github.com/junegunn/vim-plug/wiki/Dependency-Resolution).
 
 - [Writing my own Vim plugin manager](http://junegunn.kr/2013/09/writing-my-own-vim-plugin-manager)
 - [Thoughts on Vim plugin dependency](http://junegunn.kr/2013/09/thoughts-on-vim-plugin-dependency)
+- [Vim plugins and startup time](http://junegunn.kr/2014/07/vim-plugins-and-startup-time)
 
 ### FAQ/Troubleshooting
 
