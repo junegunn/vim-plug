@@ -519,6 +519,7 @@ function! s:names(...)
 endfunction
 
 function! s:update_impl(pull, args) abort
+  let st = reltime()
   let args = copy(a:args)
   let threads = (len(args) > 0 && args[-1] =~ '^[1-9][0-9]*$') ?
                   \ remove(args, -1) : get(g:, 'plug_threads', 16)
@@ -579,6 +580,7 @@ function! s:update_impl(pull, args) abort
     call plug#end()
   endif
   call s:finish(a:pull)
+  call setline(1, "Updated. Elapsed time: " . split(reltimestr(reltime(st)))[0] . ' sec.')
 endfunction
 
 function! s:extend(names)
@@ -606,7 +608,6 @@ function! s:update_progress(pull, cnt, bar, total)
 endfunction
 
 function! s:update_serial(pull, todo)
-  let st    = reltime()
   let base  = g:plug_home
   let todo  = copy(a:todo)
   let total = len(todo)
@@ -657,8 +658,6 @@ function! s:update_serial(pull, todo)
       break
     endif
   endwhile
-
-  call setline(1, "Updated. Elapsed time: " . split(reltimestr(reltime(st)))[0] . ' sec.')
 endfunction
 
 function! s:update_parallel(pull, todo, threads)
@@ -689,7 +688,6 @@ function! s:update_parallel(pull, todo, threads)
   require 'fileutils'
   require 'timeout'
   running = true
-  st    = Time.now
   iswin = VIM::evaluate('s:is_win').to_i == 1
   pull  = VIM::evaluate('a:pull').to_i == 1
   base  = VIM::evaluate('g:plug_home')
@@ -875,7 +873,6 @@ function! s:update_parallel(pull, todo, threads)
   end
   refresh.kill if refresh
   watcher.kill
-  $curbuf[1] = "Updated. Elapsed time: #{"%.6f" % (Time.now - st)} sec."
 EOF
 endfunction
 
