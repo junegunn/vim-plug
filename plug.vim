@@ -289,55 +289,90 @@ function! s:lod_map(map, name, prefix)
   call feedkeys(a:prefix . substitute(a:map, '^<Plug>', "\<Plug>", '') . extra)
 endfunction
 
-function! s:add(force, ...)
-  let opts = { 'branch': 'master', 'frozen': 0 }
-  if a:0 == 1
-    let plugin = a:1
-  elseif a:0 == 2
-    let plugin = a:1
-    if type(a:2) == s:TYPE.string
-      let opts.branch = a:2
-    elseif type(a:2) == s:TYPE.dict
-      call extend(opts, a:2)
-      if has_key(opts, 'tag')
-        let opts.branch = remove(opts, 'tag')
-      endif
-    else
-      echoerr "Invalid argument type (expected: string or dictionary)"
-      return
-    endif
-  else
+function! s:add(force, repo, ...)
+  if a:0 > 1
     echoerr "Invalid number of arguments (1..2)"
     return
   endif
 
-  let plugin = substitute(plugin, '[/\\]*$', '', '')
-  let name = substitute(split(plugin, '/')[-1], '\.git$', '', '')
-  if !a:force && has_key(g:plugs, name)
-    let s:extended[name] = g:plugs[name]
-    return
-  endif
+  try
+    let [name, spec] = s:build_plug_spec(a:repo, a:000)
 
-  if plugin[0] =~ '[/$~]' || plugin =~? '^[a-z]:'
-    let spec = extend(opts, { 'dir': s:dirpath(expand(plugin)) })
-  else
-    if plugin =~ ':'
-      let uri = plugin
-    else
-      if plugin !~ '/'
-        let plugin = 'vim-scripts/'. plugin
+    if !a:force && has_key(g:plugs, name)
+      let s:extended[name] = g:plugs[name]
+      return
+    endif
+
+    if !a:force
+      let s:extended[name] = spec
+    endif
+
+    let g:plugs[name] = spec
+    let g:plugs_order += [name]
+  catch
+    echoerr v:exception
+    return
+  endtry
+endfunction
+
+function! s:build_plug_spec(repo, opts)
+  try
+    let [name, properties] = s:infer_properties(a:repo)
+    let spec = extend(s:parse_options(a:opts), properties)
+    return [name, spec]
+  catch
+    throw v:exception
+  endtry
+endfunction
+
+function! s:parse_options(args)
+  let opts = { 'branch': 'master', 'frozen': 0 }
+  if !empty(a:args)
+    let arg = a:args[0]
+    if type(arg) == s:TYPE.string
+      let opts.branch = arg
+    elseif type(arg) == s:TYPE.dict
+      call extend(opts, arg)
+      if has_key(opts, 'tag')
+        let opts.branch = remove(opts, 'tag')
       endif
-      let uri = 'https://git:@github.com/' . plugin . '.git'
+    else
+      throw "Invalid argument type (expected: string or dictionary)"
+    endif
+  endif
+  return opts
+endfunction
+
+function! s:infer_properties(repo)
+  let repo = s:trim_ending_slash(a:repo)
+  let name = s:extract_name(repo)
+  if s:is_local_plug(repo)
+    let properties = { 'dir': s:dirpath(expand(repo)) }
+  else
+    if repo =~ ':'
+      let uri = repo
+    else
+      if repo !~ '/'
+        let repo = 'vim-scripts/'. repo
+      endif
+      let uri = 'https://git:@github.com/' . repo . '.git'
     endif
     let dir = s:dirpath( fnamemodify(join([g:plug_home, name], '/'), ':p') )
-    let spec = extend(opts, { 'dir': dir, 'uri': uri })
+    let properties = { 'dir': dir, 'uri': uri }
   endif
+  return [name, properties]
+endfunction
 
-  let g:plugs[name] = spec
-  if !a:force
-    let s:extended[name] = spec
-  endif
-  let g:plugs_order += [name]
+function! s:trim_ending_slash(str)
+  return substitute(a:str, '[/\\]*$', '', '')
+endfunction
+
+function! s:extract_name(repo)
+  return substitute(split(a:repo, '/')[-1], '\.git$', '', '')
+endfunction
+
+function! s:is_local_plug(repo)
+  return a:repo[0] =~ '[/$~]' || a:repo =~? '^[a-z]:'
 endfunction
 
 function! s:install(...)
