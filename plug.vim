@@ -218,7 +218,7 @@ else
   endfunction
 
   function! s:dirpath(path)
-    return s:path(a:path) . '/'
+    return substitute(a:path, '[/\\]*$', '/', '')
   endfunction
 endif
 
