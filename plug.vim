@@ -71,6 +71,7 @@ let s:plug_buf = -1
 let s:mac_gui = has('gui_macvim') && has('gui_running')
 let s:is_win = has('win32') || has('win64')
 let s:me = expand('<sfile>:p')
+let s:base_spec = { 'branch': 'master', 'frozen': 0, 'local': 0 }
 let s:TYPE = {
 \   'string': type(""),
 \   'list': type([]),
@@ -310,7 +311,7 @@ function! s:add(force, repo, ...)
       return
     endif
 
-    let spec = extend(s:parse_options(a:0 == 1 ? a:1 : {}),
+    let spec = extend(a:0 == 1 ? s:parse_options(a:1) : copy(s:base_spec),
                     \ s:infer_properties(name, repo))
     if !a:force
       let s:extended[name] = spec
@@ -324,7 +325,7 @@ function! s:add(force, repo, ...)
 endfunction
 
 function! s:parse_options(arg)
-  let opts = { 'branch': 'master', 'frozen': 0, 'local': 0 }
+  let opts = copy(s:base_spec)
   let type = type(a:arg)
   if type == s:TYPE.string
     let opts.branch = a:arg
