@@ -360,7 +360,7 @@ function! s:infer_properties(name, repo)
 endfunction
 
 function! s:extract_name(repo)
-  return substitute(split(a:repo, '[\/]\+')[-1], '\.git$', '', '')
+  return substitute(fnamemodify(a:repo, ':t'), '\.git$', '', '')
 endfunction
 
 function! s:is_local_plug(repo)
@@ -614,7 +614,7 @@ endfunction
 function! s:find_plugfiles()
   let plugfiles = {}
   for pf in split(globpath(g:plug_home, '*/'.s:plug_file), '\n')
-    let plugfiles[split(pf, '[\/]\+')[-2]] = pf
+    let plugfiles[fnamemodify(pf, ':h:t')] = pf
   endfor
   return plugfiles
 endfunction
