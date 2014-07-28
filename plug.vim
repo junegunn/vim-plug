@@ -195,14 +195,17 @@ function! plug#end()
   syntax on
 endfunction
 
+function! s:trim(str)
+  return substitute(a:str, '[\/]\+$', '', '')
+endfunction
+
 if s:is_win
   function! s:rtp(spec)
-    let rtp = s:dirpath(a:spec.dir . get(a:spec, 'rtp', ''))
-    return substitute(rtp, '\\*$', '', '')
+    return s:path(a:spec.dir . get(a:spec, 'rtp', ''))
   endfunction
 
   function! s:path(path)
-    return substitute(substitute(a:path, '/', '\', 'g'), '[/\\]*$', '', '')
+    return s:trim(substitute(a:path, '/', '\', 'g'))
   endfunction
 
   function! s:dirpath(path)
@@ -214,11 +217,11 @@ else
   endfunction
 
   function! s:path(path)
-    return substitute(a:path, '[/\\]*$', '', '')
+    return s:trim(a:path)
   endfunction
 
   function! s:dirpath(path)
-    return s:path(a:path) . '/'
+    return s:trim(a:path) . '/'
   endfunction
 endif
 
@@ -300,7 +303,7 @@ function! s:add(force, repo, ...)
   endif
 
   try
-    let repo = s:trim_trailing_slashes(a:repo)
+    let repo = s:trim(a:repo)
     let name = s:extract_name(repo)
     if !a:force && has_key(g:plugs, name)
       let s:extended[name] = g:plugs[name]
@@ -355,12 +358,8 @@ function! s:infer_properties(name, repo)
   return properties
 endfunction
 
-function! s:trim_trailing_slashes(str)
-  return substitute(a:str, '[/\\]*$', '', '')
-endfunction
-
 function! s:extract_name(repo)
-  return substitute(split(a:repo, '/')[-1], '\.git$', '', '')
+  return substitute(split(a:repo, '[\/]\+')[-1], '\.git$', '', '')
 endfunction
 
 function! s:is_local_plug(repo)
@@ -678,7 +677,7 @@ function! s:update_serial(pull, todo)
               \ printf('git clone --recursive %s -b %s %s 2>&1 && cd %s && git submodule update --init --recursive 2>&1',
               \ s:shellesc(spec.uri),
               \ s:shellesc(spec.branch),
-              \ s:shellesc(substitute(spec.dir, '[\/]\+$', '', '')),
+              \ s:shellesc(s:trim(spec.dir)),
               \ s:shellesc(spec.dir)))
         let error = v:shell_error != 0
         if !error | let s:prev_update.new[name] = 1 | endif
