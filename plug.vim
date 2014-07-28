@@ -297,13 +297,15 @@ function! s:add(force, repo, ...)
 
   let exception = ''
   try
-    let [name, spec] = s:build_plug_spec(a:repo, a:000)
-
+    let repo = s:trim_trailing_slashes(a:repo)
+    let name = s:extract_name(repo)
     if !a:force && has_key(g:plugs, name)
       let s:extended[name] = g:plugs[name]
       return
     endif
 
+    let spec = extend(s:parse_options(a:0 == 1 ? a:1 : {}),
+                    \ s:infer_properties(name, repo))
     if !a:force
       let s:extended[name] = spec
     endif
@@ -318,24 +320,14 @@ function! s:add(force, repo, ...)
   endif
 endfunction
 
-function! s:build_plug_spec(repo, opts)
-  try
-    let [name, properties] = s:infer_properties(a:repo)
-    let spec = extend(s:parse_options(a:opts), properties)
-    return [name, spec]
-  catch
-    throw v:exception
-  endtry
-endfunction
-
-function! s:parse_options(args)
+function! s:parse_options(arg)
   let opts = { 'branch': 'master', 'frozen': 0 }
-  if !empty(a:args)
-    let arg = a:args[0]
-    if type(arg) == s:TYPE.string
-      let opts.branch = arg
-    elseif type(arg) == s:TYPE.dict
-      call extend(opts, arg)
+  if !empty(a:arg)
+    let type = type(a:arg)
+    if type == s:TYPE.string
+      let opts.branch = a:arg
+    elseif type == s:TYPE.dict
+      call extend(opts, a:arg)
       if has_key(opts, 'tag')
         let opts.branch = remove(opts, 'tag')
       endif
@@ -346,9 +338,8 @@ function! s:parse_options(args)
   return opts
 endfunction
 
-function! s:infer_properties(repo)
-  let repo = s:trim_ending_slash(a:repo)
-  let name = s:extract_name(repo)
+function! s:infer_properties(name, repo)
+  let repo = a:repo
   if s:is_local_plug(repo)
     let properties = { 'dir': s:dirpath(expand(repo)) }
   else
@@ -360,13 +351,13 @@ function! s:infer_properties(repo)
       endif
       let uri = 'https://git:@github.com/' . repo . '.git'
     endif
-    let dir = s:dirpath( fnamemodify(join([g:plug_home, name], '/'), ':p') )
+    let dir = s:dirpath( fnamemodify(join([g:plug_home, a:name], '/'), ':p') )
     let properties = { 'dir': dir, 'uri': uri }
   endif
-  return [name, properties]
+  return properties
 endfunction
 
-function! s:trim_ending_slash(str)
+function! s:trim_trailing_slashes(str)
   return substitute(a:str, '[/\\]*$', '', '')
 endfunction
 
