@@ -129,8 +129,10 @@ function! plug#end()
     return
   endif
   let keys = keys(g:plugs)
+  let plugfiles = s:find_plugfiles()
   while !empty(keys)
-    let keys = keys(s:extend(keys))
+    " No need to look for Plugfiles more than once
+    let keys = keys(s:extend(keys, plugfiles))
   endwhile
 
   if exists('#PlugLOD')
@@ -321,7 +323,7 @@ function! s:add(force, repo, ...)
 endfunction
 
 function! s:parse_options(arg)
-  let opts = { 'branch': 'master', 'frozen': 0 }
+  let opts = { 'branch': 'master', 'frozen': 0, 'local': 0 }
   if !empty(a:arg)
     let type = type(a:arg)
     if type == s:TYPE.string
@@ -341,7 +343,7 @@ endfunction
 function! s:infer_properties(name, repo)
   let repo = a:repo
   if s:is_local_plug(repo)
-    let properties = { 'dir': s:dirpath(expand(repo)) }
+    let properties = { 'dir': s:dirpath(expand(repo)), 'local': 1 }
   else
     if repo =~ ':'
       let uri = repo
@@ -613,14 +615,28 @@ function! s:update_impl(pull, args) abort
   call setline(1, "Updated. Elapsed time: " . split(reltimestr(reltime(st)))[0] . ' sec.')
 endfunction
 
-function! s:extend(names)
+function! s:find_plugfiles()
+  let plugfiles = {}
+  for pf in split(globpath(g:plug_home, '*/'.s:plug_file), '\n')
+    let plugfiles[split(pf, '[\/]\+')[-2]] = pf
+  endfor
+  return plugfiles
+endfunction
+
+function! s:extend(names, ...)
   let s:extended = {}
+  let plugfiles = a:0 > 0 ? a:1 : s:find_plugfiles()
   try
     command! -nargs=+ Plug call s:add(0, <args>)
     for name in a:names
-      let plugfile = globpath(s:rtp(g:plugs[name]), s:plug_file)
-      if filereadable(plugfile)
-        execute "source ". s:esc(plugfile)
+      let spec = g:plugs[name]
+      if get(spec, 'local', 0)
+        let plugfile = globpath(s:rtp(spec), s:plug_file)
+        if filereadable(plugfile)
+          execute 'source '. s:esc(plugfile)
+        endif
+      elseif has_key(plugfiles, name)
+        execute 'source '. s:esc(plugfiles[name])
       endif
     endfor
   finally
