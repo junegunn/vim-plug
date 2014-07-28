@@ -109,7 +109,7 @@ function! plug#begin(...)
   command! -nargs=* -complete=customlist,s:names PlugInstall call s:install(<f-args>)
   command! -nargs=* -complete=customlist,s:names PlugUpdate  call s:update(<f-args>)
   command! -nargs=0 -bang PlugClean call s:clean('<bang>' == '!')
-  command! -nargs=0 PlugUpgrade if s:upgrade() | execute "source ". s:me | endif
+  command! -nargs=0 PlugUpgrade if s:upgrade() | call s:upgrade_specs() | execute "source ". s:me | endif
   command! -nargs=0 PlugStatus  call s:status()
   command! -nargs=0 PlugDiff    call s:diff()
 
@@ -552,7 +552,7 @@ function! s:update_impl(pull, args) abort
                   \ remove(args, -1) : get(g:, 'plug_threads', 16)
 
   let managed = filter(copy(g:plugs), 's:is_managed(v:key)')
-  let todo = empty(args) ? filter(managed, '!get(v:val, "frozen", 0)') :
+  let todo = empty(args) ? filter(managed, '!v:val.frozen') :
                          \ filter(managed, 'index(args, v:key) >= 0')
 
   if empty(todo)
@@ -625,7 +625,7 @@ function! s:extend(names, ...)
     command! -nargs=+ Plug call s:add(0, <args>)
     for name in a:names
       let spec = g:plugs[name]
-      if get(spec, 'local', 0)
+      if spec.local
         let plugfile = globpath(s:rtp(spec), s:plug_file)
         if filereadable(plugfile)
           execute 'source '. s:esc(plugfile)
@@ -1085,6 +1085,13 @@ EOF
   else
     return s:err('curl executable or ruby support not found')
   endif
+endfunction
+
+function! s:upgrade_specs()
+  for spec in values(g:plugs)
+    let spec.frozen = get(spec, 'frozen', 0)
+    let spec.local  = get(spec, 'local', 0)
+  endfor
 endfunction
 
 function! s:status()
