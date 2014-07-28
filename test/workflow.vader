@@ -39,12 +39,10 @@ Execute (Initialize test environment):
   let $MYVIMRC = vimrc
 
 Execute (plug#end() before plug#begin() should fail):
-  try
-    call plug#end()
-    Assert 0, 'should not reach here'
-  catch
-    Assert stridx(v:exception, 'Call plug#begin() first') >= 0
-  endtry
+  redir => out
+  AssertEqual 0, plug#end()
+  redir END
+  Assert stridx(out, 'Call plug#begin() first') >= 0
 
 Execute (plug#begin() without path argument):
   call plug#begin()
@@ -54,12 +52,10 @@ Execute (plug#begin() without path argument):
 Execute (plug#begin() without path argument with empty &rtp):
   let save_rtp = &rtp
   set rtp=
-  try
-    call plug#begin()
-    Assert 0, 'should not reach here'
-  catch
-    Assert stridx(v:exception, 'Unable to determine plug home') >= 0, 'Got: '.v:exception
-  endtry
+  redir => out
+  AssertEqual 0, plug#begin()
+  redir END
+  Assert stridx(out, 'Unable to determine plug home') >= 0
   let &rtp = save_rtp
 
 Execute (plug#begin(path)):
@@ -671,7 +667,7 @@ Execute (Cleanup):
   unlet g:plugs
   unlet g:plug_home
   unlet g:vimrc_reloaded
-  unlet temp_plugged vader plug basertp save_rtp repo lnum fzf
+  unlet temp_plugged vader plug basertp save_rtp repo lnum fzf out
   delf PlugStatusSorted
   delf AssertExpect
   delf PlugUpdated

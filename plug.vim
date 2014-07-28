@@ -86,21 +86,18 @@ function! plug#begin(...)
   elseif !empty(&rtp)
     let home = s:path(split(&rtp, ',')[0]) . '/plugged'
   else
-    echoerr "Unable to determine plug home. Try calling plug#begin() with a path argument."
-    return 0
+    return s:err('Unable to determine plug home. Try calling plug#begin() with a path argument.')
   endif
 
   if !isdirectory(home)
     try
       call mkdir(home, 'p')
     catch
-      echoerr 'Invalid plug directory: '. home
-      return 0
+      return s:err('Invalid plug directory: '. home)
     endtry
   endif
   if !executable('git')
-    echoerr "`git' executable not found. vim-plug requires git."
-    return 0
+    return s:err('`git` executable not found. vim-plug requires git.')
   endif
 
   let g:plug_home = home
@@ -125,8 +122,7 @@ endfunction
 
 function! plug#end()
   if !exists('g:plugs')
-    echoerr 'Call plug#begin() first'
-    return
+    return s:err('Call plug#begin() first')
   endif
   let keys = keys(g:plugs)
   let plugfiles = s:find_plugfiles()
@@ -226,6 +222,13 @@ else
   endfunction
 endif
 
+function! s:err(msg)
+  echohl ErrorMsg
+  echom a:msg
+  echohl None
+  return 0
+endfunction
+
 function! s:esc(path)
   return substitute(a:path, ' ', '\\ ', 'g')
 endfunction
@@ -293,11 +296,9 @@ endfunction
 
 function! s:add(force, repo, ...)
   if a:0 > 1
-    echoerr "Invalid number of arguments (1..2)"
-    return
+    return s:err('Invalid number of arguments (1..2)')
   endif
 
-  let exception = ''
   try
     let repo = s:trim_trailing_slashes(a:repo)
     let name = s:extract_name(repo)
@@ -315,27 +316,22 @@ function! s:add(force, repo, ...)
     let g:plugs[name] = spec
     let g:plugs_order += [name]
   catch
-    let exception = v:exception
+    return s:err(v:exception)
   endtry
-  if !empty(exception)
-    echoerr exception
-  endif
 endfunction
 
 function! s:parse_options(arg)
   let opts = { 'branch': 'master', 'frozen': 0, 'local': 0 }
-  if !empty(a:arg)
-    let type = type(a:arg)
-    if type == s:TYPE.string
-      let opts.branch = a:arg
-    elseif type == s:TYPE.dict
-      call extend(opts, a:arg)
-      if has_key(opts, 'tag')
-        let opts.branch = remove(opts, 'tag')
-      endif
-    else
-      throw "Invalid argument type (expected: string or dictionary)"
+  let type = type(a:arg)
+  if type == s:TYPE.string
+    let opts.branch = a:arg
+  elseif type == s:TYPE.dict
+    call extend(opts, a:arg)
+    if has_key(opts, 'tag')
+      let opts.branch = remove(opts, 'tag')
     endif
+  else
+    throw 'Invalid argument type (expected: string or dictionary)'
   endif
   return opts
 endfunction
@@ -1068,8 +1064,7 @@ function! s:upgrade()
       echo "Downloaded ". s:plug_source
       return 1
     else
-      echoerr "Error upgrading vim-plug"
-      return 0
+      return s:err('Error upgrading vim-plug')
     endif
   elseif has('ruby')
     echo "Downloading ". s:plug_source
@@ -1089,8 +1084,7 @@ EOF
     echo "Downloaded ". s:plug_source
     return 1
   else
-    echoerr "curl executable or ruby support not found"
-    return 0
+    return s:err('curl executable or ruby support not found')
   endif
 endfunction
 
