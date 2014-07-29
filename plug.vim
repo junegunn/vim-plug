@@ -73,10 +73,10 @@ let s:is_win = has('win32') || has('win64')
 let s:me = expand('<sfile>:p')
 let s:base_spec = { 'branch': 'master', 'frozen': 0, 'local': 0 }
 let s:TYPE = {
-\   'string': type(""),
-\   'list': type([]),
-\   'dict': type({}),
-\   'funcref': type(function("call"))
+\   'string':  type(''),
+\   'list':    type([]),
+\   'dict':    type({}),
+\   'funcref': type(function('call'))
 \ }
 
 function! plug#begin(...)
@@ -110,7 +110,7 @@ function! plug#begin(...)
   command! -nargs=* -complete=customlist,s:names PlugInstall call s:install(<f-args>)
   command! -nargs=* -complete=customlist,s:names PlugUpdate  call s:update(<f-args>)
   command! -nargs=0 -bang PlugClean call s:clean('<bang>' == '!')
-  command! -nargs=0 PlugUpgrade if s:upgrade() | call s:upgrade_specs() | execute "source ". s:me | endif
+  command! -nargs=0 PlugUpgrade if s:upgrade() | call s:upgrade_specs() | execute 'source '. s:me | endif
   command! -nargs=0 PlugStatus  call s:status()
   command! -nargs=0 PlugDiff    call s:diff()
 
@@ -158,15 +158,15 @@ function! plug#end()
         if cmd =~ '^<Plug>.\+'
           if empty(mapcheck(cmd)) && empty(mapcheck(cmd, 'i'))
             for [mode, map_prefix, key_prefix] in
-                  \ [['i', "<C-O>", ''], ['n', '', ''], ['v', '', 'gv'], ['o', '', '']]
+                  \ [['i', '<C-O>', ''], ['n', '', ''], ['v', '', 'gv'], ['o', '', '']]
               execute printf(
-              \ "%snoremap <silent> %s %s:<C-U>call <SID>lod_map(%s, %s, '%s')<CR>",
+              \ '%snoremap <silent> %s %s:<C-U>call <SID>lod_map(%s, %s, "%s")<CR>',
               \ mode, cmd, map_prefix, string(cmd), string(name), key_prefix)
             endfor
           endif
         elseif !exists(':'.cmd)
           execute printf(
-          \ "command! -nargs=* -range -bang %s call s:lod_cmd(%s, '<bang>', <line1>, <line2>, <q-args>, %s)",
+          \ 'command! -nargs=* -range -bang %s call s:lod_cmd(%s, "<bang>", <line1>, <line2>, <q-args>, %s)',
           \ cmd, string(cmd), string(name))
         endif
       endfor
@@ -246,10 +246,10 @@ function! s:esc(path)
 endfunction
 
 function! s:add_rtp(rtp)
-  execute "set rtp^=".s:esc(a:rtp)
+  execute 'set rtp^='.s:esc(a:rtp)
   let after = globpath(a:rtp, 'after')
   if isdirectory(after)
-    execute "set rtp+=".s:esc(after)
+    execute 'set rtp+='.s:esc(after)
   endif
 endfunction
 
@@ -287,7 +287,7 @@ function! s:lod_cmd(cmd, bang, l1, l2, args, name)
   execute 'delc '.a:cmd
   call s:lod(g:plugs[a:name], ['plugin', 'ftdetect', 'after'])
   call s:reorg_rtp()
-  execute printf("%s%s%s %s", (a:l1 == a:l2 ? '' : (a:l1.','.a:l2)), a:cmd, a:bang, a:args)
+  execute printf('%s%s%s %s', (a:l1 == a:l2 ? '' : (a:l1.','.a:l2)), a:cmd, a:bang, a:args)
 endfunction
 
 function! s:lod_map(map, name, prefix)
@@ -383,7 +383,7 @@ function! s:apply()
   for spec in values(g:plugs)
     let docd = join([spec.dir, 'doc'], '/')
     if isdirectory(docd)
-      silent! execute "helptags ". join([spec.dir, 'doc'], '/')
+      silent! execute 'helptags '. join([spec.dir, 'doc'], '/')
     endif
   endfor
   runtime! plugin/*.vim
@@ -473,10 +473,10 @@ function! s:assign_name()
   let name   = prefix
   let idx    = 2
   while bufexists(name)
-    let name = printf("%s (%s)", prefix, idx)
+    let name = printf('%s (%s)', prefix, idx)
     let idx = idx + 1
   endwhile
-  silent! execute "f ".fnameescape(name)
+  silent! execute 'f '.fnameescape(name)
 endfunction
 
 function! s:do(pull, todo)
@@ -612,7 +612,7 @@ function! s:update_impl(pull, args) abort
     call plug#end()
   endif
   call s:finish(a:pull)
-  call setline(1, "Updated. Elapsed time: " . split(reltimestr(reltime(st)))[0] . ' sec.')
+  call setline(1, 'Updated. Elapsed time: ' . split(reltimestr(reltime(st)))[0] . ' sec.')
 endfunction
 
 function! s:find_plugfiles()
@@ -647,7 +647,7 @@ endfunction
 
 function! s:update_progress(pull, cnt, bar, total)
   call setline(1, (a:pull ? 'Updating' : 'Installing').
-        \ " plugins (".a:cnt."/".a:total.")")
+        \ ' plugins ('.a:cnt.'/'.a:total.')')
   call s:progress_bar(2, a:bar, a:total)
   normal! 2G
   redraw
@@ -962,16 +962,16 @@ function! s:git_valid(spec, check_branch, cd)
   let ret = 1
   let msg = 'OK'
   if isdirectory(a:spec.dir)
-    if a:cd | execute "cd " . s:esc(a:spec.dir) | endif
-    let result = split(s:system("git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url"), '\n')
+    if a:cd | execute 'cd ' . s:esc(a:spec.dir) | endif
+    let result = split(s:system('git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url'), '\n')
     let remote = result[-1]
     if v:shell_error
-      let msg = join([remote, "PlugClean required."], "\n")
+      let msg = join([remote, 'PlugClean required.'], "\n")
       let ret = 0
     elseif !s:compare_git_uri(remote, a:spec.uri)
       let msg = join(['Invalid URI: '.remote,
                     \ 'Expected:    '.a:spec.uri,
-                    \ "PlugClean required."], "\n")
+                    \ 'PlugClean required.'], "\n")
       let ret = 0
     elseif a:check_branch
       let branch = result[0]
@@ -1036,7 +1036,7 @@ function! s:clean(force)
     call append(line('$'), 'Already clean.')
   else
     call inputsave()
-    let yes = a:force || (input("Proceed? (Y/N) ") =~? '^y')
+    let yes = a:force || (input('Proceed? (Y/N) ') =~? '^y')
     call inputrestore()
     if yes
       for dir in todo
@@ -1056,22 +1056,22 @@ function! s:upgrade()
   if executable('curl')
     let mee = s:shellesc(s:me)
     let new = s:shellesc(s:me . '.new')
-    echo "Downloading ". s:plug_source
+    echo 'Downloading '. s:plug_source
     redraw
     let mv = s:is_win ? 'move /Y' : 'mv -f'
     let cp = s:is_win ? 'copy /Y' : 'cp -f'
     call system(printf(
-      \ "curl -fLo %s %s && ".cp." %s %s.old && ".mv." %s %s",
+      \ 'curl -fLo %s %s && '.cp.' %s %s.old && '.mv.' %s %s',
       \ new, s:plug_source, mee, mee, new, mee))
     if v:shell_error == 0
       unlet g:loaded_plug
-      echo "Downloaded ". s:plug_source
+      echo 'Downloaded '. s:plug_source
       return 1
     else
       return s:err('Error upgrading vim-plug')
     endif
   elseif has('ruby')
-    echo "Downloading ". s:plug_source
+    echo 'Downloading '. s:plug_source
     ruby << EOF
       require 'open-uri'
       require 'fileutils'
@@ -1085,7 +1085,7 @@ function! s:upgrade()
       File.rename  new, me
 EOF
     unlet g:loaded_plug
-    echo "Downloaded ". s:plug_source
+    echo 'Downloaded '. s:plug_source
     return 1
   else
     return s:err('curl executable or ruby support not found')
