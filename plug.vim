@@ -212,6 +212,10 @@ if s:is_win
   function! s:dirpath(path)
     return s:path(a:path) . '\'
   endfunction
+
+  function! s:is_local_plug(repo)
+    return a:repo =~? '^[a-z]:'
+  endfunction
 else
   function! s:rtp(spec)
     return s:dirpath(a:spec.dir . get(a:spec, 'rtp', ''))
@@ -223,6 +227,10 @@ else
 
   function! s:dirpath(path)
     return s:trim(a:path) . '/'
+  endfunction
+
+  function! s:is_local_plug(repo)
+    return a:repo[0] =~ '[/$~]'
   endfunction
 endif
 
@@ -361,10 +369,6 @@ endfunction
 
 function! s:extract_name(repo)
   return substitute(fnamemodify(a:repo, ':t'), '\.git$', '', '')
-endfunction
-
-function! s:is_local_plug(repo)
-  return a:repo[0] =~ '[/$~]' || a:repo =~? '^[a-z]:'
 endfunction
 
 function! s:install(...)
