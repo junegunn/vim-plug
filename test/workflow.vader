@@ -672,5 +672,7 @@ Execute (Cleanup):
   delf AssertExpect
   delf PlugUpdated
   delc AssertExpect
+  unmap /
+  unmap ?
 
   Restore
