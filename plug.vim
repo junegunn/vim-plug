@@ -226,7 +226,7 @@ else
   endfunction
 
   function! s:dirpath(path)
-    return s:trim(a:path) . '/'
+    return substitute(a:path, '[/\\]*$', '/', '')
   endfunction
 
   function! s:is_local_plug(repo)
