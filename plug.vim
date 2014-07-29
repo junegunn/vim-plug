@@ -313,7 +313,7 @@ function! s:add(force, repo, ...)
 
   try
     let repo = s:trim(a:repo)
-    let name = s:extract_name(repo)
+    let name = fnamemodify(repo, ':t:s?\.git$??')
     if !a:force && has_key(g:plugs, name)
       let s:extended[name] = g:plugs[name]
       return
@@ -365,10 +365,6 @@ function! s:infer_properties(name, repo)
     let properties = { 'dir': dir, 'uri': uri }
   endif
   return properties
-endfunction
-
-function! s:extract_name(repo)
-  return substitute(fnamemodify(a:repo, ':t'), '\.git$', '', '')
 endfunction
 
 function! s:install(...)
