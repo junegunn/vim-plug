@@ -373,7 +373,7 @@ function! s:apply()
     endif
   endfor
   runtime! plugin/*.vim
-  runtime! after/*.vim
+  runtime! after/**/*.vim
   silent! source $MYVIMRC
 endfunction
 
