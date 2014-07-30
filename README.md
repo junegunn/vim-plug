@@ -16,7 +16,6 @@ Somewhere between [Pathogen](https://github.com/tpope/vim-pathogen) and
 - Smallest possible feature set
 - Branch/tag support
 - On-demand loading
-- Dependency resolution using `Plugfile` (experimental)
 
 ### Cons.
 
@@ -163,15 +162,11 @@ let g:fzf_install = 'yes | ./install'
 Plug 'junegunn/fzf', { 'do': g:fzf_install }
 ```
 
-### Dependency resolution
-
-See [Dependency
-Resolution](https://github.com/junegunn/vim-plug/wiki/Dependency-Resolution).
-
 ### Articles
 
 - [Writing my own Vim plugin manager](http://junegunn.kr/2013/09/writing-my-own-vim-plugin-manager)
 - [Thoughts on Vim plugin dependency](http://junegunn.kr/2013/09/thoughts-on-vim-plugin-dependency)
+    - *Support for Plugfile has been removed since 0.5.0*
 - [Vim plugins and startup time](http://junegunn.kr/2014/07/vim-plugins-and-startup-time)
 
 ### FAQ/Troubleshooting

@@ -66,7 +66,6 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 let s:plug_source = 'https://raw.github.com/junegunn/vim-plug/master/plug.vim'
-let s:plug_file = 'Plugfile'
 let s:plug_buf = -1
 let s:mac_gui = has('gui_macvim') && has('gui_running')
 let s:is_win = has('win32') || has('win64')
@@ -106,7 +105,7 @@ function! plug#begin(...)
   " we want to keep track of the order plugins where registered.
   let g:plugs_order = []
 
-  command! -nargs=+ -bar Plug   call s:add(1, <args>)
+  command! -nargs=+ -bar Plug   call s:add(<args>)
   command! -nargs=* -complete=customlist,s:names PlugInstall call s:install(<f-args>)
   command! -nargs=* -complete=customlist,s:names PlugUpdate  call s:update(<f-args>)
   command! -nargs=0 -bang PlugClean call s:clean('<bang>' == '!')
@@ -125,12 +124,6 @@ function! plug#end()
   if !exists('g:plugs')
     return s:err('Call plug#begin() first')
   endif
-  let keys = keys(g:plugs)
-  let plugfiles = s:find_plugfiles()
-  while !empty(keys)
-    " No need to look for Plugfiles more than once
-    let keys = keys(s:extend(keys, plugfiles))
-  endwhile
 
   if exists('#PlugLOD')
     augroup PlugLOD
@@ -306,7 +299,7 @@ function! s:lod_map(map, name, prefix)
   call feedkeys(a:prefix . substitute(a:map, '^<Plug>', "\<Plug>", '') . extra)
 endfunction
 
-function! s:add(force, repo, ...)
+function! s:add(repo, ...)
   if a:0 > 1
     return s:err('Invalid number of arguments (1..2)')
   endif
@@ -314,17 +307,8 @@ function! s:add(force, repo, ...)
   try
     let repo = s:trim(a:repo)
     let name = fnamemodify(repo, ':t:s?\.git$??')
-    if !a:force && has_key(g:plugs, name)
-      let s:extended[name] = g:plugs[name]
-      return
-    endif
-
     let spec = extend(s:infer_properties(name, repo),
                     \ a:0 == 1 ? s:parse_options(a:1) : copy(s:base_spec))
-    if !a:force
-      let s:extended[name] = spec
-    endif
-
     let g:plugs[name] = spec
     let g:plugs_order += [name]
   catch
@@ -614,36 +598,6 @@ function! s:update_impl(pull, args) abort
   call setline(1, 'Updated. Elapsed time: ' . split(reltimestr(reltime(st)))[0] . ' sec.')
 endfunction
 
-function! s:find_plugfiles()
-  let plugfiles = {}
-  for pf in split(globpath(g:plug_home, '*/'.s:plug_file), '\n')
-    let plugfiles[fnamemodify(pf, ':h:t')] = pf
-  endfor
-  return plugfiles
-endfunction
-
-function! s:extend(names, ...)
-  let s:extended = {}
-  let plugfiles = a:0 > 0 ? a:1 : s:find_plugfiles()
-  try
-    command! -nargs=+ Plug call s:add(0, <args>)
-    for name in a:names
-      let spec = g:plugs[name]
-      if spec.local
-        let plugfile = globpath(s:rtp(spec), s:plug_file)
-        if filereadable(plugfile)
-          execute 'source '. s:esc(plugfile)
-        endif
-      elseif has_key(plugfiles, name)
-        execute 'source '. s:esc(plugfiles[name])
-      endif
-    endfor
-  finally
-    command! -nargs=+ Plug call s:add(1, <args>)
-  endtry
-  return s:extended
-endfunction
-
 function! s:update_progress(pull, cnt, bar, total)
   call setline(1, (a:pull ? 'Updating' : 'Installing').
         \ ' plugins ('.a:cnt.'/'.a:total.')')
@@ -659,50 +613,39 @@ function! s:update_serial(pull, todo)
   let done  = {}
   let bar   = ''
 
-  while !empty(todo)
-    for [name, spec] in items(todo)
-      let done[name] = 1
-      if isdirectory(spec.dir)
-        execute 'cd '.s:esc(spec.dir)
-        let [valid, msg] = s:git_valid(spec, 0, 0)
-        if valid
-          let result = a:pull ?
-            \ s:system(
-            \ printf('git checkout -q %s 2>&1 && git pull origin %s 2>&1 && git submodule update --init --recursive 2>&1',
-            \   s:shellesc(spec.branch), s:shellesc(spec.branch))) : 'Already installed'
-          let error = a:pull ? v:shell_error != 0 : 0
-        else
-          let result = msg
-          let error = 1
-        endif
-        cd -
+  for [name, spec] in items(todo)
+    let done[name] = 1
+    if isdirectory(spec.dir)
+      execute 'cd '.s:esc(spec.dir)
+      let [valid, msg] = s:git_valid(spec, 0, 0)
+      if valid
+        let result = a:pull ?
+          \ s:system(
+          \ printf('git checkout -q %s 2>&1 && git pull origin %s 2>&1 && git submodule update --init --recursive 2>&1',
+          \   s:shellesc(spec.branch), s:shellesc(spec.branch))) : 'Already installed'
+        let error = a:pull ? v:shell_error != 0 : 0
       else
-        let result = s:system(
-              \ printf('git clone --recursive %s -b %s %s 2>&1 && cd %s && git submodule update --init --recursive 2>&1',
-              \ s:shellesc(spec.uri),
-              \ s:shellesc(spec.branch),
-              \ s:shellesc(s:trim(spec.dir)),
-              \ s:shellesc(spec.dir)))
-        let error = v:shell_error != 0
-        if !error | let s:prev_update.new[name] = 1 | endif
+        let result = msg
+        let error = 1
       endif
-      let bar .= error ? 'x' : '='
-      if error
-        call add(s:prev_update.errors, name)
-      endif
-      call append(3, s:format_message(!error, name, result))
-      call s:update_progress(a:pull, len(done), bar, total)
-    endfor
-
-    let extended = s:extend(keys(todo))
-    if !empty(extended)
-      let todo = filter(extended, '!has_key(done, v:key)')
-      let total += len(todo)
-      call s:update_progress(a:pull, len(done), bar, total)
+      cd -
     else
-      break
+      let result = s:system(
+            \ printf('git clone --recursive %s -b %s %s 2>&1 && cd %s && git submodule update --init --recursive 2>&1',
+            \ s:shellesc(spec.uri),
+            \ s:shellesc(spec.branch),
+            \ s:shellesc(s:trim(spec.dir)),
+            \ s:shellesc(spec.dir)))
+      let error = v:shell_error != 0
+      if !error | let s:prev_update.new[name] = 1 | endif
     endif
-  endwhile
+    let bar .= error ? 'x' : '='
+    if error
+      call add(s:prev_update.errors, name)
+    endif
+    call append(3, s:format_message(!error, name, result))
+    call s:update_progress(a:pull, len(done), bar, total)
+  endfor
 endfunction
 
 function! s:update_parallel(pull, todo, threads)
@@ -728,7 +671,6 @@ function! s:update_parallel(pull, todo, threads)
     %["#{arg.gsub('"', '\"')}"]
   end
 
-  require 'set'
   require 'thread'
   require 'fileutils'
   require 'timeout'
@@ -859,63 +801,52 @@ function! s:update_parallel(pull, todo, threads)
     end
   } if VIM::evaluate('s:mac_gui') == 1
 
-  processed = Set.new
   progress = iswin ? '' : '--progress'
-  until all.empty?
-    names = all.keys
-    processed.merge names
-    [names.length, nthr].min.times do
-      mtx.synchronize do
-        threads << Thread.new {
-          while pair = take1.call
-            name = pair.first
-            dir, uri, branch = pair.last.values_at *%w[dir uri branch]
-            branch = esc branch
-            subm = "git submodule update --init --recursive 2>&1"
-            exists = File.directory? dir
-            ok, result =
-              if exists
-                dir = esc dir
-                ret, data = bt.call "#{cd} #{dir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url", nil, nil
-                current_uri = data.lines.to_a.last
-                if !ret
-                  if data =~ /^Interrupted|^Timeout/
-                    [false, data]
-                  else
-                    [false, [data.chomp, "PlugClean required."].join($/)]
-                  end
-                elsif current_uri.sub(/git:@/, '') != uri.sub(/git:@/, '')
-                  [false, ["Invalid URI: #{current_uri}",
-                           "Expected:    #{uri}",
-                           "PlugClean required."].join($/)]
+  [all.length, nthr].min.times do
+    mtx.synchronize do
+      threads << Thread.new {
+        while pair = take1.call
+          name = pair.first
+          dir, uri, branch = pair.last.values_at *%w[dir uri branch]
+          branch = esc branch
+          subm = "git submodule update --init --recursive 2>&1"
+          exists = File.directory? dir
+          ok, result =
+            if exists
+              dir = esc dir
+              ret, data = bt.call "#{cd} #{dir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url", nil, nil
+              current_uri = data.lines.to_a.last
+              if !ret
+                if data =~ /^Interrupted|^Timeout/
+                  [false, data]
                 else
-                  if pull
-                    log.call name, 'Updating ...', :update
-                    bt.call "#{cd} #{dir} && git checkout -q #{branch} 2>&1 && (git pull origin #{branch} #{progress} 2>&1 && #{subm})", name, :update
-                  else
-                    [true, skip]
-                  end
+                  [false, [data.chomp, "PlugClean required."].join($/)]
                 end
+              elsif current_uri.sub(/git:@/, '') != uri.sub(/git:@/, '')
+                [false, ["Invalid URI: #{current_uri}",
+                         "Expected:    #{uri}",
+                         "PlugClean required."].join($/)]
               else
-                d = esc dir.sub(%r{[\\/]+$}, '')
-                log.call name, 'Installing ...', :install
-                bt.call "(git clone #{progress} --recursive #{uri} -b #{branch} #{d} 2>&1 && cd #{esc dir} && #{subm})", name, :install
+                if pull
+                  log.call name, 'Updating ...', :update
+                  bt.call "#{cd} #{dir} && git checkout -q #{branch} 2>&1 && (git pull origin #{branch} #{progress} 2>&1 && #{subm})", name, :update
+                else
+                  [true, skip]
+                end
               end
-            mtx.synchronize { VIM::command("let s:prev_update.new['#{name}'] = 1") } if !exists && ok
-            log.call name, result, ok
-          end
-        } if running
-      end
+            else
+              d = esc dir.sub(%r{[\\/]+$}, '')
+              log.call name, 'Installing ...', :install
+              bt.call "(git clone #{progress} --recursive #{uri} -b #{branch} #{d} 2>&1 && cd #{esc dir} && #{subm})", name, :install
+            end
+          mtx.synchronize { VIM::command("let s:prev_update.new['#{name}'] = 1") } if !exists && ok
+          log.call name, result, ok
+        end
+      } if running
     end
-    threads.each { |t| t.join rescue nil }
-    mtx.synchronize { threads.clear }
-    extended = Hash[(VIM::evaluate("s:extend(#{names.inspect})") || {}).reject { |k, _|
-      processed.include? k
-    }]
-    tot += extended.length
-    all.merge!(extended)
-    logh.call
   end
+  threads.each { |t| t.join rescue nil }
+  logh.call
   refresh.kill if refresh
   watcher.kill
 EOF

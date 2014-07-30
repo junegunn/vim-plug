@@ -357,7 +357,8 @@ Execute (Trying to execute on-demand commands when plugin is not installed):
 
 Execute (New set of plugins):
   call plug#begin()
-  Plug 'junegunn/vim-fnr' " Depends on vim-pseudocl
+  Plug 'junegunn/vim-fnr'
+  Plug 'junegunn/vim-pseudocl'
   Plug 'junegunn/vim-easy-align', { 'on': 'EasyAlign' }
   Plug 'junegunn/vim-redis',      { 'for': 'redis' }
   call plug#end()
@@ -368,15 +369,15 @@ Execute (Check commands):
 
 Execute (Partial PlugInstall):
   PlugInstall vim-fnr vim-easy-align
-  AssertExpect 'vim-pseudocl', 1
-  PlugInstall vim-fnr vim-easy-align 1
-  AssertExpect 'vim-pseudocl', 1
+  AssertExpect 'vim-fnr', 1
   q
 
-Execute (Check dependent plugin):
-  Assert &rtp =~ 'pseudocl', &rtp
+  PlugInstall vim-fnr vim-easy-align 1
+  AssertExpect 'vim-fnr', 1
+  AssertExpect 'vim-easy-align', 1
   AssertEqual first_rtp, split(&rtp, ',')[0]
   AssertEqual last_rtp, split(&rtp, ',')[-1]
+  q
 
 Given (Unaligned code):
   a=1
@@ -668,6 +669,7 @@ Execute (Using Funcref):
 Execute (Using custom dir):
   Assert isdirectory(g:plugs['vim-easy-align'].dir)
 
+  call system('rm -rf '.$TMPDIR.'easy-align')
   call plug#begin()
   Plug 'junegunn/vim-easy-align', { 'dir': $TMPDIR.'easy-align' }
   call plug#end()
