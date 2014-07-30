@@ -149,8 +149,7 @@ function! plug#end()
     endif
 
     if has_key(plug, 'on')
-      let commands = s:to_a(plug.on)
-      for cmd in commands
+      for cmd in s:to_a(plug.on)
         if cmd =~ '^<Plug>.\+'
           if empty(mapcheck(cmd)) && empty(mapcheck(cmd, 'i'))
             for [mode, map_prefix, key_prefix] in
@@ -311,7 +310,7 @@ function! s:add(repo, ...)
     let repo = s:trim(a:repo)
     let name = fnamemodify(repo, ':t:s?\.git$??')
     let spec = extend(s:infer_properties(name, repo),
-                    \ a:0 == 1 ? s:parse_options(a:1) : copy(s:base_spec))
+                    \ a:0 == 1 ? s:parse_options(a:1) : s:base_spec)
     let g:plugs[name] = spec
     let g:plugs_order += [name]
   catch
@@ -341,7 +340,7 @@ endfunction
 function! s:infer_properties(name, repo)
   let repo = a:repo
   if s:is_local_plug(repo)
-    let properties = { 'dir': s:dirpath(expand(repo)) }
+    return { 'dir': s:dirpath(expand(repo)) }
   else
     if repo =~ ':'
       let uri = repo
@@ -352,9 +351,8 @@ function! s:infer_properties(name, repo)
       let uri = 'https://git:@github.com/' . repo . '.git'
     endif
     let dir = s:dirpath( fnamemodify(join([g:plug_home, a:name], '/'), ':p') )
-    let properties = { 'dir': dir, 'uri': uri }
+    return { 'dir': dir, 'uri': uri }
   endif
-  return properties
 endfunction
 
 function! s:install(...)
