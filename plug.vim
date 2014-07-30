@@ -73,7 +73,7 @@ let s:plug_buf = -1
 let s:mac_gui = has('gui_macvim') && has('gui_running')
 let s:is_win = has('win32') || has('win64')
 let s:me = expand('<sfile>:p')
-let s:base_spec = { 'branch': 'master', 'frozen': 0, 'local': 0 }
+let s:base_spec = { 'branch': 'master', 'frozen': 0 }
 let s:TYPE = {
 \   'string':  type(''),
 \   'list':    type([]),
@@ -341,7 +341,7 @@ endfunction
 function! s:infer_properties(name, repo)
   let repo = a:repo
   if s:is_local_plug(repo)
-    let properties = { 'dir': s:dirpath(expand(repo)), 'local': 1 }
+    let properties = { 'dir': s:dirpath(expand(repo)) }
   else
     if repo =~ ':'
       let uri = repo
@@ -562,7 +562,6 @@ function! s:update_impl(pull, args) abort
   if !isdirectory(g:plug_home)
     call mkdir(g:plug_home, 'p')
   endif
-  let len = len(g:plugs)
   let s:prev_update = { 'errors': [], 'pull': a:pull, 'new': {}, 'threads': threads }
   if has('ruby') && threads > 1
     try
@@ -594,9 +593,6 @@ function! s:update_impl(pull, args) abort
     call s:update_serial(a:pull, todo)
   endif
   call s:do(a:pull, filter(copy(todo), 'has_key(v:val, "do")'))
-  if len(g:plugs) > len
-    call plug#end()
-  endif
   call s:finish(a:pull)
   call setline(1, 'Updated. Elapsed time: ' . split(reltimestr(reltime(st)))[0] . ' sec.')
 endfunction
@@ -674,6 +670,20 @@ function! s:update_parallel(pull, todo, threads)
     %["#{arg.gsub('"', '\"')}"]
   end
 
+  def killall pid
+    pids = [pid]
+    unless `which pgrep`.empty?
+      children = pids
+      until children.empty?
+        children = children.map { |pid|
+          `pgrep -P #{pid}`.lines.map { |l| l.chomp }
+        }.flatten
+        pids += children
+      end
+    end
+    pids.each { |pid| Process.kill 'TERM', pid.to_i rescue nil }
+  end
+
   require 'thread'
   require 'fileutils'
   require 'timeout'
@@ -681,7 +691,7 @@ function! s:update_parallel(pull, todo, threads)
   iswin = VIM::evaluate('s:is_win').to_i == 1
   pull  = VIM::evaluate('a:pull').to_i == 1
   base  = VIM::evaluate('g:plug_home')
-  all   = VIM::evaluate('copy(a:todo)')
+  all   = VIM::evaluate('a:todo')
   limit = VIM::evaluate('get(g:, "plug_timeout", 60)')
   tries = VIM::evaluate('get(g:, "plug_retries", 2)') + 1
   nthr  = VIM::evaluate('a:threads').to_i
@@ -756,17 +766,7 @@ function! s:update_parallel(pull, todo, threads)
       [$? == 0, data.chomp]
     rescue Timeout::Error, Interrupt => e
       if fd && !fd.closed?
-        pids = [fd.pid]
-        unless `which pgrep`.empty?
-          children = pids
-          until children.empty?
-            children = children.map { |pid|
-              `pgrep -P #{pid}`.lines.map { |l| l.chomp }
-            }.flatten
-            pids += children
-          end
-        end
-        pids.each { |pid| Process.kill 'TERM', pid.to_i rescue nil }
+        killall fd.pid
         fd.close
       end
       if e.is_a?(Timeout::Error) && tried < tries
@@ -1028,7 +1028,6 @@ endfunction
 function! s:upgrade_specs()
   for spec in values(g:plugs)
     let spec.frozen = get(spec, 'frozen', 0)
-    let spec.local  = get(spec, 'local', 0)
   endfor
 endfunction
 
