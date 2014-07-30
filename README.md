@@ -50,8 +50,11 @@ Plug 'https://github.com/junegunn/vim-github-dashboard.git'
 " Plugin options
 Plug 'nsf/gocode', { 'tag': 'go.weekly.2012-03-13', 'rtp': 'vim' }
 
-" Locally-managed plugin
-Plug '~/.fzf'
+" Plugin outside ~/.vim/plugged with post-update hook
+Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install' }
+
+" Unmanaged plugin (manually installed and updated)
+Plug '~/my-prototype-plugin'
 
 call plug#end()
 ```
