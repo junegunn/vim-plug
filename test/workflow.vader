@@ -660,6 +660,27 @@ Execute (Using Funcref):
   Assert filereadable(g:plugs['vim-pseudocl'].dir.'/vim-pseudoclinstalled2'),
     \ 'vim-pseudocl/vim-pseudoclinstalled2 should exist'
 
+
+**********************************************************************
+~ Overriding `dir`
+**********************************************************************
+
+Execute (Using custom dir):
+  Assert isdirectory(g:plugs['vim-easy-align'].dir)
+
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align', { 'dir': $TMPDIR.'easy-align' }
+  call plug#end()
+  AssertEqual $TMPDIR.'easy-align/', g:plugs['vim-easy-align'].dir
+
+  PlugClean!
+  Assert !isdirectory(g:plugs['vim-easy-align'].dir)
+  q
+
+  PlugInstall
+  q
+  Assert isdirectory(g:plugs['vim-easy-align'].dir)
+
 Execute (Cleanup):
   call system('rm -rf '.temp_plugged)
   call rename('fzf', 'fzf-staged')

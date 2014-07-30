@@ -319,8 +319,8 @@ function! s:add(force, repo, ...)
       return
     endif
 
-    let spec = extend(a:0 == 1 ? s:parse_options(a:1) : copy(s:base_spec),
-                    \ s:infer_properties(name, repo))
+    let spec = extend(s:infer_properties(name, repo),
+                    \ a:0 == 1 ? s:parse_options(a:1) : copy(s:base_spec))
     if !a:force
       let s:extended[name] = spec
     endif
@@ -341,6 +341,9 @@ function! s:parse_options(arg)
     call extend(opts, a:arg)
     if has_key(opts, 'tag')
       let opts.branch = remove(opts, 'tag')
+    endif
+    if has_key(opts, 'dir')
+      let opts.dir = s:dirpath(expand(opts.dir))
     endif
   else
     throw 'Invalid argument type (expected: string or dictionary)'
