@@ -1,25 +1,21 @@
 ![vim-plug](https://raw.github.com/junegunn/vim-plug/master/plug.png)
 ![travis-ci](https://travis-ci.org/junegunn/vim-plug.svg?branch=master)
 
-A single-file Vim plugin manager.
-
-Somewhere between [Pathogen](https://github.com/tpope/vim-pathogen) and
-[Vundle](https://github.com/gmarik/vundle), but with faster parallel installer.
+A minimalist Vim plugin manager.
 
 ![](https://raw.github.com/junegunn/i/master/vim-plug/installer.gif)
 
 ### Pros.
 
-- Easier to setup
-- Parallel installation/update (requires
+- Easier to setup: Single file. No boilerplate code required.
+- Easier to use: Concise, intuitive syntax
+- Super-fast parallel installation/update (requires
   [+ruby](http://junegunn.kr/2013/09/installing-vim-with-ruby-support/))
-- Smallest possible feature set
-- Branch/tag support
-- On-demand loading
-
-### Cons.
-
-- Everything else
+- On-demand loading to achieve
+  [fast startup time](http://junegunn.kr/images/vim-startup-time.png)
+- Post-update hooks
+- Can choose a specific branch or tag for each plugin
+- Support for externally managed plugins
 
 ### Usage
 
