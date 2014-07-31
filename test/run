@@ -14,6 +14,23 @@ if [ ! -d fzf-staged ]; then
   git clone https://github.com/junegunn/fzf.git fzf-staged
 fi
 
+make_dirs() {
+  mkdir -p "$1"
+  cd "$1"
+  mkdir -p autoload colors ftdetect ftplugin indent plugin syntax
+  for d in *; do
+    cat > $d/xxx.vim << EOF
+    " echom expand('<sfile>')
+    let g:xxx = get(g:, 'xxx', [])
+    call add(g:xxx, '${1:4}/$d')
+EOF
+  done
+  cd - > /dev/null
+}
+
+make_dirs xxx/
+make_dirs xxx/after
+
 cat > /tmp/mini-vimrc << VIMRC
 set rtp+=vader.vim
 source $PLUG_SRC

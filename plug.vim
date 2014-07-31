@@ -123,7 +123,16 @@ function! s:to_a(v)
   return type(a:v) == s:TYPE.list ? a:v : [a:v]
 endfunction
 
+function! s:source(from, ...)
+  for pattern in a:000
+    for vim in split(globpath(a:from, pattern), '\n')
+      execute 'source '.vim
+    endfor
+  endfor
+endfunction
+
 function! plug#end()
+  let reload = !has('vim_starting')
   if !exists('g:plugs')
     return s:err('Call plug#begin() first')
   endif
@@ -144,7 +153,11 @@ function! plug#end()
   for name in reverse(copy(g:plugs_order))
     let plug = g:plugs[name]
     if !has_key(plug, 'on') && !has_key(plug, 'for')
-      call s:add_rtp(s:rtp(plug))
+      let rtp = s:rtp(plug)
+      call s:add_rtp(rtp)
+      if reload
+        call s:source(rtp, 'plugin/**/*.vim', 'after/plugin/**/*.vim')
+      endif
       continue
     endif
 
@@ -168,9 +181,7 @@ function! plug#end()
     endif
 
     if has_key(plug, 'for')
-      for vim in split(globpath(s:rtp(plug), 'ftdetect/**/*.vim'), '\n')
-        execute 'source '.vim
-      endfor
+      call s:source(s:rtp(plug), 'ftdetect/**/*.vim', 'after/ftdetect/**/*.vim')
       for key in s:to_a(plug.for)
         if !has_key(lod, key)
           let lod[key] = []
@@ -263,24 +274,23 @@ function! s:lod(plug, types)
   let rtp = s:rtp(a:plug)
   call s:add_rtp(rtp)
   for dir in a:types
-    for vim in split(globpath(rtp, dir.'/**/*.vim'), '\n')
-      execute 'source '.vim
-    endfor
+    call s:source(rtp, dir.'/**/*.vim')
   endfor
 endfunction
 
 function! s:lod_ft(pat, names)
   for name in a:names
-    call s:lod(g:plugs[name], ['plugin', 'after'])
+    call s:lod(g:plugs[name], ['plugin', 'after/plugin'])
   endfor
   call s:reorg_rtp()
   execute 'autocmd! PlugLOD FileType ' . a:pat
   silent! doautocmd filetypeplugin FileType
+  silent! doautocmd filetypeindent FileType
 endfunction
 
 function! s:lod_cmd(cmd, bang, l1, l2, args, name)
   execute 'delc '.a:cmd
-  call s:lod(g:plugs[a:name], ['plugin', 'ftdetect', 'after'])
+  call s:lod(g:plugs[a:name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
   call s:reorg_rtp()
   execute printf('%s%s%s %s', (a:l1 == a:l2 ? '' : (a:l1.','.a:l2)), a:cmd, a:bang, a:args)
 endfunction
@@ -288,7 +298,7 @@ endfunction
 function! s:lod_map(map, name, prefix)
   execute 'unmap '.a:map
   execute 'iunmap '.a:map
-  call s:lod(g:plugs[a:name], ['plugin', 'ftdetect', 'after'])
+  call s:lod(g:plugs[a:name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
   call s:reorg_rtp()
   let extra = ''
   while 1
@@ -363,16 +373,13 @@ function! s:update(...)
   call s:update_impl(1, a:000)
 endfunction
 
-function! s:apply()
+function! s:helptags()
   for spec in values(g:plugs)
     let docd = join([spec.dir, 'doc'], '/')
     if isdirectory(docd)
       silent! execute 'helptags '. join([spec.dir, 'doc'], '/')
     endif
   endfor
-  runtime! plugin/*.vim
-  runtime! after/**/*.vim
-  silent! source $MYVIMRC
 endfunction
 
 function! s:syntax()
@@ -503,10 +510,11 @@ endfunction
 function! s:finish(pull)
   call append(3, '- Finishing ... ')
   redraw
-  call s:apply()
-  call s:syntax()
+  call s:helptags()
+  call plug#end()
   call setline(4, getline(4) . 'Done!')
   normal! gg
+  call s:syntax()
   redraw
   let msgs = []
   if !empty(s:prev_update.errors)

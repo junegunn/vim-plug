@@ -1,5 +1,5 @@
 Execute (Initialize test environment):
-  Save &rtp, g:plugs, g:plug_home, $MYVIMRC
+  Save &rtp, g:plugs, g:plug_home
 
   let first_rtp = split(&rtp, ',')[0]
   let last_rtp  = split(&rtp, ',')[-1]
@@ -32,11 +32,6 @@ Execute (Initialize test environment):
     AssertEqual a:cnt, len(filter(getline(1, '$'), "v:val ".op." '".a:pat."'"))
   endfunction
   command! -nargs=+ -bang AssertExpect call AssertExpect('<bang>' == '!', <args>)
-
-  let g:vimrc_reloaded = 0
-  let vimrc    = tempname()
-  call writefile(['let g:vimrc_reloaded += 1'], vimrc)
-  let $MYVIMRC = vimrc
 
 Execute (plug#end() before plug#begin() should fail):
   redir => out
@@ -133,7 +128,6 @@ Execute (Yet, plugins are not available):
 
 Execute (PlugInstall):
   PlugInstall
-  AssertEqual 1, g:vimrc_reloaded
   q
 
 Execute (Plugin available after installation):
@@ -167,7 +161,6 @@ Expect:
 Execute (PlugUpdate to set the right branch):
   PlugUpdate
   call PlugStatusSorted()
-  AssertEqual 2, g:vimrc_reloaded
 
 Expect:
   - goyo.vim: OK
@@ -254,7 +247,6 @@ Execute (PlugClean! to remove vim-emoji):
 Execute (PlugUpdate to install both again):
   PlugUpdate
   AssertExpect '^- [^:]*:', 2
-  AssertEqual 3, g:vimrc_reloaded
   Assert !empty(globpath(&rtp, 'colors/seoul256.vim')), 'seoul256.vim should be found'
   Assert !empty(globpath(&rtp, 'autoload/emoji.vim')), 'vim-emoji should be found'
   q
@@ -262,7 +254,6 @@ Execute (PlugUpdate to install both again):
 Execute (PlugUpdate only to find out plugins are up-to-date, D key to check):
   PlugUpdate
   AssertExpect 'Already up-to-date', 2
-  AssertEqual 4, g:vimrc_reloaded
   normal D
   AssertEqual 'No updates.', getline(1)
   q
@@ -384,9 +375,14 @@ Given (Unaligned code):
   aa=2
 
 Execute (Check installed plugins):
+  if has('vim_starting')
+    Log 'Vader is run from commandline'
+    runtime! plugin/**/*.vim
+  endif
   Assert exists(':FNR'),           'FNR command should be found'
-  Assert exists(':EasyAlign'),     'EasyAlign command should be found'
   Assert !exists(':RedisExecute'), 'RedisExecute command still should not be found'
+
+  Assert exists(':EasyAlign'), 'EasyAlign command should be found'
   %EasyAlign=
 
 Expect (Aligned code):
@@ -683,19 +679,64 @@ Execute (Using custom dir):
   q
   Assert isdirectory(g:plugs['vim-easy-align'].dir)
 
-Execute (Cleanup):
-  call system('rm -rf '.temp_plugged)
-  call rename('fzf', 'fzf-staged')
+**********************************************************************
+~ On-demand loading load order
+**********************************************************************
+Before (Clear global vars):
+  let g:xxx = []
+  set rtp-=$PWD/xxx/
+  set rtp-=$PWD/xxx/after
 
-  unlet g:plugs
-  unlet g:plug_home
-  unlet g:vimrc_reloaded
-  unlet temp_plugged vader plug basertp save_rtp repo lnum fzf out
-  delf PlugStatusSorted
-  delf AssertExpect
-  delf PlugUpdated
-  delc AssertExpect
-  unmap /
-  unmap ?
+Execute (Immediate loading):
+  call plug#begin()
+  Plug '$PWD/xxx'
+  call plug#end()
+
+  " FIXME:
+  " Different result when Vader is run from commandline with `-c` option
+  Log g:xxx
+  if has('vim_starting')
+    AssertEqual ['/ftdetect', 'after/ftdetect'], g:xxx
+  else
+    AssertEqual ['/plugin', 'after/plugin', '/ftdetect', 'after/ftdetect'], g:xxx
+  endif
+
+Execute (Command-based on-demand loading):
+  call plug#begin()
+  Plug '$PWD/xxx', { 'on': 'XXX' }
+  call plug#end()
+
+  AssertEqual [], g:xxx
+
+  silent! XXX
+  AssertEqual ['/ftdetect', 'after/ftdetect', '/plugin', 'after/plugin'], g:xxx
+
+  setf xxx
+  AssertEqual ['/ftdetect', 'after/ftdetect', '/plugin', 'after/plugin', '/ftplugin', 'after/ftplugin', '/indent', 'after/indent', '/syntax', 'after/syntax'], g:xxx
+
+Execute (Filetype-based on-demand loading):
+  call plug#begin()
+  Plug '$PWD/xxx', { 'for': 'xxx' }
+  call plug#end()
+
+  AssertEqual ['/ftdetect', 'after/ftdetect'], g:xxx
+
+  setf xxx
+  AssertEqual ['/ftdetect', 'after/ftdetect', '/plugin', 'after/plugin', '/ftplugin', 'after/ftplugin', '/indent', 'after/indent', '/syntax', 'after/syntax'], g:xxx
+
+Before:
+Execute (Cleanup):
+  silent! call system('rm -rf '.temp_plugged)
+  silent! call rename('fzf', 'fzf-staged')
+  silent! unlet g:plugs
+  silent! unlet g:plug_home
+  silent! unlet temp_plugged vader plug basertp save_rtp repo lnum fzf out
+  silent! delf PlugStatusSorted
+  silent! delf AssertExpect
+  silent! delf PlugUpdated
+  silent! delc AssertExpect
+  silent! unmap /
+  silent! unmap ?
 
   Restore
+
