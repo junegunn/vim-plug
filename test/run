@@ -33,6 +33,7 @@ make_dirs xxx/after
 
 cat > /tmp/mini-vimrc << VIMRC
 set rtp+=vader.vim
+set shell=/bin/bash
 source $PLUG_SRC
 VIMRC
 
