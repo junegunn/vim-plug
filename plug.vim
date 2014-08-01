@@ -377,7 +377,7 @@ function! s:helptags()
   for spec in values(g:plugs)
     let docd = join([spec.dir, 'doc'], '/')
     if isdirectory(docd)
-      silent! execute 'helptags '. join([spec.dir, 'doc'], '/')
+      silent! execute 'helptags '. s:esc(docd)
     endif
   endfor
 endfunction
