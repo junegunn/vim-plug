@@ -162,16 +162,16 @@ let g:fzf_install = 'yes | ./install'
 Plug 'junegunn/fzf', { 'do': g:fzf_install }
 ```
 
+### FAQ/Troubleshooting
+
+See [FAQ/Troubleshooting](https://github.com/junegunn/vim-plug/wiki/faq).
+
 ### Articles
 
 - [Writing my own Vim plugin manager](http://junegunn.kr/2013/09/writing-my-own-vim-plugin-manager)
 - [Vim plugins and startup time](http://junegunn.kr/2014/07/vim-plugins-and-startup-time)
-- [Thoughts on Vim plugin dependency](http://junegunn.kr/2013/09/thoughts-on-vim-plugin-dependency)
+- ~~[Thoughts on Vim plugin dependency](http://junegunn.kr/2013/09/thoughts-on-vim-plugin-dependency)~~
     - *Support for Plugfile has been removed since 0.5.0*
-
-### FAQ/Troubleshooting
-
-See [FAQ/Troubleshooting](https://github.com/junegunn/vim-plug/wiki/faq).
 
 ### License
 
