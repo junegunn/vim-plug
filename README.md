@@ -164,72 +164,13 @@ Plug 'junegunn/fzf', { 'do': g:fzf_install }
 ### Articles
 
 - [Writing my own Vim plugin manager](http://junegunn.kr/2013/09/writing-my-own-vim-plugin-manager)
+- [Vim plugins and startup time](http://junegunn.kr/2014/07/vim-plugins-and-startup-time)
 - [Thoughts on Vim plugin dependency](http://junegunn.kr/2013/09/thoughts-on-vim-plugin-dependency)
     - *Support for Plugfile has been removed since 0.5.0*
-- [Vim plugins and startup time](http://junegunn.kr/2014/07/vim-plugins-and-startup-time)
 
 ### FAQ/Troubleshooting
 
-#### Plugins are not installed/updated in parallel
-
-Your Vim does not support Ruby interface. `:echo has('ruby')` should print 1.
-In order to setup Vim with Ruby support, you may refer to [this
-article](http://junegunn.kr/2013/09/installing-vim-with-ruby-support).
-
-#### *Vim: Caught deadly signal SEGV*
-
-If your Vim crashes with the above message, first check if its Ruby interface is
-working correctly with the following command:
-
-```vim
-:ruby puts RUBY_VERSION
-```
-
-If Vim crashes even with this command, it is likely that Ruby interface is
-broken, and you have to rebuild Vim with a working version of Ruby.
-(`brew remove vim && brew install vim` or `./configure && make ...`)
-
-If you're on OS X, one possibility is that you had installed Vim with
-[Homebrew](http://brew.sh/) while using a Ruby installed with
-[RVM](http://rvm.io/) or [rbenv](https://github.com/sstephenson/rbenv) and later
-removed that version of Ruby.
-
-[Please let me know](https://github.com/junegunn/vim-plug/issues) if you can't
-resolve the problem. In the meantime, you can set `g:plug_threads` to 1, so that
-Ruby installer is not used at all.
-
-#### Errors on fish shell
-
-If vim-plug doesn't work correctly on fish shell, you might need to add `set
-shell=/bin/sh` to your .vimrc.
-
-Refer to the following links for the details:
-- http://badsimplicity.com/vim-fish-e484-cant-open-file-tmpvrdnvqe0-error/
-- https://github.com/junegunn/vim-plug/issues/12
-
-#### Freezing plugin version with commit hash
-
-vim-plug does not allow you to freeze the version of a plugin with its commit
-hash. This is by design. I don't believe a user of a plugin should be looking
-at its individual commits. Instead, one should be choosing the right version
-using release tags or versioned branches (e.g. 1.2.3, stable, devel, etc.)
-
-```vim
-Plug 'junegunn/vim-easy-align', '2.9.2'
-```
-
-If the repository doesn't come with such tags or branches, you should think of
-it as "unstable" or "in development", and always use its latest revision.
-
-If you really must choose a certain untagged revision, consider forking the
-repository.
-
-#### Migrating from other plugin managers
-
-vim-plug does not require any extra statement other than `plug#begin()` and
-`plug#end()`. You can remove `filetype off`, `filetype plugin indent on` and
-`syntax on` from your .vimrc as they are automatically handled by
-`plug#end()`.
+See [FAQ/Troubleshooting](https://github.com/junegunn/vim-plug/wiki/faq).
 
 ### License
 
