@@ -120,7 +120,7 @@ Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 Plug 'junegunn/vader.vim',  { 'on': 'Vader', 'for': 'vader' }
 ```
 
-### Post-installation/update hooks
+### Post-update hooks
 
 There are some plugins that require extra steps after installation or update.
 In that case, use `do` option to describe the task to be performed.
