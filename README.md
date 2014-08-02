@@ -151,8 +151,9 @@ and only run when the repository has changed, but you can force it to run
 unconditionally with the bang-versions of the commands: `PlugInstall!` and
 `PlugUpdate!`.
 
-Make sure to escape BARs when you write `do` option inline as they are
-mistakenly recognized as command separator for Plug command.
+Make sure to escape BARs and double-quotes when you write `do` option inline
+as they are mistakenly recognized as command separator or the start of the
+trailing comment.
 
 ```vim
 Plug 'junegunn/fzf', { 'do': 'yes \| ./install' }
