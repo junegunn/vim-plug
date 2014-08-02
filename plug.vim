@@ -109,8 +109,8 @@ function! plug#begin(...)
   let g:plugs_order = []
 
   command! -nargs=+ -bar Plug   call s:add(<args>)
-  command! -nargs=* -complete=customlist,s:names PlugInstall call s:install(<f-args>)
-  command! -nargs=* -complete=customlist,s:names PlugUpdate  call s:update(<f-args>)
+  command! -nargs=* -bang -complete=customlist,s:names PlugInstall call s:install(!empty('<bang>'), <f-args>)
+  command! -nargs=* -bang -complete=customlist,s:names PlugUpdate  call s:update(!empty('<bang>'), <f-args>)
   command! -nargs=0 -bang PlugClean call s:clean('<bang>' == '!')
   command! -nargs=0 PlugUpgrade if s:upgrade() | call s:upgrade_specs() | execute 'source '. s:me | endif
   command! -nargs=0 PlugStatus  call s:status()
@@ -365,12 +365,12 @@ function! s:infer_properties(name, repo)
   endif
 endfunction
 
-function! s:install(...)
-  call s:update_impl(0, a:000)
+function! s:install(force, ...)
+  call s:update_impl(0, a:force, a:000)
 endfunction
 
-function! s:update(...)
-  call s:update_impl(1, a:000)
+function! s:update(force, ...)
+  call s:update_impl(1, a:force, a:000)
 endfunction
 
 function! s:helptags()
@@ -470,15 +470,16 @@ function! s:assign_name()
   silent! execute 'f '.fnameescape(name)
 endfunction
 
-function! s:do(pull, todo)
+function! s:do(pull, force, todo)
   for [name, spec] in items(a:todo)
     if !isdirectory(spec.dir)
       continue
     endif
     execute 'cd '.s:esc(spec.dir)
     let installed = has_key(s:prev_update.new, name)
-    if installed || (a:pull &&
-      \ !empty(s:system_chomp('git log --pretty=format:"%h" "HEAD...HEAD@{1}"')))
+    let updated = installed ? 0 :
+      \ (a:pull && !empty(s:system_chomp('git log --pretty=format:"%h" "HEAD...HEAD@{1}"')))
+    if a:force || installed || updated
       call append(3, '- Post-update hook for '. name .' ... ')
       let type = type(spec.do)
       if type == s:TYPE.string
@@ -493,7 +494,8 @@ function! s:do(pull, todo)
         endtry
       elseif type == s:TYPE.funcref
         try
-          call spec.do({ 'name': name, 'status': (installed ? 'installed' : 'updated') })
+          let status = installed ? 'installed' : (updated ? 'updated' : 'unchanged')
+          call spec.do({ 'name': name, 'status': status, 'force': a:force })
           let result = 'Done!'
         catch
           let result = 'Error: ' . v:exception
@@ -530,7 +532,7 @@ function! s:retry()
   if empty(s:prev_update.errors)
     return
   endif
-  call s:update_impl(s:prev_update.pull,
+  call s:update_impl(s:prev_update.pull, s:prev_update.force,
         \ extend(copy(s:prev_update.errors), [s:prev_update.threads]))
 endfunction
 
@@ -542,7 +544,7 @@ function! s:names(...)
   return filter(keys(g:plugs), 'stridx(v:val, a:1) == 0 && s:is_managed(v:val)')
 endfunction
 
-function! s:update_impl(pull, args) abort
+function! s:update_impl(pull, force, args) abort
   let st = reltime()
   let args = copy(a:args)
   let threads = (len(args) > 0 && args[-1] =~ '^[1-9][0-9]*$') ?
@@ -568,7 +570,7 @@ function! s:update_impl(pull, args) abort
   if !isdirectory(g:plug_home)
     call mkdir(g:plug_home, 'p')
   endif
-  let s:prev_update = { 'errors': [], 'pull': a:pull, 'new': {}, 'threads': threads }
+  let s:prev_update = { 'errors': [], 'pull': a:pull, 'force': a:force, 'new': {}, 'threads': threads }
   if has('ruby') && threads > 1
     try
       let imd = &imd
@@ -598,7 +600,7 @@ function! s:update_impl(pull, args) abort
   else
     call s:update_serial(a:pull, todo)
   endif
-  call s:do(a:pull, filter(copy(todo), 'has_key(v:val, "do")'))
+  call s:do(a:pull, a:force, filter(copy(todo), 'has_key(v:val, "do")'))
   call s:finish(a:pull)
   call setline(1, 'Updated. Elapsed time: ' . split(reltimestr(reltime(st)))[0] . ' sec.')
 endfunction

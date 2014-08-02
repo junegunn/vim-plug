@@ -134,10 +134,11 @@ takes a single argument.
 
 ```vim
 function! BuildYCM(info)
-  " info is a dictionary with two fields
-  " - name: name of the plugin
-  " - status: 'installed' or 'updated'
-  if a:info.status == 'installed'
+  " info is a dictionary with 3 fields
+  " - name:   name of the plugin
+  " - status: 'installed', 'updated', or 'unchanged'
+  " - force:  set on PlugInstall! or PlugUpdate!
+  if a:info.status == 'installed' || a:info.force
     !./install.sh
   endif
 endfunction
@@ -145,7 +146,10 @@ endfunction
 Plug 'Valloric/YouCompleteMe', { 'do': function('BuildYCM') }
 ```
 
-Both forms of post-update hook are executed inside the directory of the plugin.
+Both forms of post-update hook are executed inside the directory of the plugin
+and only run when the repository has changed, but you can force it to run
+unconditionally with the bang-versions of the commands: `PlugInstall!` and
+`PlugUpdate!`.
 
 Make sure to escape BARs when you write `do` option inline as they are
 mistakenly recognized as command separator for Plug command.

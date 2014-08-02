@@ -621,6 +621,14 @@ Execute (When already installed):
   Assert !filereadable(g:plugs['vim-easy-align'].dir.'/installed2'),
     \ 'vim-easy-align/installed2 should not exist'
   Assert !filereadable(g:plugs['vim-pseudocl'].dir.'/installed2'),
+    \ 'vim-pseudocl/installed2 should not exist'
+
+Execute (PlugInstall!):
+  PlugInstall!
+  q
+  Assert filereadable(g:plugs['vim-easy-align'].dir.'/installed2'),
+    \ 'vim-easy-align/installed2 should exist'
+  Assert filereadable(g:plugs['vim-pseudocl'].dir.'/installed2'),
     \ 'vim-pseudocl/installed2 should exist'
 
 Execute (When already updated):
@@ -634,11 +642,19 @@ Execute (When already updated):
   Assert !filereadable(g:plugs['vim-easy-align'].dir.'/updated2'),
     \ 'vim-easy-align/updated2 should not exist'
   Assert !filereadable(g:plugs['vim-pseudocl'].dir.'/updated2'),
+    \ 'vim-pseudocl/updated2 should not exist'
+
+Execute (PlugUpdate!):
+  PlugUpdate!
+  q
+  Assert filereadable(g:plugs['vim-easy-align'].dir.'/updated2'),
+    \ 'vim-easy-align/updated2 should exist'
+  Assert filereadable(g:plugs['vim-pseudocl'].dir.'/updated2'),
     \ 'vim-pseudocl/updated2 should exist'
 
 Execute (Using Funcref):
   function! PlugUpdated(info)
-    call system('touch '. a:info.name . a:info.status . len(a:info))
+    call system('touch '. a:info.name . a:info.status . a:info.force . len(a:info))
   endfunction
 
   call plug#begin()
@@ -652,11 +668,26 @@ Execute (Using Funcref):
   PlugUpdate
   Log getline(1, '$')
   q
-  Assert filereadable(g:plugs['vim-easy-align'].dir.'/vim-easy-alignupdated2'),
-    \ 'vim-easy-align/vim-easy-alignupdated2 should exist'
-  Assert filereadable(g:plugs['vim-pseudocl'].dir.'/vim-pseudoclinstalled2'),
-    \ 'vim-pseudocl/vim-pseudoclinstalled2 should exist'
+  Assert filereadable(g:plugs['vim-easy-align'].dir.'/vim-easy-alignupdated03'),
+    \ 'vim-easy-align/vim-easy-alignupdated03 should exist'
+  Assert filereadable(g:plugs['vim-pseudocl'].dir.'/vim-pseudoclinstalled03'),
+    \ 'vim-pseudocl/vim-pseudoclinstalled03 should exist'
 
+  call system('rm -rf '.g:plugs['vim-pseudocl'].dir)
+  PlugInstall!
+  q
+  Assert filereadable(g:plugs['vim-easy-align'].dir.'/vim-easy-alignunchanged13'),
+    \ 'vim-easy-align/vim-easy-alignunchanged13 should exist'
+  Assert filereadable(g:plugs['vim-pseudocl'].dir.'/vim-pseudoclinstalled13'),
+    \ 'vim-pseudocl/vim-pseudoclinstalled13 should exist'
+
+  call system('cd '.g:plugs['vim-easy-align'].dir.' && git reset --hard HEAD^')
+  PlugUpdate!
+  q
+  Assert filereadable(g:plugs['vim-easy-align'].dir.'/vim-easy-alignupdated13'),
+    \ 'vim-easy-align/vim-easy-alignupdated13 should exist'
+  Assert filereadable(g:plugs['vim-pseudocl'].dir.'/vim-pseudoclunchanged13'),
+    \ 'vim-pseudocl/vim-pseudoclunchanged13 should exist'
 
 **********************************************************************
 ~ Overriding `dir`
