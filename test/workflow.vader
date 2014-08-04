@@ -33,6 +33,12 @@ Execute (Initialize test environment):
   endfunction
   command! -nargs=+ -bang AssertExpect call AssertExpect('<bang>' == '!', <args>)
 
+Execute (Print Ruby version):
+  redir => out
+  silent ruby puts RUBY_VERSION
+  redir END
+  Log substitute(out, '\n', '', 'g')
+
 Execute (plug#end() before plug#begin() should fail):
   redir => out
   AssertEqual 0, plug#end()
@@ -506,15 +512,15 @@ Execute (Frozen plugin are not installed nor updated):
   Plug 'junegunn/vim-easy-align', { 'frozen': 1 }
   call plug#end()
 
-  redir => output
+  redir => out
   silent PlugInstall
   redir END
-  Assert output =~ 'No plugin to install'
+  Assert out =~ 'No plugin to install'
 
-  redir => output
+  redir => out
   silent PlugUpdate
   redir END
-  Assert output =~ 'No plugin to update'
+  Assert out =~ 'No plugin to update'
 
 Execute (But you can still install it if the name is given as the argument):
   PlugInstall vim-easy-align
