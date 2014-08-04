@@ -102,12 +102,12 @@ function! plug#begin(...)
   let g:plugs_order = []
 
   command! -nargs=+ -bar Plug   call s:add(<args>)
-  command! -nargs=* -bang -complete=customlist,s:names PlugInstall call s:install(!empty('<bang>'), <f-args>)
-  command! -nargs=* -bang -complete=customlist,s:names PlugUpdate  call s:update(!empty('<bang>'), <f-args>)
-  command! -nargs=0 -bang PlugClean call s:clean('<bang>' == '!')
-  command! -nargs=0 PlugUpgrade if s:upgrade() | execute 'source '. s:me | call s:upgrade_specs() | endif
-  command! -nargs=0 PlugStatus  call s:status()
-  command! -nargs=0 PlugDiff    call s:diff()
+  command! -nargs=* -bar -bang -complete=customlist,s:names PlugInstall call s:install('<bang>' == '!', <f-args>)
+  command! -nargs=* -bar -bang -complete=customlist,s:names PlugUpdate  call s:update('<bang>' == '!', <f-args>)
+  command! -nargs=0 -bar -bang PlugClean call s:clean('<bang>' == '!')
+  command! -nargs=0 -bar PlugUpgrade if s:upgrade() | execute 'source '. s:me | call s:upgrade_specs() | endif
+  command! -nargs=0 -bar PlugStatus  call s:status()
+  command! -nargs=0 -bar PlugDiff    call s:diff()
 
   return 1
 endfunction
