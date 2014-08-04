@@ -105,7 +105,7 @@ function! plug#begin(...)
   command! -nargs=* -bang -complete=customlist,s:names PlugInstall call s:install(!empty('<bang>'), <f-args>)
   command! -nargs=* -bang -complete=customlist,s:names PlugUpdate  call s:update(!empty('<bang>'), <f-args>)
   command! -nargs=0 -bang PlugClean call s:clean('<bang>' == '!')
-  command! -nargs=0 PlugUpgrade if s:upgrade() | call s:upgrade_specs() | execute 'source '. s:me | endif
+  command! -nargs=0 PlugUpgrade if s:upgrade() | execute 'source '. s:me | call s:upgrade_specs() | endif
   command! -nargs=0 PlugStatus  call s:status()
   command! -nargs=0 PlugDiff    call s:diff()
 
