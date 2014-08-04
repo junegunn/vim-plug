@@ -92,13 +92,6 @@ function! plug#begin(...)
     return s:err('Unable to determine plug home. Try calling plug#begin() with a path argument.')
   endif
 
-  if !isdirectory(home)
-    try
-      call mkdir(home, 'p')
-    catch
-      return s:err('Invalid plug directory: '. home)
-    endtry
-  endif
   if !executable('git')
     return s:err('`git` executable not found. vim-plug requires git.')
   endif
@@ -561,15 +554,21 @@ function! s:update_impl(pull, force, args) abort
     return
   endif
 
+  if !isdirectory(g:plug_home)
+    try
+      call mkdir(g:plug_home, 'p')
+    catch
+      return s:err(printf('Invalid plug directory: %s.'
+                        \ 'Try to call plug#begin with a valid directory', g:plug_home))
+    endtry
+  endif
+
   call s:prepare()
   call append(0, a:pull ? 'Updating plugins' : 'Installing plugins')
   call append(1, '['. s:lpad('', len(todo)) .']')
   normal! 2G
   redraw
 
-  if !isdirectory(g:plug_home)
-    call mkdir(g:plug_home, 'p')
-  endif
   let s:prev_update = { 'errors': [], 'pull': a:pull, 'force': a:force, 'new': {}, 'threads': threads }
   if has('ruby') && threads > 1
     try
