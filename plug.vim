@@ -544,7 +544,7 @@ function! s:update_impl(pull, force, args) abort
                   \ remove(args, -1) : get(g:, 'plug_threads', 16)
 
   let managed = filter(copy(g:plugs), 's:is_managed(v:key)')
-  let todo = empty(args) ? filter(managed, '!get(v:val, "frozen", 0)') :
+  let todo = empty(args) ? filter(managed, '!v:val.frozen') :
                          \ filter(managed, 'index(args, v:key) >= 0')
 
   if empty(todo)
