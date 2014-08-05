@@ -101,15 +101,18 @@ function! plug#begin(...)
   " we want to keep track of the order plugins where registered.
   let g:plugs_order = []
 
+  call s:define_commands()
+  return 1
+endfunction
+
+function! s:define_commands()
   command! -nargs=+ -bar Plug   call s:add(<args>)
   command! -nargs=* -bar -bang -complete=customlist,s:names PlugInstall call s:install('<bang>' == '!', <f-args>)
   command! -nargs=* -bar -bang -complete=customlist,s:names PlugUpdate  call s:update('<bang>' == '!', <f-args>)
   command! -nargs=0 -bar -bang PlugClean call s:clean('<bang>' == '!')
-  command! -nargs=0 -bar PlugUpgrade if s:upgrade() | execute 'source '. s:me | call s:upgrade_specs() | endif
+  command! -nargs=0 -bar PlugUpgrade if s:upgrade() | execute 'source '. s:me | endif
   command! -nargs=0 -bar PlugStatus  call s:status()
   command! -nargs=0 -bar PlugDiff    call s:diff()
-
-  return 1
 endfunction
 
 function! s:to_a(v)
@@ -1003,16 +1006,13 @@ function! s:upgrade()
     call system(printf(
       \ 'curl -fLo %s %s && '.cp.' %s %s.old && '.mv.' %s %s',
       \ new, s:plug_source, mee, mee, new, mee))
-    if v:shell_error == 0
-      unlet g:loaded_plug
-      echo 'Downloaded '. s:plug_source
-      return 1
-    else
+    if v:shell_error
       return s:err('Error upgrading vim-plug')
     endif
   elseif has('ruby')
     echo 'Downloading '. s:plug_source
-    ruby << EOF
+    try
+      ruby << EOF
       require 'open-uri'
       require 'fileutils'
       me  = VIM::evaluate('s:me')
@@ -1024,12 +1024,16 @@ function! s:upgrade()
       FileUtils.cp me, old
       File.rename  new, me
 EOF
-    unlet g:loaded_plug
-    echo 'Downloaded '. s:plug_source
-    return 1
+    catch
+      return s:err('Error upgrading vim-plug')
+    endtry
   else
     return s:err('curl executable or ruby support not found')
   endif
+
+  unlet g:loaded_plug
+  echo 'Downloaded '. s:plug_source
+  return 1
 endfunction
 
 function! s:upgrade_specs()
@@ -1145,6 +1149,12 @@ endfunction
 
 let s:first_rtp = s:esc(get(split(&rtp, ','), 0, ''))
 let s:last_rtp = s:esc(get(split(&rtp, ','), -1, ''))
+
+if exists('g:plugs')
+  let g:plugs_order = get(g:, 'plugs_order', keys(g:plugs))
+  call s:upgrade_specs()
+  call s:define_commands()
+endif
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
