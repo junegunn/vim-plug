@@ -266,6 +266,26 @@ function! s:reorg_rtp()
   endif
 endfunction
 
+function! plug#load(...)
+  if a:0 == 0
+    return s:err('Argument missing: plugin name(s) required')
+  endif
+  if !exists('g:plugs')
+    return s:err('plug#begin was not called')
+  endif
+  let unknowns = filter(copy(a:000), '!has_key(g:plugs, v:val)')
+  if !empty(unknowns)
+    let s = len(unknowns) > 1 ? 's' : ''
+    return s:err(printf('Unknown plugin%s: %s', s, join(unknowns, ', ')))
+  end
+  for name in a:000
+    call s:lod(g:plugs[name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
+  endfor
+  call s:reorg_rtp()
+  silent! doautocmd BufRead
+  return 1
+endfunction
+
 function! s:lod(plug, types)
   let rtp = s:rtp(a:plug)
   call s:add_rtp(rtp)
@@ -369,13 +389,17 @@ function! s:update(force, ...)
   call s:update_impl(1, a:force, a:000)
 endfunction
 
-function! s:helptags()
+function! plug#helptags()
+  if !exists('g:plugs')
+    return s:err('plug#begin was not called')
+  endif
   for spec in values(g:plugs)
     let docd = join([spec.dir, 'doc'], '/')
     if isdirectory(docd)
       silent! execute 'helptags '. s:esc(docd)
     endif
   endfor
+  return 1
 endfunction
 
 function! s:syntax()
@@ -508,7 +532,7 @@ endfunction
 function! s:finish(pull)
   call append(3, '- Finishing ... ')
   redraw
-  call s:helptags()
+  call plug#helptags()
   call plug#end()
   call setline(4, getline(4) . 'Done!')
   normal! gg

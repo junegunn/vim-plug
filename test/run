@@ -30,6 +30,10 @@ EOF
 
 make_dirs xxx/
 make_dirs xxx/after
+mkdir xxx/doc
+cat > xxx/doc/xxx.txt << DOC
+hello *xxx*
+DOC
 
 cat > /tmp/mini-vimrc << VIMRC
 set rtp+=vader.vim
