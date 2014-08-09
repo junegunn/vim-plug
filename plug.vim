@@ -271,7 +271,7 @@ function! plug#load(...)
     return s:err('Argument missing: plugin name(s) required')
   endif
   if !exists('g:plugs')
-    return s:err('plug#begin is not called')
+    return s:err('plug#begin was not called')
   endif
   let unknowns = filter(copy(a:000), '!has_key(g:plugs, v:val)')
   if !empty(unknowns)
@@ -391,7 +391,7 @@ endfunction
 
 function! plug#helptags()
   if !exists('g:plugs')
-    return s:err('plug#begin is not called')
+    return s:err('plug#begin was not called')
   endif
   for spec in values(g:plugs)
     let docd = join([spec.dir, 'doc'], '/')
