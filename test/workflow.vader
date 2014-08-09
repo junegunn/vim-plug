@@ -771,6 +771,32 @@ Execute (plug#helptags):
   AssertEqual 1, plug#helptags()
   Assert filereadable(expand('$PWD/xxx/doc/tags'))
 
+**********************************************************************
+~ plug#load()
+**********************************************************************
+
+Execute (plug#load - invalid arguments):
+  AssertEqual 0, plug#load()
+  AssertEqual 0, plug#load('non-existent-plugin')
+  AssertEqual 0, plug#load('non-existent-plugin', 'another-non-existent-plugin')
+  AssertEqual 1, plug#load('xxx')
+  AssertEqual 0, plug#load('xxx', 'non-existent-plugin')
+  AssertEqual 0, plug#load('non-existent-plugin', 'xxx')
+
+Execute (plug#load):
+  call plug#begin()
+  Plug 'junegunn/rust.vim', { 'on': [] }
+  call plug#end()
+  PlugInstall
+  q
+
+  setf xxx
+  f test.rs
+  Log &filetype
+
+  AssertEqual 1, plug#load('rust.vim')
+  AssertEqual 'rust', &filetype
+
 Before:
 Execute (Cleanup):
   silent! call system('rm -rf '.temp_plugged)

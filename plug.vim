@@ -266,6 +266,26 @@ function! s:reorg_rtp()
   endif
 endfunction
 
+function! plug#load(...)
+  if a:0 == 0
+    return s:err('Argument missing: plugin name(s) required')
+  endif
+  if !exists('g:plugs')
+    return s:err('plug#begin is not called')
+  endif
+  let unknowns = filter(copy(a:000), '!has_key(g:plugs, v:val)')
+  if !empty(unknowns)
+    let s = len(unknowns) > 1 ? 's' : ''
+    return s:err(printf('Unknown plugin%s: %s', s, join(unknowns, ', ')))
+  end
+  for name in a:000
+    call s:lod(g:plugs[name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
+  endfor
+  call s:reorg_rtp()
+  silent! doautocmd BufRead
+  return 1
+endfunction
+
 function! s:lod(plug, types)
   let rtp = s:rtp(a:plug)
   call s:add_rtp(rtp)
