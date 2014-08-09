@@ -369,13 +369,17 @@ function! s:update(force, ...)
   call s:update_impl(1, a:force, a:000)
 endfunction
 
-function! s:helptags()
+function! plug#helptags()
+  if !exists('g:plugs')
+    return s:err('plug#begin is not called')
+  endif
   for spec in values(g:plugs)
     let docd = join([spec.dir, 'doc'], '/')
     if isdirectory(docd)
       silent! execute 'helptags '. s:esc(docd)
     endif
   endfor
+  return 1
 endfunction
 
 function! s:syntax()
@@ -508,7 +512,7 @@ endfunction
 function! s:finish(pull)
   call append(3, '- Finishing ... ')
   redraw
-  call s:helptags()
+  call plug#helptags()
   call plug#end()
   call setline(4, getline(4) . 'Done!')
   normal! gg

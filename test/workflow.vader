@@ -761,6 +761,16 @@ Execute (Filetype-based on-demand loading):
   setf xxx
   AssertEqual ['/ftdetect', 'after/ftdetect', '/plugin', 'after/plugin', '/ftplugin', 'after/ftplugin', '/indent', 'after/indent', '/syntax', 'after/syntax'], g:xxx
 
+**********************************************************************
+~ plug#helptags()
+**********************************************************************
+
+Execute (plug#helptags):
+  silent! call delete(expand('$PWD/xxx/doc/tags'))
+  Assert !filereadable(expand('$PWD/xxx/doc/tags'))
+  AssertEqual 1, plug#helptags()
+  Assert filereadable(expand('$PWD/xxx/doc/tags'))
+
 Before:
 Execute (Cleanup):
   silent! call system('rm -rf '.temp_plugged)
