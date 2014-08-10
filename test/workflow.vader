@@ -307,6 +307,13 @@ Execute (Rollback recent updates, PlugUpdate, then PlugDiff):
   AssertEqual lnum, line('.')
   AssertEqual 3, col('.')
 
+  " X key to revert the update
+  AssertExpect '^- ', 2
+  execute "normal Xn\<cr>"
+  AssertExpect '^- ', 2
+  execute "normal Xy\<cr>"
+  AssertExpect '^- ', 1
+
   " q will close preview window as well
   normal q
 
@@ -317,6 +324,7 @@ Execute (Rollback recent updates, PlugUpdate, then PlugDiff):
   " q should not close preview window if it's already open
   pedit
   PlugDiff
+  AssertExpect '^- ', 1
   execute "normal ]]j\<cr>"
   normal q
 
@@ -330,8 +338,8 @@ Execute (Plug window in a new tab):
   set buftype=nofile
   PlugUpdate
   normal D
-  AssertEqual 'No updates.', getline(1)
-  q
+  AssertExpect '^- ', 1
+  normal q
   AssertEqual 'new-tab', expand('%')
   q
   q
@@ -798,12 +806,12 @@ Execute (PlugStatus reports (not loaded)):
   q
 
 Execute (plug#load to load it):
-  setf xxx
-  f test.rs
-  Log &filetype
-
+  tabnew test.rs
+  " Vader will switch tab to [Vader-workbench] after Log
+  " Log &filetype
   AssertEqual 1, plug#load('rust.vim')
   AssertEqual 'rust', &filetype
+  q
 
 Execute (PlugStatus should not contain (not loaded)):
   PlugStatus

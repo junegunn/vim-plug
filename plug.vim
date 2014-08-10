@@ -69,7 +69,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 let s:plug_source = 'https://raw.github.com/junegunn/vim-plug/master/plug.vim'
-let s:plug_buf = -1
+let s:plug_buf = get(s:, 'plug_buf', -1)
 let s:mac_gui = has('gui_macvim') && has('gui_running')
 let s:is_win = has('win32') || has('win64')
 let s:me = expand('<sfile>:p')
@@ -468,6 +468,7 @@ function! s:prepare()
     else
       execute winnr . 'wincmd w'
     endif
+    setlocal modifiable
     silent %d _
   else
     vertical topleft new
@@ -483,7 +484,8 @@ function! s:prepare()
   endif
   silent! unmap <buffer> <cr>
   silent! unmap <buffer> L
-  setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap cursorline
+  silent! unmap <buffer> X
+  setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap cursorline modifiable
   setf vim-plug
   call s:syntax()
 endfunction
@@ -1112,6 +1114,7 @@ function! s:status()
   endfor
   call setline(1, 'Finished. '.ecnt.' error(s).')
   normal! gg
+  setlocal nomodifiable
   if unloaded
     echo "Press 'L' on each line to load plugin"
     nnoremap <silent> <buffer> L :call <SID>status_load(line('.'))<cr>
@@ -1125,7 +1128,9 @@ function! s:status_load(lnum)
   if !empty(matches)
     let name = matches[1]
     call plug#load(name)
+    setlocal modifiable
     call setline(a:lnum, substitute(line, ' (not loaded)$', '', ''))
+    setlocal nomodifiable
   endif
 endfunction
 
@@ -1138,34 +1143,43 @@ function! s:is_preview_window_open()
   return 0
 endfunction
 
+function! s:find_name(lnum)
+  for lnum in reverse(range(1, a:lnum))
+    let line = getline(lnum)
+    if empty(line)
+      return ''
+    endif
+    let name = matchstr(line, '\(^- \)\@<=[^:]\+')
+    if !empty(name)
+      return name
+    endif
+  endfor
+  return ''
+endfunction
+
 function! s:preview_commit()
   if b:plug_preview < 0
     let b:plug_preview = !s:is_preview_window_open()
   endif
 
   let sha = matchstr(getline('.'), '\(^  \)\@<=[0-9a-z]\{7}')
-  if !empty(sha)
-    let lnum = line('.')
-    while lnum > 1
-      let lnum -= 1
-      let line = getline(lnum)
-      let name = matchstr(line, '\(^- \)\@<=[^:]\+')
-      if !empty(name)
-        let dir = g:plugs[name].dir
-        if isdirectory(dir)
-          execute 'cd '.s:esc(dir)
-          execute 'pedit '.sha
-          wincmd P
-          setlocal filetype=git buftype=nofile nobuflisted
-          execute 'silent read !git show '.sha
-          normal! ggdd
-          wincmd p
-          cd -
-        endif
-        break
-      endif
-    endwhile
+  if empty(sha)
+    return
   endif
+
+  let name = s:find_name(line('.'))
+  if empty(name) || !has_key(g:plugs, name) || !isdirectory(g:plugs[name].dir)
+    return
+  endif
+
+  execute 'cd '.s:esc(g:plugs[name].dir)
+  execute 'pedit '.sha
+  wincmd P
+  setlocal filetype=git buftype=nofile nobuflisted
+  execute 'silent read !git show '.sha
+  normal! ggdd
+  wincmd p
+  cd -
 endfunction
 
 function! s:section(flags)
@@ -1199,7 +1213,28 @@ function! s:diff()
 
   call setline(1, cnt == 0 ? 'No updates.' : 'Last update:')
   nnoremap <silent> <buffer> <cr> :silent! call <SID>preview_commit()<cr>
+  nnoremap <silent> <buffer> X    :call <SID>revert()<cr>
   normal! gg
+  setlocal nomodifiable
+  if cnt > 0
+    echo "Press 'X' on each block to revert the update"
+  endif
+endfunction
+
+function! s:revert()
+  let name = s:find_name(line('.'))
+  if empty(name) || !has_key(g:plugs, name) ||
+    \ input(printf('Revert the update of %s? (Y/N) ', name)) !~? '^y'
+    return
+  endif
+
+  execute 'cd '.s:esc(g:plugs[name].dir)
+  call system('git reset --hard HEAD@{1} && git checkout '.s:esc(g:plugs[name].branch))
+  cd -
+  setlocal modifiable
+  normal! dap
+  setlocal nomodifiable
+  echo 'Reverted.'
 endfunction
 
 let s:first_rtp = s:esc(get(split(&rtp, ','), 0, ''))

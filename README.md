@@ -96,6 +96,10 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 - `S` - `PlugStatus`
 - `R` - Retry failed update or installation tasks
 - `q` - Close the window
+- `:PlugStatus`
+    - `L` - Load plugin
+- `:PlugDiff`
+    - `X` - Revert the update
 
 ### Example: A small [sensible](https://github.com/tpope/vim-sensible) Vim configuration
 
