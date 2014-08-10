@@ -761,6 +761,8 @@ Execute (Filetype-based on-demand loading):
   setf xxx
   AssertEqual ['/ftdetect', 'after/ftdetect', '/plugin', 'after/plugin', '/ftplugin', 'after/ftplugin', '/indent', 'after/indent', '/syntax', 'after/syntax'], g:xxx
 
+Before:
+
 **********************************************************************
 ~ plug#helptags()
 **********************************************************************
@@ -772,7 +774,7 @@ Execute (plug#helptags):
   Assert filereadable(expand('$PWD/xxx/doc/tags'))
 
 **********************************************************************
-~ plug#load()
+~ Manual loading
 **********************************************************************
 
 Execute (plug#load - invalid arguments):
@@ -783,13 +785,19 @@ Execute (plug#load - invalid arguments):
   AssertEqual 0, plug#load('xxx', 'non-existent-plugin')
   AssertEqual 0, plug#load('non-existent-plugin', 'xxx')
 
-Execute (plug#load):
+Execute (on: []):
   call plug#begin()
   Plug 'junegunn/rust.vim', { 'on': [] }
   call plug#end()
   PlugInstall
   q
 
+Execute (PlugStatus reports (not loaded)):
+  PlugStatus
+  AssertExpect 'not loaded', 1
+  q
+
+Execute (plug#load to load it):
   setf xxx
   f test.rs
   Log &filetype
@@ -797,7 +805,41 @@ Execute (plug#load):
   AssertEqual 1, plug#load('rust.vim')
   AssertEqual 'rust', &filetype
 
-Before:
+Execute (PlugStatus should not contain (not loaded)):
+  PlugStatus
+  AssertExpect 'not loaded', 0
+  q
+
+Execute (Load plugin from PlugStatus screen with L key in normal mode):
+  call plug#begin()
+  Plug '$PWD/yyy', { 'on': [] }
+  call plug#end()
+
+  PlugStatus
+  AssertExpect 'not loaded', 1
+  Assert !exists('g:yyy'), 'yyy not loaded'
+  /not loaded
+  normal L
+  AssertExpect 'not loaded', 0
+  Assert exists('g:yyy'), 'yyy loaded'
+  q
+
+Execute (Load plugin from PlugStatus screen with L key in visual mode):
+  call plug#begin()
+  Plug '$PWD/z1', { 'on':  [] }
+  Plug '$PWD/z2', { 'for': [] }
+  call plug#end()
+
+  PlugStatus
+  AssertExpect 'not loaded', 2
+  Assert !exists('g:z1'), 'z1 not loaded'
+  Assert !exists('g:z2'), 'z2 not loaded'
+  normal ggVGL
+  AssertExpect 'not loaded', 0
+  Assert exists('g:z1'), 'z1 loaded'
+  Assert exists('g:z2'), 'z2 loaded'
+  q
+
 Execute (Cleanup):
   silent! call system('rm -rf '.temp_plugged)
   silent! call rename('fzf', 'fzf-staged')

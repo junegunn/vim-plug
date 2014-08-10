@@ -21,19 +21,23 @@ make_dirs() {
   for d in *; do
     cat > $d/xxx.vim << EOF
     " echom expand('<sfile>')
-    let g:xxx = get(g:, 'xxx', [])
-    call add(g:xxx, '${1:4}/$d')
+    let g:$2 = get(g:, '$2', [])
+    call add(g:$2, '${1:4}/$d')
 EOF
   done
   cd - > /dev/null
 }
 
-make_dirs xxx/
-make_dirs xxx/after
+make_dirs xxx/ xxx
+make_dirs xxx/after xxx
 mkdir xxx/doc
 cat > xxx/doc/xxx.txt << DOC
 hello *xxx*
 DOC
+
+make_dirs yyy/ yyy
+make_dirs z1/ z1
+make_dirs z2/ z2
 
 cat > /tmp/mini-vimrc << VIMRC
 set rtp+=vader.vim
