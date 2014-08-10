@@ -93,10 +93,6 @@ function! plug#begin(...)
     return s:err('Unable to determine plug home. Try calling plug#begin() with a path argument.')
   endif
 
-  if !executable('git')
-    return s:err('`git` executable not found. vim-plug requires git.')
-  endif
-
   let g:plug_home = home
   let g:plugs = {}
   " we want to keep track of the order plugins where registered.
@@ -107,7 +103,10 @@ function! plug#begin(...)
 endfunction
 
 function! s:define_commands()
-  command! -nargs=+ -bar Plug   call s:add(<args>)
+  command! -nargs=+ -bar Plug call s:add(<args>)
+  if !executable('git')
+    return s:err('`git` executable not found. vim-plug requires git.')
+  endif
   command! -nargs=* -bar -bang -complete=customlist,s:names PlugInstall call s:install('<bang>' == '!', <f-args>)
   command! -nargs=* -bar -bang -complete=customlist,s:names PlugUpdate  call s:update('<bang>' == '!', <f-args>)
   command! -nargs=0 -bar -bang PlugClean call s:clean('<bang>' == '!')
