@@ -75,7 +75,7 @@ Execute (Subsequent plug#begin() calls will reuse g:plug_home):
 Execute (Test Plug command):
   " Git repo with branch
   Plug 'junegunn/seoul256.vim', 'yes-t_co'
-  AssertEqual 'https://git:@github.com/junegunn/seoul256.vim.git', g:plugs['seoul256.vim'].uri
+  AssertEqual 'https://git::@github.com/junegunn/seoul256.vim.git', g:plugs['seoul256.vim'].uri
   AssertEqual join([temp_plugged, 'seoul256.vim/'], '/'), g:plugs['seoul256.vim'].dir
   AssertEqual 'yes-t_co', g:plugs['seoul256.vim'].branch
 
@@ -84,7 +84,7 @@ Execute (Test Plug command):
 
   " Git repo with tag
   Plug 'junegunn/goyo.vim', '1.5.2'
-  AssertEqual 'https://git:@github.com/junegunn/goyo.vim.git', g:plugs['goyo.vim'].uri
+  AssertEqual 'https://git::@github.com/junegunn/goyo.vim.git', g:plugs['goyo.vim'].uri
   AssertEqual join([temp_plugged, 'goyo.vim/'], '/'), g:plugs['goyo.vim'].dir
   AssertEqual '1.5.2', g:plugs['goyo.vim'].branch
 
@@ -99,7 +99,7 @@ Execute (Test Plug command):
 
   " vim-scripts/
   Plug 'beauty256'
-  AssertEqual 'https://git:@github.com/vim-scripts/beauty256.git', g:plugs.beauty256.uri
+  AssertEqual 'https://git::@github.com/vim-scripts/beauty256.git', g:plugs.beauty256.uri
   AssertEqual 'master', g:plugs.beauty256.branch
 
   AssertEqual 4, len(g:plugs)
@@ -199,8 +199,8 @@ Execute (PlugStatus):
   call PlugStatusSorted()
 
 Expect:
-      Expected:    https://git:@github.com/junegunn.choi/seoul256.vim.git
-      Invalid URI: https://git:@github.com/junegunn/seoul256.vim.git
+      Expected:    https://git::@github.com/junegunn.choi/seoul256.vim.git
+      Invalid URI: https://git::@github.com/junegunn/seoul256.vim.git
       PlugClean required.
   - vim-emoji: OK
   Finished. 1 error(s).
@@ -233,7 +233,7 @@ Execute (PlugStatus):
   call PlugStatusSorted()
 
 Expect:
-      Expected:    https://git:@github.com/junegunn/vim-emoji.git
+      Expected:    https://git::@github.com/junegunn/vim-emoji.git
       Invalid URI: https://bitbucket.org/junegunn/vim-emoji.git
       Not found. Try PlugInstall.
       PlugClean required.

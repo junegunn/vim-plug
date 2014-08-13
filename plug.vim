@@ -379,7 +379,7 @@ function! s:infer_properties(name, repo)
       if repo !~ '/'
         let repo = 'vim-scripts/'. repo
       endif
-      let uri = 'https://git:@github.com/' . repo . '.git'
+      let uri = 'https://git::@github.com/' . repo . '.git'
     endif
     let dir = s:dirpath( fnamemodify(join([g:plug_home, a:name], '/'), ':p') )
     return { 'dir': dir, 'uri': uri }
@@ -870,7 +870,7 @@ function! s:update_parallel(pull, todo, threads)
                 else
                   [false, [data.chomp, "PlugClean required."].join($/)]
                 end
-              elsif current_uri.sub(/git:@/, '') != uri.sub(/git:@/, '')
+              elsif current_uri.sub(/git::?@/, '') != uri.sub(/git::?@/, '')
                 [false, ["Invalid URI: #{current_uri}",
                          "Expected:    #{uri}",
                          "PlugClean required."].join($/)]
@@ -913,8 +913,8 @@ function! s:progress_bar(line, bar, total)
 endfunction
 
 function! s:compare_git_uri(a, b)
-  let a = substitute(a:a, 'git:@', '', '')
-  let b = substitute(a:b, 'git:@', '', '')
+  let a = substitute(a:a, 'git:\{1,2}@', '', '')
+  let b = substitute(a:b, 'git:\{1,2}@', '', '')
   return a ==# b
 endfunction
 
