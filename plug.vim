@@ -458,11 +458,16 @@ function! s:lastline(msg)
   return get(lines, -1, '')
 endfunction
 
+function! s:new_window()
+    let window_cmd = get(g:, 'plug_window', 'vertical topleft new')
+    execute window_cmd
+endfunction
+
 function! s:prepare()
   if bufexists(s:plug_buf)
     let winnr = bufwinnr(s:plug_buf)
     if winnr < 0
-      vertical topleft new
+      call s:new_window()
       execute 'buffer ' . s:plug_buf
     else
       execute winnr . 'wincmd w'
@@ -470,7 +475,7 @@ function! s:prepare()
     setlocal modifiable
     silent %d _
   else
-    vertical topleft new
+    call s:new_window()
     nnoremap <silent> <buffer> q  :if b:plug_preview==1<bar>pc<bar>endif<bar>q<cr>
     nnoremap <silent> <buffer> R  :silent! call <SID>retry()<cr>
     nnoremap <silent> <buffer> D  :PlugDiff<cr>
