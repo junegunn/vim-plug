@@ -5,7 +5,7 @@
 "
 "   mkdir -p ~/.vim/autoload
 "   curl -fLo ~/.vim/autoload/plug.vim \
-"     https://raw.github.com/junegunn/vim-plug/master/plug.vim
+"     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 "
 " Edit your .vimrc
 "
@@ -68,7 +68,7 @@ let g:loaded_plug = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
-let s:plug_source = 'https://raw.github.com/junegunn/vim-plug/master/plug.vim'
+let s:plug_source = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 let s:plug_buf = get(s:, 'plug_buf', -1)
 let s:mac_gui = has('gui_macvim') && has('gui_running')
 let s:is_win = has('win32') || has('win64')

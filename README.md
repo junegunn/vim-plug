@@ -1,15 +1,15 @@
-![vim-plug](https://raw.github.com/junegunn/vim-plug/master/plug.png)
+![vim-plug](https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.png)
 ![travis-ci](https://travis-ci.org/junegunn/vim-plug.svg?branch=master)
 
 A minimalist Vim plugin manager.
 
-![](https://raw.github.com/junegunn/i/master/vim-plug/installer.gif)
+![](https://raw.githubusercontent.com/junegunn/i/master/vim-plug/installer.gif)
 
 ### Pros.
 
 - Easier to setup: Single file. No boilerplate code required.
 - Easier to use: Concise, intuitive syntax
-- [Super-fast](https://raw.github.com/junegunn/i/master/vim-plug/40-in-4.gif)
+- [Super-fast](https://raw.githubusercontent.com/junegunn/i/master/vim-plug/40-in-4.gif)
   parallel installation/update (requires
   [+ruby](https://github.com/junegunn/vim-plug/wiki/ruby))
 - On-demand loading to achieve
@@ -20,13 +20,13 @@ A minimalist Vim plugin manager.
 
 ### Usage
 
-[Download plug.vim](https://raw.github.com/junegunn/vim-plug/master/plug.vim)
+[Download plug.vim](https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim)
 and put it in ~/.vim/autoload
 
 ```sh
 mkdir -p ~/.vim/autoload
 curl -fLo ~/.vim/autoload/plug.vim \
-    https://raw.github.com/junegunn/vim-plug/master/plug.vim
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 ```
 
 Edit your .vimrc
