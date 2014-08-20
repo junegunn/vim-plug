@@ -459,8 +459,7 @@ function! s:lastline(msg)
 endfunction
 
 function! s:new_window()
-    let window_cmd = get(g:, 'plug_window', 'vertical topleft new')
-    execute window_cmd
+  execute get(g:, 'plug_window', 'vertical topleft new')
 endfunction
 
 function! s:prepare()
