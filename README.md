@@ -82,13 +82,14 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 | `for`          | On-demand loading: File types                                        |
 | `frozen`       | Do not install/update plugin unless explicitly given as the argument |
 
-### Options for parallel installer
+### Global options
 
-| Flag             | Default | Description                          |
-| ---------------- | ------- | ------------------------------------ |
-| `g:plug_threads` | 16      | Default number of threads to use     |
-| `g:plug_timeout` | 60      | Time limit of each task in seconds   |
-| `g:plug_retries` | 2       | Number of retries in case of timeout |
+| Flag             | Default                | Description                          |
+| ---------------- | ---------------------- | ------------------------------------ |
+| `g:plug_window`  | `vertical topleft new` | Command to open plug window          |
+| `g:plug_threads` | 16                     | Default number of threads to use     |
+| `g:plug_timeout` | 60                     | Time limit of each task in seconds   |
+| `g:plug_retries` | 2                      | Number of retries in case of timeout |
 
 ### Keybindings
 
