@@ -1,5 +1,5 @@
 Execute (Initialize test environment):
-  Save &rtp, g:plugs, g:plug_home
+  Save &rtp, g:plugs, g:plug_home, g:plug_window
 
   let first_rtp = split(&rtp, ',')[0]
   let last_rtp  = split(&rtp, ',')[-1]
@@ -11,8 +11,7 @@ Execute (Initialize test environment):
   execute 'set rtp^='.plug
   let basertp = &rtp
 
-  unlet! g:plugs
-  unlet! g:plug_home
+  unlet! g:plugs g:plug_home g:plug_window
 
   set t_Co=256
   colo default
@@ -848,12 +847,39 @@ Execute (Load plugin from PlugStatus screen with L key in visual mode):
   Assert exists('g:z2'), 'z2 loaded'
   q
 
+**********************************************************************
+~ g:plug_window
+**********************************************************************
+Execute (Open plug window in a new tab):
+  " Without g:plug_window, plug window is open on the left split
+  let tabnr = tabpagenr()
+  PlugStatus
+  AssertEqual tabnr, tabpagenr()
+  AssertEqual 1, winnr()
+
+  " PlugStatus again inside the window should not change the view
+  normal S
+  AssertEqual tabnr, tabpagenr()
+  AssertEqual 1, winnr()
+  q
+
+  " Define g:plug_window so that plug window is open in a new tab
+  let g:plug_window = 'tabnew'
+  PlugStatus
+  AssertNotEqual tabnr, tabpagenr()
+
+  " PlugStatus again inside the window should not change the view
+  let tabnr = tabpagenr()
+  normal S
+  AssertEqual tabnr, tabpagenr()
+  q
+
 Execute (Cleanup):
   silent! call system('rm -rf '.temp_plugged)
   silent! call rename('fzf', 'fzf-staged')
   silent! unlet g:plugs
   silent! unlet g:plug_home
-  silent! unlet temp_plugged vader plug basertp save_rtp repo lnum fzf out
+  silent! unlet temp_plugged vader plug basertp save_rtp repo lnum fzf out tabnr
   silent! delf PlugStatusSorted
   silent! delf AssertExpect
   silent! delf PlugUpdated
