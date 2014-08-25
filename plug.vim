@@ -379,7 +379,11 @@ function! s:infer_properties(name, repo)
       if repo !~ '/'
         let repo = 'vim-scripts/'. repo
       endif
-      let uri = 'https://git::@github.com/' . repo . '.git'
+      if exists('g:plug_use_ssh') && g:plug_use_ssh == 1
+          let uri = 'git@github.com:' . repo . '.git'
+      else
+          let uri = 'https://git::@github.com/' . repo . '.git'
+      endif
     endif
     let dir = s:dirpath( fnamemodify(join([g:plug_home, a:name], '/'), ':p') )
     return { 'dir': dir, 'uri': uri }
@@ -1251,4 +1255,3 @@ endif
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
-
