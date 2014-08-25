@@ -379,7 +379,7 @@ function! s:infer_properties(name, repo)
       if repo !~ '/'
         let repo = 'vim-scripts/'. repo
       endif
-      if g:plug_use_ssh == 1
+      if exists('g:plug_use_ssh') && g:plug_use_ssh == 1
           let uri = 'git@github.com:' . repo . '.git'
       else
           let uri = 'https://git::@github.com/' . repo . '.git'
