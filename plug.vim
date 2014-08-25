@@ -379,7 +379,8 @@ function! s:infer_properties(name, repo)
       if repo !~ '/'
         let repo = 'vim-scripts/'. repo
       endif
-      let uri = 'https://git::@github.com/' . repo . '.git'
+      let fmt = get(g:, 'plug_url_format', 'https://git::@github.com/%s.git')
+      let uri = printf(fmt, repo)
     endif
     let dir = s:dirpath( fnamemodify(join([g:plug_home, a:name], '/'), ':p') )
     return { 'dir': dir, 'uri': uri }

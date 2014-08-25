@@ -874,11 +874,24 @@ Execute (Open plug window in a new tab):
   AssertEqual tabnr, tabpagenr()
   q
 
+**********************************************************************
+~ g:plug_url_format
+**********************************************************************
+Execute (Using g:plug_url_format):
+  call plug#begin()
+  let g:plug_url_format = 'git@bitbucket.org:%s.git'
+  Plug 'junegunn/seoul256.vim'
+  let g:plug_url_format = 'git@bitsocket.org:%s.git'
+  Plug 'beauty256'
+  AssertEqual 'git@bitbucket.org:junegunn/seoul256.vim.git', g:plugs['seoul256.vim'].uri
+  AssertEqual 'git@bitsocket.org:vim-scripts/beauty256.git', g:plugs['beauty256'].uri
+
 Execute (Cleanup):
   silent! call system('rm -rf '.temp_plugged)
   silent! call rename('fzf', 'fzf-staged')
   silent! unlet g:plugs
   silent! unlet g:plug_home
+  silent! unlet g:plug_url_format
   silent! unlet temp_plugged vader plug basertp save_rtp repo lnum fzf out tabnr
   silent! delf PlugStatusSorted
   silent! delf AssertExpect
