@@ -670,7 +670,7 @@ function! s:update_serial(pull, todo)
       if valid
         let result = a:pull ?
           \ s:system(
-          \ printf('git checkout -q %s 2>&1 && git pull origin %s 2>&1 && git submodule update --init --recursive 2>&1',
+          \ printf('git checkout -q %s 2>&1 && git pull --no-rebase origin %s 2>&1 && git submodule update --init --recursive 2>&1',
           \   s:shellesc(spec.branch), s:shellesc(spec.branch))) : 'Already installed'
         let error = a:pull ? v:shell_error != 0 : 0
       else
@@ -882,7 +882,7 @@ function! s:update_parallel(pull, todo, threads)
               else
                 if pull
                   log.call name, 'Updating ...', :update
-                  bt.call "#{cd} #{dir} && git checkout -q #{branch} 2>&1 && (git pull origin #{branch} #{progress} 2>&1 && #{subm})", name, :update
+                  bt.call "#{cd} #{dir} && git checkout -q #{branch} 2>&1 && (git pull --no-rebase origin #{branch} #{progress} 2>&1 && #{subm})", name, :update
                 else
                   [true, skip]
                 end
