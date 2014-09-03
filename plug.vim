@@ -1176,14 +1176,14 @@ function! s:preview_commit()
     return
   endif
 
-  execute 'cd '.s:esc(g:plugs[name].dir)
-  execute 'pedit '.sha
+  execute 'pedit' sha
   wincmd P
   setlocal filetype=git buftype=nofile nobuflisted
-  execute 'silent read !git show '.sha
-  normal! ggdd
-  wincmd p
+  execute 'cd' s:esc(g:plugs[name].dir)
+  execute 'silent read !git show' sha
   cd -
+  normal! gg"_dd
+  wincmd p
 endfunction
 
 function! s:section(flags)
