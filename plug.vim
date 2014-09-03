@@ -110,7 +110,7 @@ function! s:define_commands()
   command! -nargs=* -bar -bang -complete=customlist,s:names PlugInstall call s:install('<bang>' == '!', <f-args>)
   command! -nargs=* -bar -bang -complete=customlist,s:names PlugUpdate  call s:update('<bang>' == '!', <f-args>)
   command! -nargs=0 -bar -bang PlugClean call s:clean('<bang>' == '!')
-  command! -nargs=0 -bar PlugUpgrade if s:upgrade() | execute 'source '. s:me | endif
+  command! -nargs=0 -bar PlugUpgrade if s:upgrade() | execute 'source' s:me | endif
   command! -nargs=0 -bar PlugStatus  call s:status()
   command! -nargs=0 -bar PlugDiff    call s:diff()
 endfunction
@@ -122,7 +122,7 @@ endfunction
 function! s:source(from, ...)
   for pattern in a:000
     for vim in split(globpath(a:from, pattern), '\n')
-      execute 'source '.vim
+      execute 'source' vim
     endfor
   endfor
 endfunction
@@ -303,21 +303,21 @@ function! s:lod_ft(pat, names)
     call s:lod(g:plugs[name], ['plugin', 'after/plugin'])
   endfor
   call s:reorg_rtp()
-  execute 'autocmd! PlugLOD FileType ' . a:pat
+  execute 'autocmd! PlugLOD FileType' a:pat
   silent! doautocmd filetypeplugin FileType
   silent! doautocmd filetypeindent FileType
 endfunction
 
 function! s:lod_cmd(cmd, bang, l1, l2, args, name)
-  execute 'delc '.a:cmd
+  execute 'delc' a:cmd
   call s:lod(g:plugs[a:name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
   call s:reorg_rtp()
   execute printf('%s%s%s %s', (a:l1 == a:l2 ? '' : (a:l1.','.a:l2)), a:cmd, a:bang, a:args)
 endfunction
 
 function! s:lod_map(map, name, prefix)
-  execute 'unmap '.a:map
-  execute 'iunmap '.a:map
+  execute 'unmap' a:map
+  execute 'iunmap' a:map
   call s:lod(g:plugs[a:name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
   call s:reorg_rtp()
   let extra = ''
@@ -402,7 +402,7 @@ function! plug#helptags()
   for spec in values(g:plugs)
     let docd = join([spec.dir, 'doc'], '/')
     if isdirectory(docd)
-      silent! execute 'helptags '. s:esc(docd)
+      silent! execute 'helptags' s:esc(docd)
     endif
   endfor
   return 1
@@ -468,7 +468,7 @@ function! s:prepare()
     let winnr = bufwinnr(s:plug_buf)
     if winnr < 0
       call s:new_window()
-      execute 'buffer ' . s:plug_buf
+      execute 'buffer' s:plug_buf
     else
       execute winnr . 'wincmd w'
     endif
@@ -503,7 +503,7 @@ function! s:assign_name()
     let name = printf('%s (%s)', prefix, idx)
     let idx = idx + 1
   endwhile
-  silent! execute 'f '.fnameescape(name)
+  silent! execute 'f' fnameescape(name)
 endfunction
 
 function! s:do(pull, force, todo)
@@ -511,7 +511,7 @@ function! s:do(pull, force, todo)
     if !isdirectory(spec.dir)
       continue
     endif
-    execute 'cd '.s:esc(spec.dir)
+    execute 'cd' s:esc(spec.dir)
     let installed = has_key(s:prev_update.new, name)
     let updated = installed ? 0 :
       \ (a:pull && !empty(s:system_chomp('git log --pretty=format:"%h" "HEAD...HEAD@{1}"')))
@@ -665,7 +665,7 @@ function! s:update_serial(pull, todo)
   for [name, spec] in items(todo)
     let done[name] = 1
     if isdirectory(spec.dir)
-      execute 'cd '.s:esc(spec.dir)
+      execute 'cd' s:esc(spec.dir)
       let [valid, msg] = s:git_valid(spec, 0, 0)
       if valid
         let result = a:pull ?
@@ -945,7 +945,7 @@ function! s:git_valid(spec, check_branch, cd)
   let ret = 1
   let msg = 'OK'
   if isdirectory(a:spec.dir)
-    if a:cd | execute 'cd ' . s:esc(a:spec.dir) | endif
+    if a:cd | execute 'cd' s:esc(a:spec.dir) | endif
     let result = split(s:system('git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url'), '\n')
     let remote = result[-1]
     if v:shell_error
@@ -1202,7 +1202,7 @@ function! s:diff()
       continue
     endif
 
-    execute 'cd '.s:esc(v.dir)
+    execute 'cd' s:esc(v.dir)
     let diff = system('git log --pretty=format:"%h %s (%cr)" "HEAD...HEAD@{1}"')
     if !v:shell_error && !empty(diff)
       call append(1, '')
@@ -1232,7 +1232,7 @@ function! s:revert()
     return
   endif
 
-  execute 'cd '.s:esc(g:plugs[name].dir)
+  execute 'cd' s:esc(g:plugs[name].dir)
   call system('git reset --hard HEAD@{1} && git checkout '.s:esc(g:plugs[name].branch))
   cd -
   setlocal modifiable
