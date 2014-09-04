@@ -72,7 +72,7 @@ let s:plug_source = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/
 let s:plug_buf = get(s:, 'plug_buf', -1)
 let s:mac_gui = has('gui_macvim') && has('gui_running')
 let s:is_win = has('win32') || has('win64')
-let s:me = expand('<sfile>:p')
+let s:me = resolve(expand('<sfile>:p'))
 let s:base_spec = { 'branch': 'master', 'frozen': 0 }
 let s:TYPE = {
 \   'string':  type(''),
