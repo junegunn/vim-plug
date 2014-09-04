@@ -1236,7 +1236,7 @@ function! s:revert()
   call system('git reset --hard HEAD@{1} && git checkout '.s:esc(g:plugs[name].branch))
   cd -
   setlocal modifiable
-  normal! dap
+  normal! "_dap
   setlocal nomodifiable
   echo 'Reverted.'
 endfunction
