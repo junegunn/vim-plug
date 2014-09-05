@@ -197,7 +197,7 @@ function! plug#end()
   endfor
   call s:reorg_rtp()
   filetype plugin indent on
-  syntax on
+  syntax enable
 endfunction
 
 function! s:trim(str)
