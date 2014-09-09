@@ -1037,44 +1037,40 @@ function! s:clean(force)
 endfunction
 
 function! s:upgrade()
-  if executable('curl')
-    let mee = s:shellesc(s:me)
-    let new = s:shellesc(s:me . '.new')
-    echo 'Downloading '. s:plug_source
-    redraw
-    let mv = s:is_win ? 'move /Y' : 'mv -f'
-    let cp = s:is_win ? 'copy /Y' : 'cp -f'
-    call system(printf(
-      \ 'curl -fLo %s %s && '.cp.' %s %s.old && '.mv.' %s %s',
-      \ new, s:plug_source, mee, mee, new, mee))
-    if v:shell_error
-      return s:err('Error upgrading vim-plug')
-    endif
-  elseif has('ruby')
-    echo 'Downloading '. s:plug_source
-    try
+  let new = s:me . '.new'
+  echo 'Downloading '. s:plug_source
+  redraw
+  try
+    if executable('curl')
+      let output = system(printf('curl -fLo %s %s', s:shellesc(new), s:plug_source))
+      if v:shell_error
+        throw get(split(output, '\n'), -1, '')
+      endif
+    elseif has('ruby')
       ruby << EOF
       require 'open-uri'
-      require 'fileutils'
-      me  = VIM::evaluate('s:me')
-      old = me + '.old'
-      new = me + '.new'
-      File.open(new, 'w') do |f|
+      File.open(VIM::evaluate('new'), 'w') do |f|
         f << open(VIM::evaluate('s:plug_source')).read
       end
-      FileUtils.cp me, old
-      File.rename  new, me
 EOF
-    catch
-      return s:err('Error upgrading vim-plug')
-    endtry
-  else
-    return s:err('curl executable or ruby support not found')
-  endif
+    else
+      return s:err('curl executable or ruby support not found')
+    endif
+  catch
+    return s:err('Error upgrading vim-plug: '. v:exception)
+  endtry
 
-  unlet g:loaded_plug
-  echo 'Downloaded '. s:plug_source
-  return 1
+  if readfile(s:me) ==# readfile(new)
+    echo 'vim-plug is up-to-date'
+    silent! call delete(new)
+    return 0
+  else
+    call rename(s:me, s:me . '.old')
+    call rename(new, s:me)
+    unlet g:loaded_plug
+    echo 'vim-plug is upgraded'
+    return 1
+  endif
 endfunction
 
 function! s:upgrade_specs()
