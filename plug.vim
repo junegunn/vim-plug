@@ -1044,7 +1044,7 @@ function! s:upgrade()
     if executable('curl')
       let output = system(printf('curl -fLo %s %s', s:shellesc(new), s:plug_source))
       if v:shell_error
-        throw get(split(output, '\n'), -1, '')
+        throw get(split(output, '\n'), -1, v:shell_error)
       endif
     elseif has('ruby')
       ruby << EOF
