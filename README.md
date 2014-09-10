@@ -130,6 +130,10 @@ Plug 'kovisoft/paredit', { 'for': ['clojure', 'scheme'] }
 Plug 'junegunn/vader.vim',  { 'on': 'Vader', 'for': 'vader' }
 ```
 
+`for` option is generally not needed as most plugins for specific file types
+usually don't have too much code in `plugin` directory. You might want to
+examine the output of `vim --startuptime` before applying the option.
+
 ### Post-update hooks
 
 There are some plugins that require extra steps after installation or update.
