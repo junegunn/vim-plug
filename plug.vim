@@ -789,7 +789,7 @@ function! s:update_parallel(pull, todo, threads)
       logh.call
     end
   }
-  bt = proc { |cmd, name, type|
+  bt = proc { |cmd, name, type, cleanup|
     tried = timeout = 0
     begin
       tried += 1
@@ -820,6 +820,7 @@ function! s:update_parallel(pull, todo, threads)
         killall fd.pid
         fd.close
       end
+      cleanup.call if cleanup
       if e.is_a?(Timeout::Error) && tried < tries
         3.downto(1) do |countdown|
           s = countdown > 1 ? 's' : ''
@@ -868,7 +869,7 @@ function! s:update_parallel(pull, todo, threads)
           ok, result =
             if exists
               dir = esc dir
-              ret, data = bt.call "#{cd} #{dir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url", nil, nil
+              ret, data = bt.call "#{cd} #{dir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url"
               current_uri = data.lines.to_a.last
               if !ret
                 if data =~ /^Interrupted|^Timeout/
@@ -891,7 +892,9 @@ function! s:update_parallel(pull, todo, threads)
             else
               d = esc dir.sub(%r{[\\/]+$}, '')
               log.call name, 'Installing ...', :install
-              bt.call "(git clone #{progress} --recursive #{uri} -b #{branch} #{d} 2>&1 && cd #{esc dir} && #{subm})", name, :install
+              bt.call "(git clone #{progress} --recursive #{uri} -b #{branch} #{d} 2>&1 && cd #{esc dir} && #{subm})", name, :install, proc {
+                FileUtils.rm_rf dir
+              }
             end
           mtx.synchronize { VIM::command("let s:prev_update.new['#{name}'] = 1") } if !exists && ok
           log.call name, result, ok
