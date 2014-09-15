@@ -27,7 +27,7 @@ Execute (Initialize test environment):
   endfunction
 
   function! AssertExpect(bang, pat, cnt)
-    let op = a:bang ? '==' : '=~'
+    let op = a:bang ? '==#' : '=~#'
     AssertEqual a:cnt, len(filter(getline(1, '$'), "v:val ".op." '".a:pat."'"))
   endfunction
   command! -nargs=+ -bang AssertExpect call AssertExpect('<bang>' == '!', <args>)
@@ -873,6 +873,7 @@ Execute (Open plug window in a new tab):
   normal S
   AssertEqual tabnr, tabpagenr()
   q
+  unlet g:plug_window
 
 **********************************************************************
 ~ g:plug_url_format
@@ -885,6 +886,56 @@ Execute (Using g:plug_url_format):
   Plug 'beauty256'
   AssertEqual 'git@bitbucket.org:junegunn/seoul256.vim.git', g:plugs['seoul256.vim'].uri
   AssertEqual 'git@bitsocket.org:vim-scripts/beauty256.git', g:plugs['beauty256'].uri
+  unlet g:plug_url_format
+
+**********************************************************************
+~ U
+**********************************************************************
+Execute (Plug block):
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align'
+  Plug 'junegunn/vim-emoji'
+  call plug#end()
+
+Execute (Update plugin with U key in normal mode):
+  PlugStatus
+  /emoji
+  normal U
+  Log getline(1, '$')
+  AssertExpect 'Updated', 1
+  AssertExpect 'vim-emoji', 1
+  AssertExpect 'vim-easy-align', 0
+  AssertExpect! '[=]', 1
+
+  " From PlugInstall screen
+  PlugInstall
+  /easy-align
+  normal U
+  AssertExpect 'Updated', 1
+  AssertExpect 'vim-emoji', 0
+  AssertExpect 'vim-easy-align', 1
+  AssertExpect! '[=]', 1
+  q
+
+Execute (Update plugins with U key in visual mode):
+  silent! call system('rm -rf '.g:plugs['vim-easy-align'].dir)
+
+  PlugStatus
+  normal VGU
+  Log getline(1, '$')
+  AssertExpect 'Updated', 1
+  AssertExpect 'vim-emoji', 1
+  AssertExpect 'vim-easy-align', 1
+  AssertExpect! '[==]', 1
+
+  " From PlugUpdate screen
+  normal VGU
+  Log getline(1, '$')
+  AssertExpect 'Updated', 1
+  AssertExpect 'vim-emoji', 1
+  AssertExpect 'vim-easy-align', 1
+  AssertExpect! '[==]', 1
+  q
 
 Execute (Cleanup):
   silent! call system('rm -rf '.temp_plugged)
