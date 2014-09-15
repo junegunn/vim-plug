@@ -107,8 +107,8 @@ function! s:define_commands()
   if !executable('git')
     return s:err('`git` executable not found. vim-plug requires git.')
   endif
-  command! -nargs=* -bar -bang -complete=customlist,s:names PlugInstall call s:install('<bang>' == '!', <f-args>)
-  command! -nargs=* -bar -bang -complete=customlist,s:names PlugUpdate  call s:update('<bang>' == '!', <f-args>)
+  command! -nargs=* -bar -bang -complete=customlist,s:names PlugInstall call s:install('<bang>' == '!', [<f-args>])
+  command! -nargs=* -bar -bang -complete=customlist,s:names PlugUpdate  call s:update('<bang>' == '!', [<f-args>])
   command! -nargs=0 -bar -bang PlugClean call s:clean('<bang>' == '!')
   command! -nargs=0 -bar PlugUpgrade if s:upgrade() | execute 'source' s:me | endif
   command! -nargs=0 -bar PlugStatus  call s:status()
@@ -387,12 +387,12 @@ function! s:infer_properties(name, repo)
   endif
 endfunction
 
-function! s:install(force, ...)
-  call s:update_impl(0, a:force, a:000)
+function! s:install(force, names)
+  call s:update_impl(0, a:force, a:names)
 endfunction
 
-function! s:update(force, ...)
-  call s:update_impl(1, a:force, a:000)
+function! s:update(force, names)
+  call s:update_impl(1, a:force, a:names)
 endfunction
 
 function! plug#helptags()
@@ -476,10 +476,12 @@ function! s:prepare()
     silent %d _
   else
     call s:new_window()
-    nnoremap <silent> <buffer> q  :if b:plug_preview==1<bar>pc<bar>endif<bar>q<cr>
+    nnoremap <silent> <buffer> q  :if b:plug_preview==1<bar>pc<bar>endif<bar>echo<bar>q<cr>
     nnoremap <silent> <buffer> R  :silent! call <SID>retry()<cr>
     nnoremap <silent> <buffer> D  :PlugDiff<cr>
     nnoremap <silent> <buffer> S  :PlugStatus<cr>
+    nnoremap <silent> <buffer> U  :call <SID>status_update()<cr>
+    xnoremap <silent> <buffer> U  :call <SID>status_update()<cr>
     nnoremap <silent> <buffer> ]] :silent! call <SID>section('')<cr>
     nnoremap <silent> <buffer> [[ :silent! call <SID>section('b')<cr>
     let b:plug_preview = -1
@@ -1120,21 +1122,34 @@ function! s:status()
   normal! gg
   setlocal nomodifiable
   if unloaded
-    echo "Press 'L' on each line to load plugin"
+    echo "Press 'L' on each line to load plugin, or 'U' to update"
     nnoremap <silent> <buffer> L :call <SID>status_load(line('.'))<cr>
     xnoremap <silent> <buffer> L :call <SID>status_load(line('.'))<cr>
   end
 endfunction
 
+function! s:extract_name(str, prefix, suffix)
+  let matches = matchlist(a:str, '^' .a:prefix. ' \([^:]\+\):.*'.a:suffix. '$')
+  return get(matches, 1, '')
+endfunction
+
 function! s:status_load(lnum)
   let line = getline(a:lnum)
-  let matches = matchlist(line, '^- \([^:]*\):.*(not loaded)$')
-  if !empty(matches)
-    let name = matches[1]
+  let name = s:extract_name(line, '-', '(not loaded)')
+  if !empty(name)
     call plug#load(name)
     setlocal modifiable
     call setline(a:lnum, substitute(line, ' (not loaded)$', '', ''))
     setlocal nomodifiable
+  endif
+endfunction
+
+function! s:status_update() range
+  let line = getline(a:firstline, a:lastline)
+  let names = filter(map(line, 's:extract_name(v:val, "[x-]", "")'), '!empty(v:val)')
+  if !empty(names)
+    echo
+    execute 'PlugUpdate' join(names)
   endif
 endfunction
 
