@@ -628,7 +628,7 @@ function! s:update_impl(pull, force, args) abort
       let printed = {}
       silent 4,$d _
       for line in lines
-        let name = get(matchlist(line, '^. \([^:]\+\):'), 1, '')
+        let name = matchstr(line, '^. \zs[^:]\+\ze:')
         if empty(name) || !has_key(printed, name)
           call append('$', line)
           if !empty(name)
@@ -1129,8 +1129,7 @@ function! s:status()
 endfunction
 
 function! s:extract_name(str, prefix, suffix)
-  let matches = matchlist(a:str, '^' .a:prefix. ' \([^:]\+\):.*'.a:suffix. '$')
-  return get(matches, 1, '')
+  return matchstr(a:str, '^'.a:prefix.' \zs[^:]\+\ze:.*'.a:suffix.'$')
 endfunction
 
 function! s:status_load(lnum)
@@ -1145,8 +1144,8 @@ function! s:status_load(lnum)
 endfunction
 
 function! s:status_update() range
-  let line = getline(a:firstline, a:lastline)
-  let names = filter(map(line, 's:extract_name(v:val, "[x-]", "")'), '!empty(v:val)')
+  let lines = getline(a:firstline, a:lastline)
+  let names = filter(map(lines, 's:extract_name(v:val, "[x-]", "")'), '!empty(v:val)')
   if !empty(names)
     echo
     execute 'PlugUpdate' join(names)
