@@ -937,6 +937,11 @@ Execute (Update plugins with U key in visual mode):
   AssertExpect! '[==]', 1
   q
 
+Execute (plug#begin should expand env vars):
+  AssertNotEqual '$HOME/.emacs/plugged', expand('$HOME/.emacs/plugged')
+  call plug#begin('$HOME/.emacs/plugged')
+  AssertEqual expand('$HOME/.emacs/plugged'), g:plug_home
+
 Execute (Cleanup):
   silent! call system('rm -rf '.temp_plugged)
   silent! call rename('fzf', 'fzf-staged')

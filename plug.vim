@@ -84,7 +84,7 @@ let s:loaded = get(s:, 'loaded', {})
 
 function! plug#begin(...)
   if a:0 > 0
-    let home = s:path(fnamemodify(a:1, ':p'))
+    let home = s:path(fnamemodify(expand(a:1), ':p'))
   elseif exists('g:plug_home')
     let home = s:path(g:plug_home)
   elseif !empty(&rtp)
