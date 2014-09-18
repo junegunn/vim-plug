@@ -725,7 +725,7 @@ function! s:update_parallel(pull, todo, threads)
 
   def killall pid
     pids = [pid]
-    unless `which pgrep`.empty?
+    unless `which pgrep 2> /dev/null`.empty?
       children = pids
       until children.empty?
         children = children.map { |pid|
