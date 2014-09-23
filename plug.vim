@@ -287,7 +287,7 @@ function! s:reorg_rtp()
   let rtps     = map(s:loaded_names(), 's:rtp(g:plugs[v:val])')
   let afters   = filter(map(copy(rtps), 'globpath(v:val, "after")'), 'isdirectory(v:val)')
   let &rtp     = join(map(rtps, 's:escrtp(v:val)'), ',')
-                 \ . substitute(','.s:middle.',', ',,', ',', '')
+                 \ . substitute(','.s:middle.',', '^,,$', ',', '')
                  \ . join(map(afters, 's:escrtp(v:val)'), ',')
   let s:prtp   = &rtp
 
