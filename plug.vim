@@ -128,7 +128,6 @@ function! s:source(from, ...)
 endfunction
 
 function! plug#end()
-  let reload = !has('vim_starting')
   if !exists('g:plugs')
     return s:err('Call plug#begin() first')
   endif
@@ -189,12 +188,12 @@ function! plug#end()
     augroup END
   endfor
 
-  if reload
-    call s:reload()
-  endif
   call s:reorg_rtp()
   filetype plugin indent on
   syntax enable
+  if !has('vim_starting')
+    call s:reload()
+  endif
 endfunction
 
 function! s:loaded_names()
