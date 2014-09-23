@@ -32,6 +32,12 @@ Execute (Initialize test environment):
   endfunction
   command! -nargs=+ -bang AssertExpect call AssertExpect('<bang>' == '!', <args>)
 
+  function! EnsureLoaded()
+    if has('vim_starting')
+      runtime! plugin/**/*.vim
+    endif
+  endfunction
+
 Execute (Print Ruby version):
   redir => out
   silent ruby puts RUBY_VERSION
@@ -388,10 +394,7 @@ Given (Unaligned code):
   aa=2
 
 Execute (Check installed plugins):
-  if has('vim_starting')
-    Log 'Vader is run from commandline'
-    runtime! plugin/**/*.vim
-  endif
+  call EnsureLoaded()
   Assert exists(':FNR'),           'FNR command should be found'
   Assert !exists(':RedisExecute'), 'RedisExecute command still should not be found'
 
@@ -740,9 +743,9 @@ Execute (Immediate loading):
   " Different result when Vader is run from commandline with `-c` option
   Log g:xxx
   if has('vim_starting')
-    AssertEqual ['/ftdetect', 'after/ftdetect'], g:xxx
+    AssertEqual ['xxx/ftdetect', 'xxx/after/ftdetect'], g:xxx
   else
-    AssertEqual ['/plugin', 'after/plugin', '/ftdetect', 'after/ftdetect'], g:xxx
+    AssertEqual ['xxx/plugin', 'xxx/after/plugin', 'xxx/ftdetect', 'xxx/after/ftdetect'], g:xxx
   endif
 
 Execute (Command-based on-demand loading):
@@ -753,20 +756,20 @@ Execute (Command-based on-demand loading):
   AssertEqual [], g:xxx
 
   silent! XXX
-  AssertEqual ['/ftdetect', 'after/ftdetect', '/plugin', 'after/plugin'], g:xxx
+  AssertEqual ['xxx/ftdetect', 'xxx/after/ftdetect', 'xxx/plugin', 'xxx/after/plugin'], g:xxx
 
   setf xxx
-  AssertEqual ['/ftdetect', 'after/ftdetect', '/plugin', 'after/plugin', '/ftplugin', 'after/ftplugin', '/indent', 'after/indent', '/syntax', 'after/syntax'], g:xxx
+  AssertEqual ['xxx/ftdetect', 'xxx/after/ftdetect', 'xxx/plugin', 'xxx/after/plugin', 'xxx/ftplugin', 'xxx/after/ftplugin', 'xxx/indent', 'xxx/after/indent', 'xxx/syntax', 'xxx/after/syntax'], g:xxx
 
 Execute (Filetype-based on-demand loading):
   call plug#begin()
   Plug '$PWD/xxx', { 'for': 'xxx' }
   call plug#end()
 
-  AssertEqual ['/ftdetect', 'after/ftdetect'], g:xxx
+  AssertEqual ['xxx/ftdetect', 'xxx/after/ftdetect'], g:xxx
 
   setf xxx
-  AssertEqual ['/ftdetect', 'after/ftdetect', '/plugin', 'after/plugin', '/ftplugin', 'after/ftplugin', '/indent', 'after/indent', '/syntax', 'after/syntax'], g:xxx
+  AssertEqual ['xxx/ftdetect', 'xxx/after/ftdetect', 'xxx/plugin', 'xxx/after/plugin', 'xxx/ftplugin', 'xxx/after/ftplugin', 'xxx/indent', 'xxx/after/indent', 'xxx/syntax', 'xxx/after/syntax'], g:xxx
 
 Before:
 
@@ -937,10 +940,69 @@ Execute (Update plugins with U key in visual mode):
   AssertExpect! '[==]', 1
   q
 
+**********************************************************************
 Execute (plug#begin should expand env vars):
   AssertNotEqual '$HOME/.emacs/plugged', expand('$HOME/.emacs/plugged')
   call plug#begin('$HOME/.emacs/plugged')
   AssertEqual expand('$HOME/.emacs/plugged'), g:plug_home
+
+**********************************************************************
+Execute (Plug directory with comma):
+  call plug#begin(temp_plugged . '/p,l,u,g,g,e,d')
+  Plug 'junegunn/vim-emoji'
+  call plug#end()
+  Log &rtp
+
+  PlugInstall
+  q
+  let found = filter(split(globpath(&rtp, 'README.md'), '\n'), 'v:val =~ ","')
+  Log found
+  AssertEqual 1, len(found)
+
+**********************************************************************
+Execute (Strict load order):
+  let g:total_order = []
+  call plug#begin()
+  Plug '$PWD/xxx'
+  Plug '$PWD/yyy', { 'for': ['xxx'] }
+  call plug#end()
+  call EnsureLoaded()
+  setf xxx
+  Log 'Case 1: ' . &rtp
+  AssertEqual ['yyy/ftdetect', 'yyy/after/ftdetect', 'xxx/ftdetect', 'xxx/after/ftdetect'], g:total_order[0:3]
+  Assert index(g:total_order, 'xxx/plugin') < index(g:total_order, 'yyy/plugin')
+  Assert index(g:total_order, 'xxx/after/plugin') < index(g:total_order, 'yyy/after/plugin')
+  let len = len(split(&rtp, ','))
+
+  let g:total_order = []
+  call plug#begin()
+  Plug '$PWD/xxx', { 'for': ['xxx'] }
+  Plug '$PWD/yyy'
+  call plug#end()
+  call EnsureLoaded()
+  set rtp^=manually-prepended
+  set rtp+=manually-appended
+  setf xxx
+  Log 'Case 2: ' . &rtp
+  AssertEqual 'manually-prepended', split(&rtp, ',')[3]
+  AssertEqual 'manually-appended',  split(&rtp, ',')[-4]
+  AssertEqual ['xxx/ftdetect', 'xxx/after/ftdetect', 'yyy/ftdetect', 'yyy/after/ftdetect'], g:total_order[0:3]
+  Assert index(g:total_order, 'yyy/plugin') < index(g:total_order, 'xxx/plugin')
+  Assert index(g:total_order, 'yyy/after/plugin') < index(g:total_order, 'xxx/after/plugin')
+  AssertEqual len + 2, len(split(&rtp, ','))
+
+  let g:total_order = []
+  call plug#begin()
+  Plug '$PWD/xxx', { 'for': ['xxx'] }
+  Plug '$PWD/yyy', { 'for': ['xxx'] }
+  call plug#end()
+  call EnsureLoaded()
+  setf xxx
+  Log 'Case 3: ' . &rtp
+  AssertEqual ['xxx/ftdetect', 'xxx/after/ftdetect', 'yyy/ftdetect', 'yyy/after/ftdetect'], g:total_order[0:3]
+  Assert index(g:total_order, 'xxx/plugin') < index(g:total_order, 'yyy/plugin')
+  Assert index(g:total_order, 'xxx/after/plugin') < index(g:total_order, 'yyy/after/plugin')
+  AssertEqual len + 2, len(split(&rtp, ','))
 
 Execute (Cleanup):
   silent! call system('rm -rf '.temp_plugged)
@@ -948,10 +1010,11 @@ Execute (Cleanup):
   silent! unlet g:plugs
   silent! unlet g:plug_home
   silent! unlet g:plug_url_format
-  silent! unlet temp_plugged vader plug basertp save_rtp repo lnum fzf out tabnr
+  silent! unlet temp_plugged vader plug basertp save_rtp repo lnum fzf out tabnr found len
   silent! delf PlugStatusSorted
   silent! delf AssertExpect
   silent! delf PlugUpdated
+  silent! delf EnsureLoaded
   silent! delc AssertExpect
   silent! unmap /
   silent! unmap ?

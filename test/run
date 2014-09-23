@@ -19,10 +19,14 @@ make_dirs() {
   cd "$1"
   mkdir -p autoload colors ftdetect ftplugin indent plugin syntax
   for d in *; do
+    [ -d $d ] || continue
     cat > $d/xxx.vim << EOF
     " echom expand('<sfile>')
+    let g:total_order = get(g:, 'total_order', [])
     let g:$2 = get(g:, '$2', [])
-    call add(g:$2, '${1:4}/$d')
+    let s:name = join(filter(['$2', '${1:4}', '$d'], '!empty(v:val)'), '/')
+    call add(g:$2, s:name)
+    call add(g:total_order, s:name)
 EOF
   done
   cd - > /dev/null
@@ -30,12 +34,14 @@ EOF
 
 make_dirs xxx/ xxx
 make_dirs xxx/after xxx
-mkdir xxx/doc
+mkdir -p xxx/doc
 cat > xxx/doc/xxx.txt << DOC
 hello *xxx*
 DOC
 
 make_dirs yyy/ yyy
+make_dirs yyy/after yyy
+
 make_dirs z1/ z1
 make_dirs z2/ z2
 

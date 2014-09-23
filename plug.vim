@@ -142,17 +142,10 @@ function! plug#end()
   let lod = {}
 
   filetype off
-  " we want to make sure the plugin directories are added to rtp in the same
-  " order that they are registered with the Plug command. since the s:add_rtp
-  " function uses ^= to add plugin directories to the front of the rtp, we
-  " need to loop through the plugins in reverse
-  for name in reverse(copy(g:plugs_order))
+  for name in g:plugs_order
     let plug = g:plugs[name]
-    if get(s:loaded, plug.dir, 0) || !has_key(plug, 'on') && !has_key(plug, 'for')
-      let rtp = s:add_rtp(plug)
-      if reload
-        call s:source(rtp, 'plugin/**/*.vim', 'after/plugin/**/*.vim')
-      endif
+    if get(s:loaded, name, 0) || !has_key(plug, 'on') && !has_key(plug, 'for')
+      let s:loaded[name] = 1
       continue
     endif
 
@@ -192,12 +185,26 @@ function! plug#end()
   for [key, names] in items(lod)
     augroup PlugLOD
       execute printf('autocmd FileType %s call <SID>lod_ft(%s, %s)',
-            \ key, string(key), string(reverse(names)))
+            \ key, string(key), string(names))
     augroup END
   endfor
+
+  if reload
+    call s:reload()
+  endif
   call s:reorg_rtp()
   filetype plugin indent on
   syntax enable
+endfunction
+
+function! s:loaded_names()
+  return filter(copy(g:plugs_order), 'get(s:loaded, v:val, 0)')
+endfunction
+
+function! s:reload()
+  for name in s:loaded_names()
+    call s:source(s:rtp(g:plugs[name]), 'plugin/**/*.vim', 'after/plugin/**/*.vim')
+  endfor
 endfunction
 
 function! s:trim(str)
@@ -246,27 +253,46 @@ function! s:err(msg)
 endfunction
 
 function! s:esc(path)
-  return substitute(a:path, ' ', '\\ ', 'g')
+  return escape(a:path, ' ')
 endfunction
 
-function! s:add_rtp(plug)
-  let rtp = s:rtp(a:plug)
-  execute 'set rtp^='.s:esc(rtp)
-  let after = globpath(rtp, 'after')
-  if isdirectory(after)
-    execute 'set rtp+='.s:esc(after)
-  endif
-  let s:loaded[a:plug.dir] = 1
-  return rtp
+function! s:escrtp(path)
+  return escape(a:path, ' ,')
+endfunction
+
+function! s:remove_rtp()
+  for name in s:loaded_names()
+    let rtp = s:rtp(g:plugs[name])
+    execute 'set rtp-='.s:escrtp(rtp)
+    let after = globpath(rtp, 'after')
+    if isdirectory(after)
+      execute 'set rtp-='.s:escrtp(after)
+    endif
+  endfor
 endfunction
 
 function! s:reorg_rtp()
   if !empty(s:first_rtp)
     execute 'set rtp-='.s:first_rtp
-    execute 'set rtp^='.s:first_rtp
-  endif
-  if s:last_rtp !=# s:first_rtp
     execute 'set rtp-='.s:last_rtp
+  endif
+
+  " &rtp is modified from outside
+  if exists('s:prtp') && s:prtp !=# &rtp
+    call s:remove_rtp()
+    unlet! s:middle
+  endif
+
+  let s:middle = get(s:, 'middle', &rtp)
+  let rtps     = map(s:loaded_names(), 's:rtp(g:plugs[v:val])')
+  let afters   = filter(map(copy(rtps), 'globpath(v:val, "after")'), 'isdirectory(v:val)')
+  let &rtp     = join(map(rtps, 's:escrtp(v:val)'), ',')
+                 \ . substitute(','.s:middle.',', '^,,$', ',', '')
+                 \ . join(map(afters, 's:escrtp(v:val)'), ',')
+  let s:prtp   = &rtp
+
+  if !empty(s:first_rtp)
+    execute 'set rtp^='.s:first_rtp
     execute 'set rtp+='.s:last_rtp
   endif
 endfunction
@@ -284,25 +310,28 @@ function! plug#load(...)
     return s:err(printf('Unknown plugin%s: %s', s, join(unknowns, ', ')))
   end
   for name in a:000
-    call s:lod(g:plugs[name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
+    call s:lod([name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
   endfor
-  call s:reorg_rtp()
   silent! doautocmd BufRead
   return 1
 endfunction
 
-function! s:lod(plug, types)
-  let rtp = s:add_rtp(a:plug)
-  for dir in a:types
-    call s:source(rtp, dir.'/**/*.vim')
+function! s:lod(names, types)
+  for name in a:names
+    let s:loaded[name] = 1
+  endfor
+  call s:reorg_rtp()
+
+  for name in a:names
+    let rtp = s:rtp(g:plugs[name])
+    for dir in a:types
+      call s:source(rtp, dir.'/**/*.vim')
+    endfor
   endfor
 endfunction
 
 function! s:lod_ft(pat, names)
-  for name in a:names
-    call s:lod(g:plugs[name], ['plugin', 'after/plugin'])
-  endfor
-  call s:reorg_rtp()
+  call s:lod(a:names, ['plugin', 'after/plugin'])
   execute 'autocmd! PlugLOD FileType' a:pat
   silent! doautocmd filetypeplugin FileType
   silent! doautocmd filetypeindent FileType
@@ -310,16 +339,14 @@ endfunction
 
 function! s:lod_cmd(cmd, bang, l1, l2, args, name)
   execute 'delc' a:cmd
-  call s:lod(g:plugs[a:name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
-  call s:reorg_rtp()
+  call s:lod([a:name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
   execute printf('%s%s%s %s', (a:l1 == a:l2 ? '' : (a:l1.','.a:l2)), a:cmd, a:bang, a:args)
 endfunction
 
 function! s:lod_map(map, name, prefix)
   execute 'unmap' a:map
   execute 'iunmap' a:map
-  call s:lod(g:plugs[a:name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
-  call s:reorg_rtp()
+  call s:lod([a:name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
   let extra = ''
   while 1
     let c = getchar(0)
@@ -343,7 +370,7 @@ function! s:add(repo, ...)
                     \ a:0 == 1 ? s:parse_options(a:1) : s:base_spec)
     let g:plugs[name] = spec
     let g:plugs_order += [name]
-    let s:loaded[spec.dir] = 0
+    let s:loaded[name] = 0
   catch
     return s:err(v:exception)
   endtry
@@ -1109,7 +1136,7 @@ function! s:status()
     let cnt += 1
     let ecnt += !valid
     " `s:loaded` entry can be missing if PlugUpgraded
-    if valid && get(s:loaded, spec.dir, -1) == 0
+    if valid && get(s:loaded, name, -1) == 0
       let unloaded = 1
       let msg .= ' (not loaded)'
     endif
@@ -1255,8 +1282,12 @@ function! s:revert()
   echo 'Reverted.'
 endfunction
 
-let s:first_rtp = s:esc(get(split(&rtp, ','), 0, ''))
-let s:last_rtp = s:esc(get(split(&rtp, ','), -1, ''))
+function! s:split_rtp()
+  return split(&rtp, '\\\@<!,')
+endfunction
+
+let s:first_rtp = s:escrtp(get(s:split_rtp(), 0, ''))
+let s:last_rtp  = s:escrtp(get(s:split_rtp(), -1, ''))
 
 if exists('g:plugs')
   let g:plugs_order = get(g:, 'plugs_order', keys(g:plugs))
