@@ -1015,10 +1015,9 @@ function! s:clean(force)
 
   " List of valid directories
   let dirs = []
-  let managed = filter(copy(g:plugs), 's:is_managed(v:key)')
-  let [cnt, total] = [0, len(managed)]
-  for spec in values(managed)
-    if s:git_valid(spec, 0, 1)[0]
+  let [cnt, total] = [0, len(g:plugs)]
+  for [name, spec] in items(g:plugs)
+    if !s:is_managed(name) || s:git_valid(spec, 0, 1)[0]
       call add(dirs, spec.dir)
     endif
     let cnt += 1

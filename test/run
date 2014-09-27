@@ -15,8 +15,8 @@ if [ ! -d fzf-staged ]; then
 fi
 
 make_dirs() {
-  mkdir -p "$1"
-  cd "$1"
+  mkdir -p "temp/$1"
+  cd "temp/$1"
   mkdir -p autoload colors ftdetect ftplugin indent plugin syntax
   for d in *; do
     [ -d $d ] || continue
@@ -34,8 +34,8 @@ EOF
 
 make_dirs xxx/ xxx
 make_dirs xxx/after xxx
-mkdir -p xxx/doc
-cat > xxx/doc/xxx.txt << DOC
+mkdir -p temp/xxx/doc
+cat > temp/xxx/doc/xxx.txt << DOC
 hello *xxx*
 DOC
 

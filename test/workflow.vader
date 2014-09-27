@@ -731,12 +731,12 @@ Execute (Using custom dir):
 **********************************************************************
 Before (Clear global vars):
   let g:xxx = []
-  set rtp-=$PWD/xxx/
-  set rtp-=$PWD/xxx/after
+  set rtp-=$PWD/temp/xxx/
+  set rtp-=$PWD/temp/xxx/after
 
 Execute (Immediate loading):
   call plug#begin()
-  Plug '$PWD/xxx'
+  Plug '$PWD/temp/xxx'
   call plug#end()
 
   " FIXME:
@@ -750,7 +750,7 @@ Execute (Immediate loading):
 
 Execute (Command-based on-demand loading):
   call plug#begin()
-  Plug '$PWD/xxx', { 'on': 'XXX' }
+  Plug '$PWD/temp/xxx', { 'on': 'XXX' }
   call plug#end()
 
   AssertEqual [], g:xxx
@@ -763,7 +763,7 @@ Execute (Command-based on-demand loading):
 
 Execute (Filetype-based on-demand loading):
   call plug#begin()
-  Plug '$PWD/xxx', { 'for': 'xxx' }
+  Plug '$PWD/temp/xxx', { 'for': 'xxx' }
   call plug#end()
 
   AssertEqual ['xxx/ftdetect', 'xxx/after/ftdetect'], g:xxx
@@ -778,10 +778,10 @@ Before:
 **********************************************************************
 
 Execute (plug#helptags):
-  silent! call delete(expand('$PWD/xxx/doc/tags'))
-  Assert !filereadable(expand('$PWD/xxx/doc/tags'))
+  silent! call delete(expand('$PWD/temp/xxx/doc/tags'))
+  Assert !filereadable(expand('$PWD/temp/xxx/doc/tags'))
   AssertEqual 1, plug#helptags()
-  Assert filereadable(expand('$PWD/xxx/doc/tags'))
+  Assert filereadable(expand('$PWD/temp/xxx/doc/tags'))
 
 **********************************************************************
 ~ Manual loading
@@ -822,7 +822,7 @@ Execute (PlugStatus should not contain (not loaded)):
 
 Execute (Load plugin from PlugStatus screen with L key in normal mode):
   call plug#begin()
-  Plug '$PWD/yyy', { 'on': [] }
+  Plug '$PWD/temp/yyy', { 'on': [] }
   call plug#end()
 
   PlugStatus
@@ -836,8 +836,8 @@ Execute (Load plugin from PlugStatus screen with L key in normal mode):
 
 Execute (Load plugin from PlugStatus screen with L key in visual mode):
   call plug#begin()
-  Plug '$PWD/z1', { 'on':  [] }
-  Plug '$PWD/z2', { 'for': [] }
+  Plug '$PWD/temp/z1', { 'on':  [] }
+  Plug '$PWD/temp/z2', { 'for': [] }
   call plug#end()
 
   PlugStatus
@@ -963,8 +963,8 @@ Execute (Plug directory with comma):
 Execute (Strict load order):
   let g:total_order = []
   call plug#begin()
-  Plug '$PWD/xxx'
-  Plug '$PWD/yyy', { 'for': ['xxx'] }
+  Plug '$PWD/temp/xxx'
+  Plug '$PWD/temp/yyy', { 'for': ['xxx'] }
   call plug#end()
   call EnsureLoaded()
   setf xxx
@@ -976,8 +976,8 @@ Execute (Strict load order):
 
   let g:total_order = []
   call plug#begin()
-  Plug '$PWD/xxx', { 'for': ['xxx'] }
-  Plug '$PWD/yyy'
+  Plug '$PWD/temp/xxx', { 'for': ['xxx'] }
+  Plug '$PWD/temp/yyy'
   call plug#end()
   call EnsureLoaded()
   set rtp^=manually-prepended
@@ -993,8 +993,8 @@ Execute (Strict load order):
 
   let g:total_order = []
   call plug#begin()
-  Plug '$PWD/xxx', { 'for': ['xxx'] }
-  Plug '$PWD/yyy', { 'for': ['xxx'] }
+  Plug '$PWD/temp/xxx', { 'for': ['xxx'] }
+  Plug '$PWD/temp/yyy', { 'for': ['xxx'] }
   call plug#end()
   call EnsureLoaded()
   setf xxx
@@ -1003,6 +1003,23 @@ Execute (Strict load order):
   Assert index(g:total_order, 'xxx/plugin') < index(g:total_order, 'yyy/plugin')
   Assert index(g:total_order, 'xxx/after/plugin') < index(g:total_order, 'yyy/after/plugin')
   AssertEqual len + 2, len(split(&rtp, ','))
+
+**********************************************************************
+Execute (PlugClean should not try to remove unmanaged plugins inside g:plug_home):
+  call plug#begin('$PWD/temp')
+  Plug '$PWD/temp/xxx'
+  Plug '$PWD/temp/yyy'
+  call plug#end()
+
+  " Remove z1, z2
+  PlugClean!
+  AssertExpect '^- ', 2
+  AssertExpect 'Already clean', 0
+
+  PlugClean!
+  AssertExpect '^- ', 0
+  AssertExpect 'Already clean', 1
+  q
 
 Execute (Cleanup):
   silent! call system('rm -rf '.temp_plugged)
