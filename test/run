@@ -32,18 +32,22 @@ EOF
   cd - > /dev/null
 }
 
-make_dirs xxx/ xxx
-make_dirs xxx/after xxx
-mkdir -p temp/xxx/doc
-cat > temp/xxx/doc/xxx.txt << DOC
+init() {
+  rm -rf temp/{xxx,yyy,z1,z2}
+
+  make_dirs xxx/ xxx
+  make_dirs xxx/after xxx
+  mkdir -p temp/xxx/doc
+  cat > temp/xxx/doc/xxx.txt << DOC
 hello *xxx*
 DOC
 
-make_dirs yyy/ yyy
-make_dirs yyy/after yyy
+  make_dirs yyy/ yyy
+  make_dirs yyy/after yyy
 
-make_dirs z1/ z1
-make_dirs z2/ z2
+  make_dirs z1/ z1
+  make_dirs z2/ z2
+}
 
 cat > /tmp/mini-vimrc << VIMRC
 set rtp+=vader.vim
@@ -51,8 +55,10 @@ set shell=/bin/bash
 source $PLUG_SRC
 VIMRC
 
+init
 if [ "$1" = '!' ]; then
   /usr/local/bin/vim -Nu /tmp/mini-vimrc -c 'Vader! workflow.vader' > /dev/null &&
+  init &&
   /usr/local/bin/vim -Nu /tmp/mini-vimrc -c 'let g:plug_threads = 1 | Vader! workflow.vader' > /dev/null
 else
   /usr/local/bin/vim -Nu /tmp/mini-vimrc -c 'Vader workflow.vader'
