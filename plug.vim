@@ -710,11 +710,10 @@ function! s:update_serial(pull, todo)
       cd -
     else
       let result = s:system(
-            \ printf('git clone --recursive %s -b %s %s 2>&1 && cd %s && git submodule update --init --recursive 2>&1',
+            \ printf('git clone --recursive %s -b %s %s 2>&1',
             \ s:shellesc(spec.uri),
             \ s:shellesc(spec.branch),
-            \ s:shellesc(s:trim(spec.dir)),
-            \ s:shellesc(spec.dir)))
+            \ s:shellesc(s:trim(spec.dir))))
       let error = v:shell_error != 0
       if !error | let s:prev_update.new[name] = 1 | endif
     endif
@@ -921,7 +920,7 @@ function! s:update_parallel(pull, todo, threads)
             else
               d = esc dir.sub(%r{[\\/]+$}, '')
               log.call name, 'Installing ...', :install
-              bt.call "(git clone #{progress} --recursive #{uri} -b #{branch} #{d} 2>&1 && cd #{esc dir} && #{subm})", name, :install, proc {
+              bt.call "git clone #{progress} --recursive #{uri} -b #{branch} #{d} 2>&1", name, :install, proc {
                 FileUtils.rm_rf dir
               }
             end
