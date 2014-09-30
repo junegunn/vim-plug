@@ -69,6 +69,7 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 | `PlugUpgrade`                       | Upgrade vim-plug itself                                            |
 | `PlugStatus`                        | Check the status of plugins                                        |
 | `PlugDiff`                          | See the updated changes from the previous PlugUpdate               |
+| `PlugSnapshot [output path]`        | Generate script for restoring the current snapshot of the plugins  |
 
 ### `Plug` options
 
