@@ -55,7 +55,7 @@ set shell=/bin/bash
 source $PLUG_SRC
 VIMRC
 
-[ -z "$TMPDIR" ] && export TMPDIR=/tmp
+[ -z "$TMPDIR" ] && export TMPDIR=/tmp/
 init
 if [ "$1" = '!' ]; then
   /usr/local/bin/vim -Nu /tmp/mini-vimrc -c 'Vader! workflow.vader' > /dev/null &&
