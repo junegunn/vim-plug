@@ -1036,6 +1036,11 @@ Execute (PlugSnapshot):
   AssertEqual 'PLUG_HOME=$TMPDIR/plugged', getline(7)
   AssertEqual 0, stridx(getline(9), 'cd $PLUG_HOME/seoul256.vim/ && git reset --hard')
   AssertEqual 0, stridx(getline(10), 'cd $PLUG_HOME/vim-emoji/ && git reset --hard')
+  AssertEqual 'sh', &filetype
+
+  execute 'PlugSnapshot' g:plug_home.'/snapshot.sh'
+  AssertEqual 'sh', &filetype
+  AssertEqual 'snapshot.sh', fnamemodify(expand('%'), ':t')
   q
 
 Execute (Cleanup):
