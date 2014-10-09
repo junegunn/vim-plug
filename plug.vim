@@ -506,23 +506,29 @@ function! s:switch_in()
     return 0
   endif
 
-  let s:pos = [tabpagenr(), winnr(), winsaveview()]
-  execute 'normal!' s:plug_tab.'gt'
-  let winnr = bufwinnr(s:plug_buf)
-  execute winnr 'wincmd w'
+  if winbufnr(0) != s:plug_buf
+    let s:pos = [tabpagenr(), winnr(), winsaveview()]
+    execute 'normal!' s:plug_tab.'gt'
+    let winnr = bufwinnr(s:plug_buf)
+    execute winnr.'wincmd w'
+    call add(s:pos, winsaveview())
+  else
+    let s:pos = [winsaveview()]
+  endif
 
-  call add(s:pos, winsaveview())
   setlocal modifiable
   return 1
 endfunction
 
 function! s:switch_out()
-  call winrestview(s:pos[3])
+  call winrestview(s:pos[-1])
   setlocal nomodifiable
 
-  execute 'normal!' s:pos[0].'gt'
-  execute s:pos[1] 'wincmd w'
-  call winrestview(s:pos[2])
+  if len(s:pos) > 1
+    execute 'normal!' s:pos[0].'gt'
+    execute s:pos[1] 'wincmd w'
+    call winrestview(s:pos[2])
+  endif
 endfunction
 
 function! s:prepare()
