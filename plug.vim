@@ -73,6 +73,7 @@ let s:plug_tab = get(s:, 'plug_tab', -1)
 let s:plug_buf = get(s:, 'plug_buf', -1)
 let s:mac_gui = has('gui_macvim') && has('gui_running')
 let s:is_win = has('win32') || has('win64')
+let s:nvim = exists('##JobActivity')
 let s:me = resolve(expand('<sfile>:p'))
 let s:base_spec = { 'branch': 'master', 'frozen': 0 }
 let s:TYPE = {
@@ -484,9 +485,12 @@ function! s:lpad(str, len)
   return a:str . repeat(' ', a:len - len(a:str))
 endfunction
 
+function! s:lines(msg)
+  return split(a:msg, "[\r\n]")
+endfunction
+
 function! s:lastline(msg)
-  let lines = split(a:msg, "[\r\n]")
-  return get(lines, -1, '')
+  return get(s:lines(a:msg), -1, '')
 endfunction
 
 function! s:new_window()
@@ -506,19 +510,23 @@ function! s:switch_in()
   execute 'normal!' s:plug_tab.'gt'
   let winnr = bufwinnr(s:plug_buf)
   execute winnr 'wincmd w'
-  setlocal modifiable
 
+  call add(s:pos, winsaveview())
+  setlocal modifiable
   return 1
 endfunction
 
 function! s:switch_out()
+  call winrestview(s:pos[3])
   setlocal nomodifiable
+
   execute 'normal!' s:pos[0].'gt'
   execute s:pos[1] 'wincmd w'
   call winrestview(s:pos[2])
 endfunction
 
 function! s:prepare()
+  call s:job_abort()
   if bufexists(s:plug_buf)
     let winnr = bufwinnr(s:plug_buf)
     if winnr < 0
@@ -647,7 +655,6 @@ function! s:update_impl(pull, force, args) abort
   let managed = filter(copy(g:plugs), 's:is_managed(v:key)')
   let todo = empty(args) ? filter(managed, '!v:val.frozen') :
                          \ filter(managed, 'index(args, v:key) >= 0')
-  let threads = min([len(todo), threads])
 
   if empty(todo)
     echohl WarningMsg
@@ -667,14 +674,13 @@ function! s:update_impl(pull, force, args) abort
 
   let s:update = {
     \ 'start':   reltime(),
-    \ 'neovim':  exists('##JobActivity'),
     \ 'all':     todo,
     \ 'todo':    copy(todo),
     \ 'errors':  [],
     \ 'pull':    a:pull,
     \ 'force':   a:force,
     \ 'new':     {},
-    \ 'threads': (has('ruby') || exists('##JobActivity')) ? threads : 1,
+    \ 'threads': (has('ruby') || s:nvim) ? min([len(todo), threads]) : 1,
     \ 'bar':     '',
     \ 'fin':     0
   \ }
@@ -723,25 +729,34 @@ function! s:update_finish()
   endif
 endfunction
 
-function! s:job_handler()
-  let name = s:jobs_idx[v:job_data[0]]
-  let job = s:jobs[name]
-
-  " plug window closed
-  if !s:plug_window_exists()
-    augroup PlugJobControl
-      autocmd!
-    augroup END
-    for [name, j] in items(s:jobs)
-      call jobstop(j.jobid)
-      if j.new
-        call system('rm -rf ' . s:shellesc(g:plugs[name].dir))
-      endif
-    endfor
+function! s:job_abort()
+  if !s:nvim || !exists('s:jobs')
     return
   endif
+  augroup PlugJobControl
+    autocmd!
+  augroup END
+  for [name, j] in items(s:jobs)
+    silent! call jobstop(j.jobid)
+    if j.new
+      call system('rm -rf ' . s:shellesc(g:plugs[name].dir))
+    endif
+  endfor
+  let s:jobs     = {}
+  let s:jobs_idx = {}
+endfunction
 
-  let s:tick += 1
+function! s:job_handler() abort
+  if !s:plug_window_exists() " plug window closed
+    return s:job_abort()
+  endif
+
+  let name = get(s:jobs_idx, v:job_data[0], '')
+  if empty(name) " stale task
+    return
+  endif
+  let job = s:jobs[name]
+
   if v:job_data[1] == 'exit'
     let job.running = 0
     call s:reap(name)
@@ -751,7 +766,7 @@ function! s:job_handler()
     " To reduce the number of buffer updates
     let job.tick = get(job, 'tick', -1) + 1
     if job.tick % len(s:jobs) == 0
-      call s:log(name, s:lastline(job.result), s:update.pull ? 'u' : 'i')
+      call s:log(job.new ? '+' : '*', name, job.result)
     endif
   endif
 endfunction
@@ -761,7 +776,7 @@ function! s:spawn(name, cmd, opts)
             \ 'error': 0, 'result': '' }
   let s:jobs[a:name] = job
 
-  if s:update.neovim
+  if s:nvim
     let x = jobstart(a:name, 'sh', ['-c',
             \ has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd])
     if x > 0
@@ -785,7 +800,7 @@ function! s:spawn(name, cmd, opts)
 endfunction
 
 function! s:reap(name)
-  if s:update.neovim
+  if s:nvim
     silent! execute 'autocmd! PlugJobControl JobActivity' a:name
   endif
 
@@ -797,8 +812,7 @@ function! s:reap(name)
   endif
   let s:update.bar .= job.error ? 'x' : '='
 
-  " TODO: Error formatting
-  call s:log(a:name, s:lastline(job.result), job.error ? 'x' : '-')
+  call s:log(job.error ? 'x' : '-', a:name, job.result)
   call s:bar()
 
   call remove(s:jobs, a:name)
@@ -824,7 +838,7 @@ function! s:logpos(name)
   return 0
 endfunction
 
-function! s:log(name, line, type)
+function! s:log(bullet, name, lines)
   if s:switch_in()
     let pos = s:logpos(a:name)
     if pos > 0
@@ -835,12 +849,7 @@ function! s:log(name, line, type)
     else
       let pos = 4
     endif
-
-    let bullet = a:type == 'i' ? '+' :
-              \ (a:type == 'u' ? '*' :
-              \ (a:type == 'x' ? 'x' : '-'))
-
-    call append(pos - 1, printf('%s %s: %s', bullet, a:name, a:line))
+    call append(pos - 1, s:format_message(a:bullet, a:name, a:lines))
     call s:switch_out()
   endif
 endfunction
@@ -848,7 +857,6 @@ endfunction
 function! s:update_vim()
   let s:jobs     = {}
   let s:jobs_idx = {}
-  let s:tick     = 0
 
   call s:bar()
   normal! 2G
@@ -856,7 +864,7 @@ function! s:update_vim()
 endfunction
 
 function! s:tick()
-while 1
+while 1 " Without TCO, Vim stack is bound to explode
   if empty(s:update.todo)
     if empty(s:jobs) && !s:update.fin
       let s:update.fin = 1
@@ -868,10 +876,12 @@ while 1
   let name = keys(s:update.todo)[0]
   let spec = remove(s:update.todo, name)
   let pull = s:update.pull
-  call s:log(name, pull ? 'Updating ...' : 'Installing ...', pull ? 'u' : 'i')
+  let new  = !isdirectory(spec.dir)
+
+  call s:log(new ? '+' : '*', name, pull ? 'Updating ...' : 'Installing ...')
   redraw
 
-  if isdirectory(spec.dir)
+  if !new
     let [valid, msg] = s:git_valid(spec, 0)
     if valid
       if pull
@@ -894,11 +904,8 @@ while 1
 
   if !s:jobs[name].running
     call s:reap(name)
-    " Without TCO, Vim stack is bound to explode
-    " return s:tick()
     continue
   elseif len(s:jobs) < s:update.threads
-    " return s:tick()
     continue
   endif
   break
@@ -1134,11 +1141,11 @@ function! s:compare_git_uri(a, b)
   return a ==# b
 endfunction
 
-function! s:format_message(ok, name, message)
-  if a:ok
-    return [printf('- %s: %s', a:name, s:lastline(a:message))]
+function! s:format_message(bullet, name, message)
+  if a:bullet != 'x'
+    return [printf('%s %s: %s', a:bullet, a:name, s:lastline(a:message))]
   else
-    let lines = map(split(a:message, '\n'), '"    ".v:val')
+    let lines = map(s:lines(a:message), '"    ".v:val')
     return extend([printf('x %s:', a:name)], lines)
   endif
 endfunction
@@ -1321,7 +1328,7 @@ function! s:status()
       let msg .= ' (not loaded)'
     endif
     call s:progress_bar(2, repeat('=', cnt), total)
-    call append(3, s:format_message(valid, name, msg))
+    call append(3, s:format_message(valid ? '-' : 'x', name, msg))
     normal! 2G
     redraw
   endfor
