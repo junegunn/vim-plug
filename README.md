@@ -11,7 +11,8 @@ A minimalist Vim plugin manager.
 - Easier to use: Concise, intuitive syntax
 - [Super-fast](https://raw.githubusercontent.com/junegunn/i/master/vim-plug/40-in-4.gif)
   parallel installation/update (requires
-  [+ruby](https://github.com/junegunn/vim-plug/wiki/ruby))
+  [+ruby](https://github.com/junegunn/vim-plug/wiki/ruby) or
+  [Neovim](http://neovim.org/))
 - On-demand loading to achieve
   [fast startup time](http://junegunn.kr/images/vim-startup-time.png)
 - Post-update hooks

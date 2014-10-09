@@ -69,6 +69,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 let s:plug_source = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+let s:plug_tab = get(s:, 'plug_tab', -1)
 let s:plug_buf = get(s:, 'plug_buf', -1)
 let s:mac_gui = has('gui_macvim') && has('gui_running')
 let s:is_win = has('win32') || has('win64')
@@ -484,12 +485,37 @@ function! s:lpad(str, len)
 endfunction
 
 function! s:lastline(msg)
-  let lines = split(a:msg, '\n')
+  let lines = split(a:msg, "[\r\n]")
   return get(lines, -1, '')
 endfunction
 
 function! s:new_window()
   execute get(g:, 'plug_window', 'vertical topleft new')
+endfunction
+
+function! s:plug_window_exists()
+  return index(tabpagebuflist(s:plug_tab), s:plug_buf) >= 0
+endfunction
+
+function! s:switch_in()
+  if !s:plug_window_exists()
+    return 0
+  endif
+
+  let s:pos = [tabpagenr(), winnr(), winsaveview()]
+  execute 'normal!' s:plug_tab.'gt'
+  let winnr = bufwinnr(s:plug_buf)
+  execute winnr 'wincmd w'
+  setlocal modifiable
+
+  return 1
+endfunction
+
+function! s:switch_out()
+  setlocal nomodifiable
+  execute 'normal!' s:pos[0].'gt'
+  execute s:pos[1] 'wincmd w'
+  call winrestview(s:pos[2])
 endfunction
 
 function! s:prepare()
@@ -499,7 +525,7 @@ function! s:prepare()
       call s:new_window()
       execute 'buffer' s:plug_buf
     else
-      execute winnr . 'wincmd w'
+      execute winnr 'wincmd w'
     endif
     setlocal modifiable
     silent %d _
@@ -514,6 +540,7 @@ function! s:prepare()
     nnoremap <silent> <buffer> ]] :silent! call <SID>section('')<cr>
     nnoremap <silent> <buffer> [[ :silent! call <SID>section('b')<cr>
     let b:plug_preview = -1
+    let s:plug_tab = tabpagenr()
     let s:plug_buf = winbufnr(0)
     call s:assign_name()
   endif
@@ -542,7 +569,7 @@ function! s:do(pull, force, todo)
     if !isdirectory(spec.dir)
       continue
     endif
-    let installed = has_key(s:prev_update.new, name)
+    let installed = has_key(s:update.new, name)
     let updated = installed ? 0 :
       \ (a:pull && !empty(s:system_chomp('git log --pretty=format:"%h" "HEAD...HEAD@{1}"', spec.dir)))
     if a:force || installed || updated
@@ -586,7 +613,7 @@ function! s:finish(pull)
   call s:syntax()
   redraw
   let msgs = []
-  if !empty(s:prev_update.errors)
+  if !empty(s:update.errors)
     call add(msgs, "Press 'R' to retry.")
   endif
   if a:pull && !empty(filter(getline(5, '$'),
@@ -597,11 +624,11 @@ function! s:finish(pull)
 endfunction
 
 function! s:retry()
-  if empty(s:prev_update.errors)
+  if empty(s:update.errors)
     return
   endif
-  call s:update_impl(s:prev_update.pull, s:prev_update.force,
-        \ extend(copy(s:prev_update.errors), [s:prev_update.threads]))
+  call s:update_impl(s:update.pull, s:update.force,
+        \ extend(copy(s:update.errors), [s:update.threads]))
 endfunction
 
 function! s:is_managed(name)
@@ -613,7 +640,6 @@ function! s:names(...)
 endfunction
 
 function! s:update_impl(pull, force, args) abort
-  let st = reltime()
   let args = copy(a:args)
   let threads = (len(args) > 0 && args[-1] =~ '^[1-9][0-9]*$') ?
                   \ remove(args, -1) : get(g:, 'plug_threads', 16)
@@ -621,6 +647,7 @@ function! s:update_impl(pull, force, args) abort
   let managed = filter(copy(g:plugs), 's:is_managed(v:key)')
   let todo = empty(args) ? filter(managed, '!v:val.frozen') :
                          \ filter(managed, 'index(args, v:key) >= 0')
+  let threads = min([len(todo), threads])
 
   if empty(todo)
     echohl WarningMsg
@@ -638,20 +665,30 @@ function! s:update_impl(pull, force, args) abort
     endtry
   endif
 
-  call s:prepare()
-  call append(0, a:pull ? 'Updating plugins' : 'Installing plugins')
-  call append(1, '['. s:lpad('', len(todo)) .']')
-  normal! 2G
-  redraw
+  let s:update = {
+    \ 'start':   reltime(),
+    \ 'neovim':  exists('##JobActivity'),
+    \ 'all':     todo,
+    \ 'todo':    copy(todo),
+    \ 'errors':  [],
+    \ 'pull':    a:pull,
+    \ 'force':   a:force,
+    \ 'new':     {},
+    \ 'threads': (has('ruby') || exists('##JobActivity')) ? threads : 1,
+    \ 'bar':     '',
+    \ 'fin':     0
+  \ }
 
-  let s:prev_update = { 'errors': [], 'pull': a:pull, 'force': a:force, 'new': {}, 'threads': threads }
-  if has('ruby') && threads > 1
+  call s:prepare()
+  call append(0, ['', ''])
+
+  if has('ruby') && s:update.threads > 1
     try
       let imd = &imd
       if s:mac_gui
         set noimd
       endif
-      call s:update_parallel(a:pull, todo, threads)
+      call s:update_ruby()
     catch
       let lines = getline(4, '$')
       let printed = {}
@@ -662,71 +699,213 @@ function! s:update_impl(pull, force, args) abort
           call append('$', line)
           if !empty(name)
             let printed[name] = 1
-            if line[0] == 'x' && index(s:prev_update.errors, name) < 0
-              call add(s:prev_update.errors, name)
+            if line[0] == 'x' && index(s:update.errors, name) < 0
+              call add(s:update.errors, name)
             end
           endif
         endif
       endfor
     finally
       let &imd = imd
+      call s:update_finish()
     endtry
   else
-    call s:update_serial(a:pull, todo)
+    call s:update_vim()
   endif
-  call s:do(a:pull, a:force, filter(copy(todo), 'has_key(v:val, "do")'))
-  call s:finish(a:pull)
-  call setline(1, 'Updated. Elapsed time: ' . split(reltimestr(reltime(st)))[0] . ' sec.')
 endfunction
 
-function! s:update_progress(pull, cnt, bar, total)
-  call setline(1, (a:pull ? 'Updating' : 'Installing').
-        \ ' plugins ('.a:cnt.'/'.a:total.')')
-  call s:progress_bar(2, a:bar, a:total)
-  normal! 2G
-  redraw
+function! s:update_finish()
+  if s:switch_in()
+    call s:do(s:update.pull, s:update.force, filter(copy(s:update.all), 'has_key(v:val, "do")'))
+    call s:finish(s:update.pull)
+    call setline(1, 'Updated. Elapsed time: ' . split(reltimestr(reltime(s:update.start)))[0] . ' sec.')
+    call s:switch_out()
+  endif
 endfunction
 
-function! s:update_serial(pull, todo)
-  let base  = g:plug_home
-  let todo  = copy(a:todo)
-  let total = len(todo)
-  let done  = {}
-  let bar   = ''
+function! s:job_handler()
+  let name = s:jobs_idx[v:job_data[0]]
+  let job = s:jobs[name]
 
-  for [name, spec] in items(todo)
-    let done[name] = 1
-    if isdirectory(spec.dir)
-      let [valid, msg] = s:git_valid(spec, 0)
-      if valid
-        let result = a:pull ?
-          \ s:system(
-          \ printf('git checkout -q %s 2>&1 && git pull --no-rebase origin %s 2>&1 && git submodule update --init --recursive 2>&1',
-          \   s:shellesc(spec.branch), s:shellesc(spec.branch)), spec.dir) : 'Already installed'
-        let error = a:pull ? v:shell_error != 0 : 0
-      else
-        let result = msg
-        let error = 1
+  " plug window closed
+  if !s:plug_window_exists()
+    augroup PlugJobControl
+      autocmd!
+    augroup END
+    for [name, j] in items(s:jobs)
+      call jobstop(j.jobid)
+      if j.new
+        call system('rm -rf ' . s:shellesc(g:plugs[name].dir))
+      endif
+    endfor
+    return
+  endif
+
+  let s:tick += 1
+  if v:job_data[1] == 'exit'
+    let job.running = 0
+    call s:reap(name)
+    call s:tick()
+  else
+    let job.result .= v:job_data[2]
+    " To reduce the number of buffer updates
+    let job.tick = get(job, 'tick', -1) + 1
+    if job.tick % len(s:jobs) == 0
+      call s:log(name, s:lastline(job.result), s:update.pull ? 'u' : 'i')
+    endif
+  endif
+endfunction
+
+function! s:spawn(name, cmd, opts)
+  let job = { 'running': 1, 'new': get(a:opts, 'new', 0),
+            \ 'error': 0, 'result': '' }
+  let s:jobs[a:name] = job
+
+  if s:update.neovim
+    let x = jobstart(a:name, 'sh', ['-c',
+            \ has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd])
+    if x > 0
+      let s:jobs_idx[x] = a:name
+      let job.jobid = x
+      augroup PlugJobControl
+        execute 'autocmd JobActivity' a:name 'call s:job_handler()'
+      augroup END
+    else
+      let job.running = 0
+      let job.error   = 1
+      let job.result  = x < 0 ? 'sh is not executable' :
+            \ 'Invalid arguments (or job table is full)'
+    endif
+  else
+    let params = has_key(a:opts, 'dir') ? [a:cmd, a:opts.dir] : [a:cmd]
+    let job.running = 0
+    let job.result = call('s:system', params)
+    let job.error = v:shell_error != 0
+  endif
+endfunction
+
+function! s:reap(name)
+  if s:update.neovim
+    silent! execute 'autocmd! PlugJobControl JobActivity' a:name
+  endif
+
+  let job = s:jobs[a:name]
+  if job.error
+    call add(s:update.errors, a:name)
+  elseif get(job, 'new', 0)
+    let s:update.new[a:name] = 1
+  endif
+  let s:update.bar .= job.error ? 'x' : '='
+
+  " TODO: Error formatting
+  call s:log(a:name, s:lastline(job.result), job.error ? 'x' : '-')
+  call s:bar()
+
+  call remove(s:jobs, a:name)
+  return 1
+endfunction
+
+function! s:bar()
+  if s:switch_in()
+    let total = len(s:update.all)
+    call setline(1, (s:update.pull ? 'Updating' : 'Installing').
+          \ ' plugins ('.len(s:update.bar).'/'.total.')')
+    call s:progress_bar(2, s:update.bar, total)
+    call s:switch_out()
+  endif
+endfunction
+
+function! s:logpos(name)
+  for i in range(1, line('$'))
+    if getline(i) =~# '^[-+x*] '.a:name.':'
+      return i
+    endif
+  endfor
+  return 0
+endfunction
+
+function! s:log(name, line, type)
+  if s:switch_in()
+    let pos = s:logpos(a:name)
+    if pos > 0
+      execute pos 'd _'
+      if pos > winheight('.')
+        let pos = 4
       endif
     else
-      let result = s:system(
-            \ printf('git clone --recursive %s -b %s %s 2>&1',
-            \ s:shellesc(spec.uri),
-            \ s:shellesc(spec.branch),
-            \ s:shellesc(s:trim(spec.dir))))
-      let error = v:shell_error != 0
-      if !error | let s:prev_update.new[name] = 1 | endif
+      let pos = 4
     endif
-    let bar .= error ? 'x' : '='
-    if error
-      call add(s:prev_update.errors, name)
-    endif
-    call append(3, s:format_message(!error, name, result))
-    call s:update_progress(a:pull, len(done), bar, total)
-  endfor
+
+    let bullet = a:type == 'i' ? '+' :
+              \ (a:type == 'u' ? '*' :
+              \ (a:type == 'x' ? 'x' : '-'))
+
+    call append(pos - 1, printf('%s %s: %s', bullet, a:name, a:line))
+    call s:switch_out()
+  endif
 endfunction
 
-function! s:update_parallel(pull, todo, threads)
+function! s:update_vim()
+  let s:jobs     = {}
+  let s:jobs_idx = {}
+  let s:tick     = 0
+
+  call s:bar()
+  normal! 2G
+  call s:tick()
+endfunction
+
+function! s:tick()
+while 1
+  if empty(s:update.todo)
+    if empty(s:jobs) && !s:update.fin
+      let s:update.fin = 1
+      call s:update_finish()
+    endif
+    return
+  endif
+
+  let name = keys(s:update.todo)[0]
+  let spec = remove(s:update.todo, name)
+  let pull = s:update.pull
+  call s:log(name, pull ? 'Updating ...' : 'Installing ...', pull ? 'u' : 'i')
+  redraw
+
+  if isdirectory(spec.dir)
+    let [valid, msg] = s:git_valid(spec, 0)
+    if valid
+      if pull
+        call s:spawn(name,
+          \ printf('git checkout -q %s 2>&1 && git pull --progress --no-rebase origin %s 2>&1 && git submodule update --init --recursive 2>&1',
+          \ s:shellesc(spec.branch), s:shellesc(spec.branch)), { 'dir': spec.dir })
+      else
+        let s:jobs[name] = { 'running': 0, 'result': 'Already installed', 'error': 0 }
+      endif
+    else
+      let s:jobs[name] = { 'running': 0, 'result': msg, 'error': 1 }
+    endif
+  else
+    call s:spawn(name,
+          \ printf('git clone --progress --recursive %s -b %s %s 2>&1',
+          \ s:shellesc(spec.uri),
+          \ s:shellesc(spec.branch),
+          \ s:shellesc(s:trim(spec.dir))), { 'new': 1 })
+  endif
+
+  if !s:jobs[name].running
+    call s:reap(name)
+    " Without TCO, Vim stack is bound to explode
+    " return s:tick()
+    continue
+  elseif len(s:jobs) < s:update.threads
+    " return s:tick()
+    continue
+  endif
+  break
+endwhile
+endfunction
+
+function! s:update_ruby()
   ruby << EOF
   module PlugStream
     SEP = ["\r", "\n", nil]
@@ -768,15 +947,15 @@ function! s:update_parallel(pull, todo, threads)
   require 'timeout'
   running = true
   iswin = VIM::evaluate('s:is_win').to_i == 1
-  pull  = VIM::evaluate('a:pull').to_i == 1
+  pull  = VIM::evaluate('s:update.pull').to_i == 1
   base  = VIM::evaluate('g:plug_home')
-  all   = VIM::evaluate('a:todo')
+  all   = VIM::evaluate('s:update.todo')
   limit = VIM::evaluate('get(g:, "plug_timeout", 60)')
   tries = VIM::evaluate('get(g:, "plug_retries", 2)') + 1
-  nthr  = VIM::evaluate('a:threads').to_i
+  nthr  = VIM::evaluate('s:update.threads').to_i
   maxy  = VIM::evaluate('winheight(".")').to_i
   cd    = iswin ? 'cd /d' : 'cd'
-  tot   = VIM::evaluate('len(a:todo)') || 0
+  tot   = VIM::evaluate('len(s:update.todo)') || 0
   bar   = ''
   skip  = 'Already installed'
   mtx   = Mutex.new
@@ -796,7 +975,7 @@ function! s:update_parallel(pull, todo, threads)
       b = case type
           when :install  then '+' when :update then '*'
           when true, nil then '-' else
-            VIM::command("call add(s:prev_update.errors, '#{name}')")
+            VIM::command("call add(s:update.errors, '#{name}')")
             'x'
           end
       result =
@@ -885,7 +1064,7 @@ function! s:update_parallel(pull, todo, threads)
   } if VIM::evaluate('s:mac_gui') == 1
 
   progress = iswin ? '' : '--progress'
-  [all.length, nthr].min.times do
+  nthr.times do
     mtx.synchronize do
       threads << Thread.new {
         while pair = take1.call
@@ -924,7 +1103,7 @@ function! s:update_parallel(pull, todo, threads)
                 FileUtils.rm_rf dir
               }
             end
-          mtx.synchronize { VIM::command("let s:prev_update.new['#{name}'] = 1") } if !exists && ok
+          mtx.synchronize { VIM::command("let s:update.new['#{name}'] = 1") } if !exists && ok
           log.call name, result, ok
         end
       } if running
@@ -964,8 +1143,12 @@ function! s:format_message(ok, name, message)
   endif
 endfunction
 
+function! s:with_cd(cmd, dir)
+  return 'cd '.s:esc(a:dir).' && '.a:cmd
+endfunction
+
 function! s:system(cmd, ...)
-  let cmd = a:0 > 0 ? 'cd '.s:esc(a:1).' && '.a:cmd : a:cmd
+  let cmd = a:0 > 0 ? s:with_cd(a:cmd, a:1) : a:cmd
   return system(s:is_win ? '('.cmd.')' : cmd)
 endfunction
 
