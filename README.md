@@ -86,13 +86,13 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 
 ### Global options
 
-| Flag                | Default                           | Description                          |
-| ------------------- | --------------------------------- | ------------------------------------ |
-| `g:plug_threads`    | 16                                | Default number of threads to use     |
-| `g:plug_timeout`    | 60                                | Time limit of each task in seconds   |
-| `g:plug_retries`    | 2                                 | Number of retries in case of timeout |
-| `g:plug_window`     | `vertical topleft new`            | Command to open plug window          |
-| `g:plug_url_format` | `https://git::@github.com/%s.git` | `printf` format to build repo URL    |
+| Flag                | Default                           | Description                                                 |
+| ------------------- | --------------------------------- | ----------------------------------------------------------- |
+| `g:plug_threads`    | 16                                | Default number of threads to use                            |
+| `g:plug_timeout`    | 60                                | Time limit of each task in seconds (*for Ruby installer*)   |
+| `g:plug_retries`    | 2                                 | Number of retries in case of timeout (*for Ruby installer*) |
+| `g:plug_window`     | `vertical topleft new`            | Command to open plug window                                 |
+| `g:plug_url_format` | `https://git::@github.com/%s.git` | `printf` format to build repo URL                           |
 
 ### Keybindings
 
