@@ -125,7 +125,7 @@ endfunction
 
 function! s:source(from, ...)
   for pattern in a:000
-    for vim in split(globpath(a:from, pattern), '\n')
+    for vim in s:lines(globpath(a:from, pattern))
       execute 'source' vim
     endfor
   endfor
@@ -1134,7 +1134,7 @@ function! s:shellesc(arg)
 endfunction
 
 function! s:glob_dir(path)
-  return map(filter(split(globpath(a:path, '**'), '\n'), 'isdirectory(v:val)'), 's:dirpath(v:val)')
+  return map(filter(s:lines(globpath(a:path, '**')), 'isdirectory(v:val)'), 's:dirpath(v:val)')
 endfunction
 
 function! s:progress_bar(line, bar, total)
@@ -1174,7 +1174,7 @@ function! s:git_valid(spec, check_branch)
   let ret = 1
   let msg = 'OK'
   if isdirectory(a:spec.dir)
-    let result = split(s:system('git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url', a:spec.dir), '\n')
+    let result = s:lines(s:system('git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url', a:spec.dir))
     let remote = result[-1]
     if v:shell_error
       let msg = join([remote, 'PlugClean required.'], "\n")
@@ -1269,7 +1269,7 @@ function! s:upgrade()
     if executable('curl')
       let output = system(printf('curl -fLo %s %s', s:shellesc(new), s:plug_source))
       if v:shell_error
-        throw get(split(output, '\n'), -1, v:shell_error)
+        throw get(s:lines(output), -1, v:shell_error)
       endif
     elseif has('ruby')
       ruby << EOF
@@ -1438,7 +1438,7 @@ function! s:diff()
     if !empty(diff)
       call append(1, '')
       call append(2, '- '.k.':')
-      call append(3, map(split(diff, '\n'), '"  ". v:val'))
+      call append(3, map(s:lines(diff), '"  ". v:val'))
       let cnt += 1
       normal! gg
       redraw
