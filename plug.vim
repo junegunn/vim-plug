@@ -1383,7 +1383,7 @@ function! s:find_name(lnum)
     if empty(line)
       return ''
     endif
-    let name = matchstr(line, '\(^- \)\@<=[^:]\+')
+    let name = s:extract_name(line, '-', '')
     if !empty(name)
       return name
     endif
