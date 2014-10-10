@@ -498,7 +498,8 @@ function! s:new_window()
 endfunction
 
 function! s:plug_window_exists()
-  return index(tabpagebuflist(s:plug_tab), s:plug_buf) >= 0
+  let buflist = tabpagebuflist(s:plug_tab)
+  return !empty(buflist) && index(buflist, s:plug_buf) >= 0
 endfunction
 
 function! s:switch_in()
@@ -533,15 +534,7 @@ endfunction
 
 function! s:prepare()
   call s:job_abort()
-  if bufexists(s:plug_buf)
-    let winnr = bufwinnr(s:plug_buf)
-    if winnr < 0
-      call s:new_window()
-      execute 'buffer' s:plug_buf
-    else
-      execute winnr 'wincmd w'
-    endif
-    setlocal modifiable
+  if s:switch_in()
     silent %d _
   else
     call s:new_window()
