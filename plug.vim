@@ -68,7 +68,7 @@ let g:loaded_plug = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
-let s:plug_source = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+let s:plug_src = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 let s:plug_tab = get(s:, 'plug_tab', -1)
 let s:plug_buf = get(s:, 'plug_buf', -1)
 let s:mac_gui = has('gui_macvim') && has('gui_running')
@@ -98,7 +98,6 @@ function! plug#begin(...)
 
   let g:plug_home = home
   let g:plugs = {}
-  " we want to keep track of the order plugins where registered.
   let g:plugs_order = []
 
   call s:define_commands()
@@ -521,9 +520,12 @@ function! s:switch_in()
   return 1
 endfunction
 
-function! s:switch_out()
+function! s:switch_out(...)
   call winrestview(s:pos[-1])
   setlocal nomodifiable
+  if a:0 > 0
+    execute a:1
+  endif
 
   if len(s:pos) > 1
     execute 'normal!' s:pos[0].'gt'
@@ -616,8 +618,6 @@ function! s:finish(pull)
   call plug#helptags()
   call plug#end()
   call setline(4, getline(4) . 'Done!')
-  normal! gg
-  call s:syntax()
   redraw
   let msgs = []
   if !empty(s:update.errors)
@@ -700,7 +700,7 @@ function! s:update_impl(pull, force, args) abort
       let printed = {}
       silent 4,$d _
       for line in lines
-        let name = matchstr(line, '^. \zs[^:]\+\ze:')
+        let name = s:extract_name(line, '.', '')
         if empty(name) || !has_key(printed, name)
           call append('$', line)
           if !empty(name)
@@ -725,7 +725,7 @@ function! s:update_finish()
     call s:do(s:update.pull, s:update.force, filter(copy(s:update.all), 'has_key(v:val, "do")'))
     call s:finish(s:update.pull)
     call setline(1, 'Updated. Elapsed time: ' . split(reltimestr(reltime(s:update.start)))[0] . ' sec.')
-    call s:switch_out()
+    call s:switch_out('normal! gg')
   endif
 endfunction
 
@@ -798,9 +798,9 @@ function! s:spawn(name, cmd, opts)
     endif
   else
     let params = has_key(a:opts, 'dir') ? [a:cmd, a:opts.dir] : [a:cmd]
-    let job.running = 0
     let job.result = call('s:system', params)
     let job.error = v:shell_error != 0
+    let job.running = 0
   endif
 endfunction
 
@@ -1259,11 +1259,11 @@ endfunction
 
 function! s:upgrade()
   let new = s:me . '.new'
-  echo 'Downloading '. s:plug_source
+  echo 'Downloading '. s:plug_src
   redraw
   try
     if executable('curl')
-      let output = system(printf('curl -fLo %s %s', s:shellesc(new), s:plug_source))
+      let output = system(printf('curl -fLo %s %s', s:shellesc(new), s:plug_src))
       if v:shell_error
         throw get(s:lines(output), -1, v:shell_error)
       endif
@@ -1271,7 +1271,7 @@ function! s:upgrade()
       ruby << EOF
       require 'open-uri'
       File.open(VIM::evaluate('new'), 'w') do |f|
-        f << open(VIM::evaluate('s:plug_source')).read
+        f << open(VIM::evaluate('s:plug_src')).read
       end
 EOF
     else
