@@ -667,7 +667,7 @@ function! s:update_impl(pull, force, args) abort
       call mkdir(g:plug_home, 'p')
     catch
       return s:err(printf('Invalid plug directory: %s.'
-                        \ 'Try to call plug#begin with a valid directory', g:plug_home))
+              \ 'Try to call plug#begin with a valid directory', g:plug_home))
     endtry
   endif
 
@@ -686,6 +686,7 @@ function! s:update_impl(pull, force, args) abort
 
   call s:prepare()
   call append(0, ['', ''])
+  normal! 2G
 
   if has('ruby') && s:update.threads > 1
     try
@@ -820,7 +821,6 @@ function! s:reap(name)
   call s:bar()
 
   call remove(s:jobs, a:name)
-  return 1
 endfunction
 
 function! s:bar()
@@ -863,7 +863,6 @@ function! s:update_vim()
   let s:jobs_idx = {}
 
   call s:bar()
-  normal! 2G
   call s:tick()
 endfunction
 
@@ -908,11 +907,10 @@ while 1 " Without TCO, Vim stack is bound to explode
 
   if !s:jobs[name].running
     call s:reap(name)
-    continue
-  elseif len(s:jobs) < s:update.threads
-    continue
   endif
-  break
+  if len(s:jobs) >= s:update.threads
+    break
+  endif
 endwhile
 endfunction
 
