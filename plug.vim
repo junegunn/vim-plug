@@ -758,6 +758,10 @@ function! s:job_handler() abort
 
   if v:job_data[1] == 'exit'
     let job.running = 0
+    if s:lastline(job.result) ==# 'Error'
+      let job.error = 1
+      let job.result = substitute(job.result, "Error[\r\n]$", '', '')
+    endif
     call s:reap(name)
     call s:tick()
   else
@@ -777,7 +781,8 @@ function! s:spawn(name, cmd, opts)
 
   if s:nvim
     let x = jobstart(a:name, 'sh', ['-c',
-            \ has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd])
+            \ (has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd)
+            \ . ' || echo Error'])
     if x > 0
       let s:jobs_idx[x] = a:name
       let job.jobid = x
