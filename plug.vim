@@ -643,7 +643,7 @@ function! s:is_managed(name)
 endfunction
 
 function! s:names(...)
-  return filter(keys(g:plugs), 'stridx(v:val, a:1) == 0 && s:is_managed(v:val)')
+  return sort(filter(keys(g:plugs), 'stridx(v:val, a:1) == 0 && s:is_managed(v:val)'))
 endfunction
 
 function! s:update_impl(pull, force, args) abort
