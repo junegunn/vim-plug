@@ -337,7 +337,8 @@ Execute (Rollback recent updates, PlugUpdate, then PlugDiff):
   AssertEqual 1, &previewwindow
   pclose
 
-Execute (Plug window in a new tab):
+Execute (Reuse Plug window in another tab):
+  let tabnr = tabpagenr()
   PlugDiff
   tab new new-tab
   set buftype=nofile
@@ -345,8 +346,8 @@ Execute (Plug window in a new tab):
   normal D
   AssertExpect '^- ', 1
   normal q
-  AssertEqual 'new-tab', expand('%')
-  q
+  AssertEqual tabnr, tabpagenr()
+  normal! gt
   q
 
 **********************************************************************
