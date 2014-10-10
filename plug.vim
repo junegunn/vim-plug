@@ -1415,7 +1415,7 @@ function! s:preview_commit()
 endfunction
 
 function! s:section(flags)
-  call search('\(^- \)\@<=.', a:flags)
+  call search('\(^[x-] \)\@<=[^:]\+:', a:flags)
 endfunction
 
 function! s:diff()
