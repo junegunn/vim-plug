@@ -1268,12 +1268,7 @@ function! s:upgrade()
         throw get(s:lines(output), -1, v:shell_error)
       endif
     elseif has('ruby')
-      ruby << EOF
-      require 'open-uri'
-      File.open(VIM::evaluate('new'), 'w') do |f|
-        f << open(VIM::evaluate('s:plug_src')).read
-      end
-EOF
+      call s:upgrade_using_ruby(new)
     else
       return s:err('curl executable or ruby support not found')
     endif
@@ -1292,6 +1287,15 @@ EOF
     echo 'vim-plug is upgraded'
     return 1
   endif
+endfunction
+
+function! s:upgrade_using_ruby(new)
+  ruby << EOF
+  require 'open-uri'
+  File.open(VIM::evaluate('a:new'), 'w') do |f|
+    f << open(VIM::evaluate('s:plug_src')).read
+  end
+EOF
 endfunction
 
 function! s:upgrade_specs()
