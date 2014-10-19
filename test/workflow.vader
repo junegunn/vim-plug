@@ -421,7 +421,7 @@ Execute (On-demand loading based on filetypes):
 **********************************************************************
 
 Execute (Add unmanaged plugin):
-  let fzf = fnamemodify(g:vader_file, ':h') . '/fzf'
+  let fzf = expand('$PLUG_FIXTURES/fzf')
   Log fzf
 
   call plug#begin()
@@ -479,7 +479,7 @@ Execute (PlugStatus should point out that the plugin is missing):
 
 Execute (Deploy unmanaged plugin):
   Assert !exists(':FZF'), ':FZF command should not exist'
-  call rename('fzf-staged', 'fzf')
+  call rename(expand('$PLUG_FIXTURES/fzf-staged'), fzf)
 
 Execute (PlugUpdate still should not care):
   PlugUpdate
@@ -732,12 +732,12 @@ Execute (Using custom dir):
 **********************************************************************
 Before (Clear global vars):
   let g:xxx = []
-  set rtp-=$PWD/temp/xxx/
-  set rtp-=$PWD/temp/xxx/after
+  set rtp-=$PLUG_FIXTURES/xxx/
+  set rtp-=$PLUG_FIXTURES/xxx/after
 
 Execute (Immediate loading):
   call plug#begin()
-  Plug '$PWD/temp/xxx'
+  Plug '$PLUG_FIXTURES/xxx'
   call plug#end()
 
   " FIXME:
@@ -751,7 +751,7 @@ Execute (Immediate loading):
 
 Execute (Command-based on-demand loading):
   call plug#begin()
-  Plug '$PWD/temp/xxx', { 'on': 'XXX' }
+  Plug '$PLUG_FIXTURES/xxx', { 'on': 'XXX' }
   call plug#end()
 
   AssertEqual [], g:xxx
@@ -764,7 +764,7 @@ Execute (Command-based on-demand loading):
 
 Execute (Filetype-based on-demand loading):
   call plug#begin()
-  Plug '$PWD/temp/xxx', { 'for': 'xxx' }
+  Plug '$PLUG_FIXTURES/xxx', { 'for': 'xxx' }
   call plug#end()
 
   AssertEqual ['xxx/ftdetect', 'xxx/after/ftdetect'], g:xxx
@@ -779,10 +779,10 @@ Before:
 **********************************************************************
 
 Execute (plug#helptags):
-  silent! call delete(expand('$PWD/temp/xxx/doc/tags'))
-  Assert !filereadable(expand('$PWD/temp/xxx/doc/tags'))
+  silent! call delete(expand('$PLUG_FIXTURES/xxx/doc/tags'))
+  Assert !filereadable(expand('$PLUG_FIXTURES/xxx/doc/tags'))
   AssertEqual 1, plug#helptags()
-  Assert filereadable(expand('$PWD/temp/xxx/doc/tags'))
+  Assert filereadable(expand('$PLUG_FIXTURES/xxx/doc/tags'))
 
 **********************************************************************
 ~ Manual loading
@@ -823,7 +823,7 @@ Execute (PlugStatus should not contain (not loaded)):
 
 Execute (Load plugin from PlugStatus screen with L key in normal mode):
   call plug#begin()
-  Plug '$PWD/temp/yyy', { 'on': [] }
+  Plug '$PLUG_FIXTURES/yyy', { 'on': [] }
   call plug#end()
 
   PlugStatus
@@ -837,8 +837,8 @@ Execute (Load plugin from PlugStatus screen with L key in normal mode):
 
 Execute (Load plugin from PlugStatus screen with L key in visual mode):
   call plug#begin()
-  Plug '$PWD/temp/z1', { 'on':  [] }
-  Plug '$PWD/temp/z2', { 'for': [] }
+  Plug '$PLUG_FIXTURES/z1', { 'on':  [] }
+  Plug '$PLUG_FIXTURES/z2', { 'for': [] }
   call plug#end()
 
   PlugStatus
@@ -964,8 +964,8 @@ Execute (Plug directory with comma):
 Execute (Strict load order):
   let g:total_order = []
   call plug#begin()
-  Plug '$PWD/temp/xxx'
-  Plug '$PWD/temp/yyy', { 'for': ['xxx'] }
+  Plug '$PLUG_FIXTURES/xxx'
+  Plug '$PLUG_FIXTURES/yyy', { 'for': ['xxx'] }
   call plug#end()
   call EnsureLoaded()
   setf xxx
@@ -977,8 +977,8 @@ Execute (Strict load order):
 
   let g:total_order = []
   call plug#begin()
-  Plug '$PWD/temp/xxx', { 'for': ['xxx'] }
-  Plug '$PWD/temp/yyy'
+  Plug '$PLUG_FIXTURES/xxx', { 'for': ['xxx'] }
+  Plug '$PLUG_FIXTURES/yyy'
   call plug#end()
   call EnsureLoaded()
   set rtp^=manually-prepended
@@ -994,8 +994,8 @@ Execute (Strict load order):
 
   let g:total_order = []
   call plug#begin()
-  Plug '$PWD/temp/xxx', { 'for': ['xxx'] }
-  Plug '$PWD/temp/yyy', { 'for': ['xxx'] }
+  Plug '$PLUG_FIXTURES/xxx', { 'for': ['xxx'] }
+  Plug '$PLUG_FIXTURES/yyy', { 'for': ['xxx'] }
   call plug#end()
   call EnsureLoaded()
   setf xxx
@@ -1007,9 +1007,11 @@ Execute (Strict load order):
 
 **********************************************************************
 Execute (PlugClean should not try to remove unmanaged plugins inside g:plug_home):
-  call plug#begin('$PWD/temp')
-  Plug '$PWD/temp/xxx'
-  Plug '$PWD/temp/yyy'
+  call plug#begin('$PLUG_FIXTURES')
+  Plug '$PLUG_FIXTURES/ftplugin-msg', { 'for': [] }
+  Plug '$PLUG_FIXTURES/fzf'
+  Plug '$PLUG_FIXTURES/xxx'
+  Plug '$PLUG_FIXTURES/yyy'
   call plug#end()
 
   " Remove z1, z2
@@ -1020,6 +1022,24 @@ Execute (PlugClean should not try to remove unmanaged plugins inside g:plug_home
   PlugClean!
   AssertExpect '^- ', 0
   AssertExpect 'Already clean', 1
+  q
+
+**********************************************************************
+Execute (#112 On-demand loading should not suppress messages from ftplugin):
+  call plug#begin('$PLUG_FIXTURES')
+  Plug '$PLUG_FIXTURES/ftplugin-msg', { 'for': 'c' }
+  call plug#end()
+
+  redir => out
+  tabnew a.c
+  redir END
+  Assert stridx(out, 'ftplugin') >= 0
+
+* The same applies to plug#load())
+  redir => out
+  call plug#load('ftplugin-msg')
+  redir END
+  Assert stridx(out, 'ftplugin') >= 0
   q
 
 **********************************************************************
@@ -1047,7 +1067,7 @@ Execute (PlugSnapshot):
 Execute (Cleanup):
   silent! call system('rm -rf '.temp_plugged)
   silent! call system('rm -rf '.temp_plugged)
-  silent! call rename('fzf', 'fzf-staged')
+  silent! call rename(fzf, expand('$PLUG_FIXTURES/fzf-staged'))
   silent! unlet g:plugs
   silent! unlet g:plug_home
   silent! unlet g:plug_url_format

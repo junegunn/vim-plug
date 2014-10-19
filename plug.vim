@@ -315,7 +315,7 @@ function! plug#load(...)
   for name in a:000
     call s:lod([name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
   endfor
-  silent! doautocmd BufRead
+  doautocmd BufRead
   return 1
 endfunction
 
@@ -336,8 +336,8 @@ endfunction
 function! s:lod_ft(pat, names)
   call s:lod(a:names, ['plugin', 'after/plugin'])
   execute 'autocmd! PlugLOD FileType' a:pat
-  silent! doautocmd filetypeplugin FileType
-  silent! doautocmd filetypeindent FileType
+  doautocmd filetypeplugin FileType
+  doautocmd filetypeindent FileType
 endfunction
 
 function! s:lod_cmd(cmd, bang, l1, l2, args, name)

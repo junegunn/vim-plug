@@ -5,18 +5,20 @@ cd ..
 PLUG_SRC=$(pwd)/plug.vim
 cd - > /dev/null
 
+export PLUG_FIXTURES=$(pwd)/fixtures
+
 if [ ! -d vader.vim ]; then
   git clone https://github.com/junegunn/vader.vim.git
 fi
 
-rm -rf fzf
+rm -rf $PLUG_FIXTURES/fzf
 if [ ! -d fzf-staged ]; then
-  git clone https://github.com/junegunn/fzf.git fzf-staged
+  git clone https://github.com/junegunn/fzf.git $PLUG_FIXTURES/fzf-staged
 fi
 
 make_dirs() {
-  mkdir -p "temp/$1"
-  cd "temp/$1"
+  mkdir -p "$PLUG_FIXTURES/$1"
+  cd "$PLUG_FIXTURES/$1"
   mkdir -p autoload colors ftdetect ftplugin indent plugin syntax
   for d in *; do
     [ -d $d ] || continue
@@ -33,12 +35,12 @@ EOF
 }
 
 init() {
-  rm -rf temp/{xxx,yyy,z1,z2}
+  rm -rf $PLUG_FIXTURES/{xxx,yyy,z1,z2}
 
   make_dirs xxx/ xxx
   make_dirs xxx/after xxx
-  mkdir -p temp/xxx/doc
-  cat > temp/xxx/doc/xxx.txt << DOC
+  mkdir -p $PLUG_FIXTURES/xxx/doc
+  cat > $PLUG_FIXTURES/xxx/doc/xxx.txt << DOC
 hello *xxx*
 DOC
 
