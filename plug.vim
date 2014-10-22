@@ -289,9 +289,10 @@ function! s:reorg_rtp()
   let s:middle = get(s:, 'middle', &rtp)
   let rtps     = map(s:loaded_names(), 's:rtp(g:plugs[v:val])')
   let afters   = filter(map(copy(rtps), 'globpath(v:val, "after")'), 'isdirectory(v:val)')
-  let &rtp     = join(map(rtps, 's:escrtp(v:val)'), ',')
-                 \ . substitute(','.s:middle.',', '^,,$', ',', '')
+  let rtp      = join(map(rtps, 's:escrtp(v:val)'), ',')
+                 \ . ','.s:middle.','
                  \ . join(map(afters, 's:escrtp(v:val)'), ',')
+  let &rtp     = substitute(substitute(rtp, ',,*', ',', 'g'), '^,\|,$', '', 'g')
   let s:prtp   = &rtp
 
   if !empty(s:first_rtp)

@@ -1089,6 +1089,16 @@ Execute (PlugSnapshot):
   AssertEqual 'snapshot.sh', fnamemodify(expand('%'), ':t')
   q
 
+**********************************************************************
+Execute (#114 Should not contain empty path in &rtp):
+  call plug#begin('$TMPDIR/plugged')
+  call plug#end()
+
+  Log &rtp
+  Assert &rtp !~ ',,', 'Commas'
+  Assert &rtp !~ '^,', 'Comma prefix'
+  Assert &rtp !~ ',$', 'Comma suffix'
+
 Execute (Cleanup):
   silent! call system('rm -rf '.temp_plugged)
   silent! call system('rm -rf '.temp_plugged)
