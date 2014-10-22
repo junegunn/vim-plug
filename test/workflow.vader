@@ -517,12 +517,37 @@ Execute (Common parent):
 **********************************************************************
 ~ Frozen plugins
 **********************************************************************
+- We've decided to install plugins that are frozen: see #113
+Execute (Frozen plugin are not ~~installed nor~~ updated):
+  " Remove plugins
+  call plug#begin()
+  call plug#end()
+  PlugClean!
+  q
 
-Execute (Frozen plugin are not installed nor updated):
+  " vim-easy-align is not found, so it will be installed even though it's frozen
   call plug#begin()
   Plug 'junegunn/vim-easy-align', { 'frozen': 1 }
   call plug#end()
+  PlugInstall
+  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "vim-easy-align"'))
+  q
 
+  " Remove plugins again
+  call plug#begin()
+  call plug#end()
+  PlugClean!
+  q
+
+  " PlugUpdate will do the same
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align', { 'frozen': 1 }
+  call plug#end()
+  PlugInstall
+  AssertEqual 1, len(filter(getline(1, '$'), 'v:val =~ "vim-easy-align"'))
+  q
+
+  " Since vim-easy-align already exists, PlugInstall or PlugUpdate will skip it
   redir => out
   silent PlugInstall
   redir END

@@ -613,6 +613,11 @@ function! s:do(pull, force, todo)
 endfunction
 
 function! s:finish(pull)
+  let new_frozen = len(filter(keys(s:update.new), 'g:plugs[v:val].frozen'))
+  if new_frozen
+    let s = new_frozen > 1 ? 's' : ''
+    call append(3, printf('- Installed %d frozen plugin%s', new_frozen, s))
+  endif
   call append(3, '- Finishing ... ')
   redraw
   call plug#helptags()
@@ -652,7 +657,7 @@ function! s:update_impl(pull, force, args) abort
                   \ remove(args, -1) : get(g:, 'plug_threads', 16)
 
   let managed = filter(copy(g:plugs), 's:is_managed(v:key)')
-  let todo = empty(args) ? filter(managed, '!v:val.frozen') :
+  let todo = empty(args) ? filter(managed, '!v:val.frozen || !isdirectory(v:val.dir)') :
                          \ filter(managed, 'index(args, v:key) >= 0')
 
   if empty(todo)

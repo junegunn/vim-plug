@@ -74,15 +74,15 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 
 ### `Plug` options
 
-| Option         | Description                                                          |
-| -------------- | -------------------------------------------------------------------- |
-| `branch`/`tag` | Branch or tag of the repository to use                               |
-| `rtp`          | Subdirectory that contains Vim plugin                                |
-| `dir`          | Custom directory for the plugin                                      |
-| `do`           | Post-update hook (string or funcref)                                 |
-| `on`           | On-demand loading: Commands or `<Plug>`-mappings                     |
-| `for`          | On-demand loading: File types                                        |
-| `frozen`       | Do not install/update plugin unless explicitly given as the argument |
+| Option         | Description                                      |
+| -------------- | ------------------------------------------------ |
+| `branch`/`tag` | Branch or tag of the repository to use           |
+| `rtp`          | Subdirectory that contains Vim plugin            |
+| `dir`          | Custom directory for the plugin                  |
+| `do`           | Post-update hook (string or funcref)             |
+| `on`           | On-demand loading: Commands or `<Plug>`-mappings |
+| `for`          | On-demand loading: File types                    |
+| `frozen`       | Do not update unless explicitly specified        |
 
 ### Global options
 
