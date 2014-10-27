@@ -122,6 +122,10 @@ function! s:to_a(v)
   return type(a:v) == s:TYPE.list ? a:v : [a:v]
 endfunction
 
+function! s:to_s(v)
+  return type(a:v) == s:TYPE.string ? a:v : join(a:v, "\n") . "\n"
+endfunction
+
 function! s:source(from, ...)
   for pattern in a:000
     for vim in s:lines(globpath(a:from, pattern))
@@ -772,7 +776,7 @@ function! s:job_handler() abort
     call s:reap(name)
     call s:tick()
   else
-    let job.result .= v:job_data[2]
+    let job.result .= s:to_s(v:job_data[2])
     " To reduce the number of buffer updates
     let job.tick = get(job, 'tick', -1) + 1
     if job.tick % len(s:jobs) == 0
