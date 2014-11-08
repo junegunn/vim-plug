@@ -304,7 +304,8 @@ Execute (Rollback recent updates, PlugUpdate, then PlugDiff):
 
   " ]] motion
   execute 'normal $]]'
-  AssertEqual lnum + 4, line('.')
+  Assert index([lnum + 4, lnum + 5], line('.')) >= 0
+   " +5 for merge commit
   AssertEqual 3, col('.')
 
   " [[ motion
