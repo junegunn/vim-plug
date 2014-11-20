@@ -452,6 +452,7 @@ Execute (Plug block for following tests):
   call plug#end()
   " Remove plugins from previous tests
   PlugClean!
+  q
 
 Execute (PlugInstall will only install vim-easy-align):
   PlugInstall
@@ -620,6 +621,7 @@ Execute (Cleanup):
   call plug#begin()
   call plug#end()
   PlugClean!
+  q
 
 Execute (On install):
   call plug#begin()
@@ -1075,6 +1077,7 @@ Execute (PlugSnapshot):
   Plug 'junegunn/seoul256.vim'
   call plug#end()
 
+  PlugClean!
   PlugInstall
   PlugSnapshot
   AssertEqual '#!/bin/bash', getline(1)
