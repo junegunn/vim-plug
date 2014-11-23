@@ -633,7 +633,7 @@ function! s:finish(pull)
   if !empty(s:update.errors)
     call add(msgs, "Press 'R' to retry.")
   endif
-  if a:pull && !empty(filter(getline(5, '$'),
+  if a:pull && len(s:update.new) < len(filter(getline(5, '$'),
                 \ "v:val =~ '^- ' && stridx(v:val, 'Already up-to-date') < 0"))
     call add(msgs, "Press 'D' to see the updated changes.")
   endif
