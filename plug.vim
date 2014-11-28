@@ -578,6 +578,14 @@ function! s:assign_name()
   silent! execute 'f' fnameescape(name)
 endfunction
 
+function! s:all_executable(executables)
+  if len(a:executables) == 0
+      return 1
+  endif
+  let are_executable = map(a:executables, 'executable(v:val)')
+  return index(are_executable, 0) == -1
+endfunction
+
 function! s:do(pull, force, todo)
   for [name, spec] in items(a:todo)
     if !isdirectory(spec.dir)
@@ -586,7 +594,15 @@ function! s:do(pull, force, todo)
     let installed = has_key(s:update.new, name)
     let updated = installed ? 0 :
       \ (a:pull && !empty(s:system_chomp('git log --pretty=format:"%h" "HEAD...HEAD@{1}"', spec.dir)))
-    if a:force || installed || updated
+    " TODO(alexandre): use the function executable on all the parameters in
+    " the 'needs' attribute - if not then don't update.
+    if has_key(spec, 'needs')
+      echom 'Has needs.'
+      let canbuild = s:all_executable(s:to_a(spec.needs))
+    else
+      let canbuild = 1
+    endif
+    if (a:force || installed || updated) && canbuild
       execute 'cd' s:esc(spec.dir)
       call append(3, '- Post-update hook for '. name .' ... ')
       let type = type(spec.do)
@@ -656,6 +672,8 @@ function! s:names(...)
   return sort(filter(keys(g:plugs), 'stridx(v:val, a:1) == 0 && s:is_managed(v:val)'))
 endfunction
 
+" TODO (alexandre) - Maybe if you don't have the build commands,
+" you don't pull it at all, (citing the reason).
 function! s:update_impl(pull, force, args) abort
   let args = copy(a:args)
   let threads = (len(args) > 0 && args[-1] =~ '^[1-9][0-9]*$') ?
