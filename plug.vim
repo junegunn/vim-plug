@@ -75,7 +75,7 @@ let s:mac_gui = has('gui_macvim') && has('gui_running')
 let s:is_win = has('win32') || has('win64')
 let s:nvim = exists('##JobActivity') && !s:is_win
 let s:me = resolve(expand('<sfile>:p'))
-let s:base_spec = { 'branch': 'master', 'frozen': 0 }
+let s:base_spec = { 'branch': 'master', 'frozen': 0, 'needs': [] }
 let s:TYPE = {
 \   'string':  type(''),
 \   'list':    type([]),
@@ -876,6 +876,10 @@ function! s:update_vim()
   call s:tick()
 endfunction
 
+function! s:missing_executables(executables)
+  return filter(copy(s:to_a(a:executables)), '!executable(v:val)')
+endfunction
+
 function! s:tick()
 while 1 " Without TCO, Vim stack is bound to explode
   if empty(s:update.todo)
@@ -894,25 +898,31 @@ while 1 " Without TCO, Vim stack is bound to explode
   call s:log(new ? '+' : '*', name, pull ? 'Updating ...' : 'Installing ...')
   redraw
 
-  if !new
-    let [valid, msg] = s:git_valid(spec, 0)
-    if valid
-      if pull
-        call s:spawn(name,
-          \ printf('git checkout -q %s 2>&1 && git pull --progress --no-rebase origin %s 2>&1 && git submodule update --init --recursive 2>&1',
-          \ s:shellesc(spec.branch), s:shellesc(spec.branch)), { 'dir': spec.dir })
+  let executables = s:missing_executables(spec.needs)
+  if !empty(executables)
+    let msg = 'Please install '. join(executables, ', ') . '.'
+    let s:jobs[name] = { 'running': 0, 'result': msg, 'error': 1 }
+  else
+    if !new
+      let [valid, msg] = s:git_valid(spec, 0)
+      if valid
+        if pull
+          call s:spawn(name,
+            \ printf('git checkout -q %s 2>&1 && git pull --progress --no-rebase origin %s 2>&1 && git submodule update --init --recursive 2>&1',
+            \ s:shellesc(spec.branch), s:shellesc(spec.branch)), { 'dir': spec.dir })
+        else
+          let s:jobs[name] = { 'running': 0, 'result': 'Already installed', 'error': 0 }
+        endif
       else
-        let s:jobs[name] = { 'running': 0, 'result': 'Already installed', 'error': 0 }
+        let s:jobs[name] = { 'running': 0, 'result': msg, 'error': 1 }
       endif
     else
-      let s:jobs[name] = { 'running': 0, 'result': msg, 'error': 1 }
+      call s:spawn(name,
+            \ printf('git clone --progress --recursive %s -b %s %s 2>&1',
+            \ s:shellesc(spec.uri),
+            \ s:shellesc(spec.branch),
+            \ s:shellesc(s:trim(spec.dir))), { 'new': 1 })
     endif
-  else
-    call s:spawn(name,
-          \ printf('git clone --progress --recursive %s -b %s %s 2>&1',
-          \ s:shellesc(spec.uri),
-          \ s:shellesc(spec.branch),
-          \ s:shellesc(s:trim(spec.dir))), { 'new': 1 })
   endif
 
   if !s:jobs[name].running
@@ -959,6 +969,17 @@ function! s:update_ruby()
       end
     end
     pids.each { |pid| Process.kill 'TERM', pid.to_i rescue nil }
+  end
+
+  def which cmd
+    exts = ENV['PATHEXT'] ? ENV['PATHEXT'].split(';') : ['']
+    ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
+      exts.each { |ext|
+        exe = File.join(path, "#{cmd}#{ext}")
+        return exe if File.executable?(exe) && !File.directory?(exe)
+      }
+    end
+    return nil
   end
 
   require 'thread'
@@ -1088,39 +1109,45 @@ function! s:update_ruby()
       threads << Thread.new {
         while pair = take1.call
           name = pair.first
-          dir, uri, branch = pair.last.values_at *%w[dir uri branch]
+          dir, uri, branch, needs = pair.last.values_at *%w[dir uri branch needs]
           branch = esc branch
           subm = "git submodule update --init --recursive 2>&1"
           exists = File.directory? dir
+          needs = needs.kind_of?(Array) ? needs : [needs]
+          executables = needs.select{ |exe| !which exe }
           ok, result =
-            if exists
-              dir = esc dir
-              ret, data = bt.call "#{cd} #{dir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url", nil, nil, nil
-              current_uri = data.lines.to_a.last
-              if !ret
-                if data =~ /^Interrupted|^Timeout/
-                  [false, data]
+            if executables.empty?
+              if exists
+                dir = esc dir
+                ret, data = bt.call "#{cd} #{dir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url", nil, nil, nil
+                current_uri = data.lines.to_a.last
+                if !ret
+                  if data =~ /^Interrupted|^Timeout/
+                    [false, data]
+                  else
+                    [false, [data.chomp, "PlugClean required."].join($/)]
+                  end
+                elsif current_uri.sub(/git::?@/, '') != uri.sub(/git::?@/, '')
+                  [false, ["Invalid URI: #{current_uri}",
+                           "Expected:    #{uri}",
+                           "PlugClean required."].join($/)]
                 else
-                  [false, [data.chomp, "PlugClean required."].join($/)]
+                  if pull
+                    log.call name, 'Updating ...', :update
+                    bt.call "#{cd} #{dir} && git checkout -q #{branch} 2>&1 && (git pull --no-rebase origin #{branch} #{progress} 2>&1 && #{subm})", name, :update, nil
+                  else
+                    [true, skip]
+                  end
                 end
-              elsif current_uri.sub(/git::?@/, '') != uri.sub(/git::?@/, '')
-                [false, ["Invalid URI: #{current_uri}",
-                         "Expected:    #{uri}",
-                         "PlugClean required."].join($/)]
               else
-                if pull
-                  log.call name, 'Updating ...', :update
-                  bt.call "#{cd} #{dir} && git checkout -q #{branch} 2>&1 && (git pull --no-rebase origin #{branch} #{progress} 2>&1 && #{subm})", name, :update, nil
-                else
-                  [true, skip]
-                end
+                d = esc dir.sub(%r{[\\/]+$}, '')
+                log.call name, 'Installing ...', :install
+                bt.call "git clone #{progress} --recursive #{uri} -b #{branch} #{d} 2>&1", name, :install, proc {
+                  FileUtils.rm_rf dir
+                }
               end
             else
-              d = esc dir.sub(%r{[\\/]+$}, '')
-              log.call name, 'Installing ...', :install
-              bt.call "git clone #{progress} --recursive #{uri} -b #{branch} #{d} 2>&1", name, :install, proc {
-                FileUtils.rm_rf dir
-              }
+              [false, "Please install " + executables.join(", ") + " first."]
             end
           mtx.synchronize { VIM::command("let s:update.new['#{name}'] = 1") } if !exists && ok
           log.call name, result, ok
