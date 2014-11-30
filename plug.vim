@@ -75,7 +75,7 @@ let s:mac_gui = has('gui_macvim') && has('gui_running')
 let s:is_win = has('win32') || has('win64')
 let s:nvim = exists('##JobActivity') && !s:is_win
 let s:me = resolve(expand('<sfile>:p'))
-let s:base_spec = { 'branch': 'master', 'frozen': 0, 'needs': []}
+let s:base_spec = { 'branch': 'master', 'frozen': 0, 'needs': [] }
 let s:TYPE = {
 \   'string':  type(''),
 \   'list':    type([]),
@@ -897,7 +897,6 @@ while 1 " Without TCO, Vim stack is bound to explode
   let new  = !isdirectory(spec.dir)
 
   call s:log(new ? '+' : '*', name, pull ? 'Updating ...' : 'Installing ...')
-  echom 'blah'
   redraw
 
   let executables = s:missing_executables(spec.needs)
