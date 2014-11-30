@@ -627,7 +627,8 @@ Execute (Single uninstalled executable):
   call plug#begin()
   Plug 'junegunn/vim-easy-align', { 'needs': 'does-not-exist' }
   call plug#end()
-  PlugInstall!
+  PlugInstall
+  AssertExpect 'Please install does-not-exist first.', 0
   q
   Assert !isdirectory(g:plugs['vim-easy-align'].dir),
     \ 'vim-easy-align should not exist'
@@ -636,7 +637,8 @@ Execute (Multiple uninstalled executables):
   call plug#begin()
   Plug 'junegunn/vim-easy-align', { 'needs': ['does-not-exist', 'also-non-existent'] }
   call plug#end()
-  PlugInstall!
+  PlugInstall
+  AssertExpect 'Please install does-not-exist, also-non-existent first.', 0
   q
   Assert !isdirectory(g:plugs['vim-easy-align'].dir),
     \ 'vim-easy-align should not exist'
@@ -645,7 +647,8 @@ Execute (Multiple uninstalled/installed executables):
   call plug#begin()
   Plug 'junegunn/vim-easy-align', { 'needs': ['does-not-exist', 'sh'] }
   call plug#end()
-  PlugInstall!
+  PlugInstall
+  AssertExpect 'Please install does-not-exist first.', 0
   q
   Assert !isdirectory(g:plugs['vim-easy-align'].dir),
     \ 'vim-easy-align should not exist'

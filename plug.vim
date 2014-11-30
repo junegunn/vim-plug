@@ -587,7 +587,7 @@ function! s:do(pull, force, todo)
     let installed = has_key(s:update.new, name)
     let updated = installed ? 0 :
       \ (a:pull && !empty(s:system_chomp('git log --pretty=format:"%h" "HEAD...HEAD@{1}"', spec.dir)))
-    if a:force || installed || updated 
+    if a:force || installed || updated
       execute 'cd' s:esc(spec.dir)
       call append(3, '- Post-update hook for '. name .' ... ')
       let type = type(spec.do)
