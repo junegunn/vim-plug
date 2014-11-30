@@ -578,7 +578,6 @@ function! s:assign_name()
   silent! execute 'f' fnameescape(name)
 endfunction
 
-
 function! s:do(pull, force, todo)
   for [name, spec] in items(a:todo)
     if !isdirectory(spec.dir)
