@@ -81,6 +81,7 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 | `dir`          | Custom directory for the plugin                  |
 | `do`           | Post-update hook (string or funcref)             |
 | `on`           | On-demand loading: Commands or `<Plug>`-mappings |
+| `needs`        | Check for executables before installing/updating |
 | `for`          | On-demand loading: File types                    |
 | `frozen`       | Do not update unless explicitly specified        |
 
