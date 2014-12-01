@@ -752,20 +752,18 @@ function! s:job_abort()
       call system('rm -rf ' . s:shellesc(g:plugs[name].dir))
     endif
   endfor
-  let s:jobs     = {}
-  let s:jobs_idx = {}
+  let s:jobs = {}
 endfunction
 
-function! s:job_handler() abort
+function! s:job_handler(name) abort
   if !s:plug_window_exists() " plug window closed
     return s:job_abort()
   endif
 
-  let name = get(s:jobs_idx, v:job_data[0], '')
-  if empty(name) " stale task
+  if !has_key(s:jobs, a:name)
     return
   endif
-  let job = s:jobs[name]
+  let job = s:jobs[a:name]
 
   if v:job_data[1] == 'exit'
     let job.running = 0
@@ -773,14 +771,14 @@ function! s:job_handler() abort
       let job.error = 1
       let job.result = substitute(job.result, "Error[\r\n]$", '', '')
     endif
-    call s:reap(name)
+    call s:reap(a:name)
     call s:tick()
   else
     let job.result .= s:to_s(v:job_data[2])
     " To reduce the number of buffer updates
     let job.tick = get(job, 'tick', -1) + 1
     if job.tick % len(s:jobs) == 0
-      call s:log(job.new ? '+' : '*', name, job.result)
+      call s:log(job.new ? '+' : '*', a:name, job.result)
     endif
   endif
 endfunction
@@ -795,10 +793,9 @@ function! s:spawn(name, cmd, opts)
             \ (has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd)
             \ . ' || echo Error'])
     if x > 0
-      let s:jobs_idx[x] = a:name
       let job.jobid = x
       augroup PlugJobControl
-        execute 'autocmd JobActivity' a:name 'call s:job_handler()'
+        execute 'autocmd JobActivity' a:name printf('call s:job_handler(%s)', string(a:name))
       augroup END
     else
       let job.running = 0
@@ -869,8 +866,7 @@ function! s:log(bullet, name, lines)
 endfunction
 
 function! s:update_vim()
-  let s:jobs     = {}
-  let s:jobs_idx = {}
+  let s:jobs = {}
 
   call s:bar()
   call s:tick()
