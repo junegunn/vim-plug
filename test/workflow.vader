@@ -1138,6 +1138,17 @@ Execute (#130 Proper cleanup of on-demand loading triggers):
   Assert !exists(':EmojiCommandExtra'), 'EmojiCommandExtra defined'
   Assert empty(mapcheck('<Plug>(EmojiMappingExtra)')), '<Plug>(EmojiMappingExtra) defined'
 
+**********************************************************************
+Execute (#131 Syntax error):
+  call plug#begin('/no-permission')
+  Plug 'junegunn/vim-emoji'
+  call plug#end()
+
+  redir => out
+  silent PlugInstall
+  redir END
+  Assert out =~ 'Invalid plug directory: /no-permission'
+
 Execute (Cleanup):
   silent! call system('rm -rf '.temp_plugged)
   silent! call system('rm -rf '.temp_plugged)

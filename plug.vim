@@ -694,7 +694,7 @@ function! s:update_impl(pull, force, args) abort
     try
       call mkdir(g:plug_home, 'p')
     catch
-      return s:err(printf('Invalid plug directory: %s.'
+      return s:err(printf('Invalid plug directory: %s. '.
               \ 'Try to call plug#begin with a valid directory', g:plug_home))
     endtry
   endif
