@@ -83,6 +83,7 @@ let s:TYPE = {
 \   'funcref': type(function('call'))
 \ }
 let s:loaded = get(s:, 'loaded', {})
+let s:triggers = get(s:, 'triggers', {})
 
 function! plug#begin(...)
   if a:0 > 0
