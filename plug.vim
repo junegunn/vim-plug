@@ -171,7 +171,7 @@ function! plug#end()
           endif
           call add(s:triggers[name].map, cmd)
         elseif cmd =~ '^[A-Z]'
-          if !exists(':'.cmd)
+          if exists(':'.cmd) != 2
             execute printf(
             \ 'command! -nargs=* -range -bang %s call s:lod_cmd(%s, "<bang>", <line1>, <line2>, <q-args>, %s)',
             \ cmd, string(cmd), string(name))
