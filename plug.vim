@@ -1266,7 +1266,7 @@ function! s:clean(force)
     call append(line('$'), 'Already clean.')
   else
     call inputsave()
-    let yes = a:force || (input('Proceed? (Y/N) ') =~? '^y')
+    let yes = a:force || (input('Proceed? (y/N) ') =~? '^y')
     call inputrestore()
     if yes
       for dir in todo
@@ -1483,7 +1483,7 @@ endfunction
 function! s:revert()
   let name = s:find_name(line('.'))
   if empty(name) || !has_key(g:plugs, name) ||
-    \ input(printf('Revert the update of %s? (Y/N) ', name)) !~? '^y'
+    \ input(printf('Revert the update of %s? (y/N) ', name)) !~? '^y'
     return
   endif
 
