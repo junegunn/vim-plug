@@ -143,6 +143,7 @@ There are some plugins that require extra steps after installation or update.
 In that case, use `do` option to describe the task to be performed.
 
 ```vim
+Plug 'Shougo/vimproc.vim', { 'do': 'make' }
 Plug 'Valloric/YouCompleteMe', { 'do': './install.sh' }
 ```
 
