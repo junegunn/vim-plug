@@ -128,6 +128,10 @@ function! s:to_s(v)
   return type(a:v) == s:TYPE.string ? a:v : join(a:v, "\n") . "\n"
 endfunction
 
+function! s:assoc(dict, key, val)
+  let a:dict[a:key] = add(get(a:dict, a:key, []), a:val)
+endfunction
+
 function! s:source(from, ...)
   for pattern in a:000
     for vim in s:lines(globpath(a:from, pattern))
@@ -147,7 +151,8 @@ function! plug#end()
     augroup END
     augroup! PlugLOD
   endif
-  let lod = {}
+  let for_ft = {}
+  let on_autocmd = {}
 
   filetype off
   for name in g:plugs_order
@@ -170,6 +175,8 @@ function! plug#end()
             endfor
           endif
           call add(s:triggers[name].map, cmd)
+        elseif exists('##'. cmd)
+          call s:assoc(on_autocmd, tolower(cmd), name)
         elseif cmd =~ '^[A-Z]'
           if exists(':'.cmd) != 2
             execute printf(
@@ -186,19 +193,23 @@ function! plug#end()
       if !empty(types)
         call s:source(s:rtp(plug), 'ftdetect/**/*.vim', 'after/ftdetect/**/*.vim')
       endif
-      for key in types
-        if !has_key(lod, key)
-          let lod[key] = []
-        endif
-        call add(lod[key], name)
+      for type in types
+        call s:assoc(for_ft, type, name)
       endfor
     endif
   endfor
 
-  for [key, names] in items(lod)
+  for [type, names] in items(for_ft)
     augroup PlugLOD
       execute printf('autocmd FileType %s call <SID>lod_ft(%s, %s)',
-            \ key, string(key), string(names))
+            \ type, string(type), string(names))
+    augroup END
+  endfor
+
+  for [event, names] in items(on_autocmd)
+    augroup PlugLOD
+      execute printf('autocmd %s * call <SID>lod_autocmd(%s, %s)',
+            \ event, string(event), string(names))
     augroup END
   endfor
 
@@ -325,7 +336,7 @@ function! plug#load(...)
     return s:err(printf('Unknown plugin%s: %s', s, join(unknowns, ', ')))
   end
   for name in a:000
-    call s:lod([name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
+    call s:lod([name])
   endfor
   doautocmd BufRead
   return 1
@@ -345,16 +356,18 @@ function! s:remove_triggers(name)
   call remove(s:triggers, a:name)
 endfunction
 
-function! s:lod(names, types)
-  for name in a:names
+function! s:lod(...)
+  let names = a:1
+  let types = a:0 > 1 ? a:2 : ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin']
+  for name in names
     call s:remove_triggers(name)
     let s:loaded[name] = 1
   endfor
   call s:reorg_rtp()
 
-  for name in a:names
+  for name in names
     let rtp = s:rtp(g:plugs[name])
-    for dir in a:types
+    for dir in types
       call s:source(rtp, dir.'/**/*.vim')
     endfor
   endfor
@@ -367,13 +380,18 @@ function! s:lod_ft(pat, names)
   doautocmd filetypeindent FileType
 endfunction
 
+function! s:lod_autocmd(event, names)
+  call s:lod(a:names)
+  execute 'autocmd! PlugLOD' a:event
+endfunction
+
 function! s:lod_cmd(cmd, bang, l1, l2, args, name)
-  call s:lod([a:name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
+  call s:lod([a:name])
   execute printf('%s%s%s %s', (a:l1 == a:l2 ? '' : (a:l1.','.a:l2)), a:cmd, a:bang, a:args)
 endfunction
 
 function! s:lod_map(map, name, prefix)
-  call s:lod([a:name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
+  call s:lod([a:name])
   let extra = ''
   while 1
     let c = getchar(0)
