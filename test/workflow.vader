@@ -1,52 +1,6 @@
-Execute (Initialize test environment):
-  Save &rtp, g:plugs, g:plug_home, g:plug_window
-
-  let first_rtp = split(&rtp, ',')[0]
-  let last_rtp  = split(&rtp, ',')[-1]
-
-  let vader = fnamemodify(globpath(&rtp, 'autoload/vader.vim'), ':h:h')
-  let plug  = fnamemodify(globpath(&rtp, 'autoload/plug.vim'), ':h:h')
-  set rtp=$HOME/.vim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,$HOME/.vim/after
-  execute 'set rtp^='.vader
-  execute 'set rtp^='.plug
-  let basertp = &rtp
-
-  unlet! g:plugs g:plug_home g:plug_window
-
-  set t_Co=256
-  colo default
-  pclose
-
-  function! PlugStatusSorted()
-    PlugStatus
-    %y
-    q
-    normal! P
-    %sort
-    g/^$/d
-  endfunction
-
-  function! AssertExpect(bang, pat, cnt)
-    let op = a:bang ? '==#' : '=~#'
-    AssertEqual a:cnt, len(filter(getline(1, '$'), "v:val ".op." '".a:pat."'"))
-  endfunction
-  command! -nargs=+ -bang AssertExpect call AssertExpect('<bang>' == '!', <args>)
-
-  function! EnsureLoaded()
-    if has('vim_starting')
-      runtime! plugin/**/*.vim
-    endif
-  endfunction
-
-Execute (Print Ruby version):
-  redir => out
-  silent ruby puts RUBY_VERSION
-  redir END
-  Log substitute(out, '\n', '', 'g')
-
 Execute (plug#end() before plug#begin() should fail):
   redir => out
-  AssertEqual 0, plug#end()
+  silent! AssertEqual 0, plug#end()
   redir END
   Assert stridx(out, 'Call plug#begin() first') >= 0
 
@@ -80,7 +34,7 @@ Execute (Subsequent plug#begin() calls will reuse g:plug_home):
 Execute (Test Plug command):
   " Git repo with branch
   Plug 'junegunn/seoul256.vim', 'yes-t_co'
-  AssertEqual 'https://git::@github.com/junegunn/seoul256.vim.git', g:plugs['seoul256.vim'].uri
+  AssertEqual 'file:///tmp/junegunn/seoul256.vim', g:plugs['seoul256.vim'].uri
   AssertEqual join([temp_plugged, 'seoul256.vim/'], '/'), g:plugs['seoul256.vim'].dir
   AssertEqual 'yes-t_co', g:plugs['seoul256.vim'].branch
 
@@ -89,7 +43,7 @@ Execute (Test Plug command):
 
   " Git repo with tag
   Plug 'junegunn/goyo.vim', '1.5.2'
-  AssertEqual 'https://git::@github.com/junegunn/goyo.vim.git', g:plugs['goyo.vim'].uri
+  AssertEqual 'file:///tmp/junegunn/goyo.vim', g:plugs['goyo.vim'].uri
   AssertEqual join([temp_plugged, 'goyo.vim/'], '/'), g:plugs['goyo.vim'].dir
   AssertEqual '1.5.2', g:plugs['goyo.vim'].branch
 
@@ -97,14 +51,14 @@ Execute (Test Plug command):
   AssertEqual '1.5.3', g:plugs['goyo.vim'].branch
 
   " Git URI
-  Plug 'https://bitbucket.org/junegunn/vim-emoji.git'
-  AssertEqual 'https://bitbucket.org/junegunn/vim-emoji.git', g:plugs['vim-emoji'].uri
+  Plug 'file:///tmp/jg/vim-emoji'
+  AssertEqual 'file:///tmp/jg/vim-emoji', g:plugs['vim-emoji'].uri
   AssertEqual 'master', g:plugs['vim-emoji'].branch
   AssertEqual join([temp_plugged, 'vim-emoji/'], '/'), g:plugs['vim-emoji'].dir
 
   " vim-scripts/
   Plug 'beauty256'
-  AssertEqual 'https://git::@github.com/vim-scripts/beauty256.git', g:plugs.beauty256.uri
+  AssertEqual 'file:///tmp/vim-scripts/beauty256', g:plugs.beauty256.uri
   AssertEqual 'master', g:plugs.beauty256.branch
 
   AssertEqual 4, len(g:plugs)
@@ -181,7 +135,7 @@ Expect:
 Execute (Change branch of seoul256.vim):
   call plug#begin()
   Plug 'junegunn/seoul256.vim'
-  Plug 'https://bitbucket.org/junegunn/vim-emoji.git'
+  Plug 'file:///tmp/jg/vim-emoji'
   call plug#end()
 
 Execute (PlugStatus):
@@ -197,15 +151,15 @@ Expect:
 Execute (Change URI of seoul256.vim):
   call plug#begin()
   Plug 'junegunn.choi/seoul256.vim'
-  Plug 'https://bitbucket.org/junegunn/vim-emoji.git'
+  Plug 'file:///tmp/jg/vim-emoji'
   call plug#end()
 
 Execute (PlugStatus):
   call PlugStatusSorted()
 
 Expect:
-      Expected:    https://git::@github.com/junegunn.choi/seoul256.vim.git
-      Invalid URI: https://git::@github.com/junegunn/seoul256.vim.git
+      Expected:    file:///tmp/junegunn.choi/seoul256.vim
+      Invalid URI: file:///tmp/junegunn/seoul256.vim
       PlugClean required.
   - vim-emoji: OK
   Finished. 1 error(s).
@@ -238,8 +192,8 @@ Execute (PlugStatus):
   call PlugStatusSorted()
 
 Expect:
-      Expected:    https://git::@github.com/junegunn/vim-emoji.git
-      Invalid URI: https://bitbucket.org/junegunn/vim-emoji.git
+      Expected:    file:///tmp/junegunn/vim-emoji
+      Invalid URI: file:///tmp/jg/vim-emoji
       Not found. Try PlugInstall.
       PlugClean required.
   Finished. 2 error(s).
@@ -629,7 +583,7 @@ Execute (On install):
   Plug 'junegunn/vim-pseudocl'
   call plug#end()
 
-  PlugInstall
+  silent PlugInstall
   q
 
   Assert filereadable(g:plugs['vim-easy-align'].dir.'/installed'),
@@ -646,7 +600,7 @@ Execute (On update):
   " Reset for updates
   call system('cd '.g:plugs['vim-pseudocl'].dir.' && git reset --hard HEAD^')
 
-  PlugUpdate
+  silent PlugUpdate
   Log getline(1, '$')
   q
 
@@ -669,7 +623,7 @@ Execute (When already installed):
     \ 'vim-pseudocl/installed2 should not exist'
 
 Execute (PlugInstall!):
-  PlugInstall!
+  silent PlugInstall!
   q
   Assert filereadable(g:plugs['vim-easy-align'].dir.'/installed2'),
     \ 'vim-easy-align/installed2 should exist'
@@ -690,7 +644,7 @@ Execute (When already updated):
     \ 'vim-pseudocl/updated2 should not exist'
 
 Execute (PlugUpdate!):
-  PlugUpdate!
+  silent PlugUpdate!
   q
   Assert filereadable(g:plugs['vim-easy-align'].dir.'/updated2'),
     \ 'vim-easy-align/updated2 should exist'
@@ -911,6 +865,7 @@ Execute (Open plug window in a new tab):
 ~ g:plug_url_format
 **********************************************************************
 Execute (Using g:plug_url_format):
+  let prev_plug_url_format = g:plug_url_format
   call plug#begin()
   let g:plug_url_format = 'git@bitbucket.org:%s.git'
   Plug 'junegunn/seoul256.vim'
@@ -918,7 +873,7 @@ Execute (Using g:plug_url_format):
   Plug 'beauty256'
   AssertEqual 'git@bitbucket.org:junegunn/seoul256.vim.git', g:plugs['seoul256.vim'].uri
   AssertEqual 'git@bitsocket.org:vim-scripts/beauty256.git', g:plugs['beauty256'].uri
-  unlet g:plug_url_format
+  let g:plug_url_format = prev_plug_url_format
 
 **********************************************************************
 ~ U
@@ -1053,24 +1008,6 @@ Execute (PlugClean should not try to remove unmanaged plugins inside g:plug_home
   q
 
 **********************************************************************
-Execute (#112 On-demand loading should not suppress messages from ftplugin):
-  call plug#begin('$PLUG_FIXTURES')
-  Plug '$PLUG_FIXTURES/ftplugin-msg', { 'for': 'c' }
-  call plug#end()
-
-  redir => out
-  tabnew a.c
-  redir END
-  Assert stridx(out, 'ftplugin') >= 0
-
-* The same applies to plug#load())
-  redir => out
-  call plug#load('ftplugin-msg')
-  redir END
-  Assert stridx(out, 'ftplugin') >= 0
-  q
-
-**********************************************************************
 Execute (PlugSnapshot):
   call plug#begin('$TMPDIR/plugged')
   Plug 'junegunn/vim-emoji'
@@ -1092,78 +1029,4 @@ Execute (PlugSnapshot):
   AssertEqual 'sh', &filetype
   AssertEqual 'snapshot.sh', fnamemodify(expand('%'), ':t')
   q
-
-**********************************************************************
-Execute (#114 Should not contain empty path in &rtp):
-  call plug#begin('$TMPDIR/plugged')
-  call plug#end()
-
-  Log &rtp
-  Assert &rtp !~ ',,', 'Commas'
-  Assert &rtp !~ '^,', 'Comma prefix'
-  Assert &rtp !~ ',$', 'Comma suffix'
-
-**********************************************************************
-Execute (#130 Proper cleanup of on-demand loading triggers):
-  augroup PlugLOD
-    autocmd!
-  augroup END
-
-  " Cleared on command
-  call plug#begin('$TMPDIR/plugged')
-  Plug 'junegunn/vim-emoji', { 'on':  ['EmojiCommand', 'EmojiCommand2', '<Plug>(EmojiMapping)'] }
-  call plug#end()
-  PlugInstall | q
-
-  Assert exists(':EmojiCommand'), 'EmojiCommand not defined'
-  Assert exists(':EmojiCommand2'), 'EmojiCommand2 not defined'
-  Assert !empty(mapcheck('<Plug>(EmojiMapping)')), '<Plug>(EmojiMapping) not defined'
-
-  silent! EmojiCommand
-
-  Assert !exists(':EmojiCommand'), 'EmojiCommand defined'
-  Assert !exists(':EmojiCommand2'), 'EmojiCommand2 defined'
-  Assert empty(mapcheck('<Plug>(EmojiMapping)')), '<Plug>(EmojiMapping) defined'
-
-  " Cleared on FileType
-  call plug#begin('$TMPDIR/plugged')
-  Plug 'junegunn/vim-emoji', { 'on': ['EmojiCommandExtra', '<Plug>(EmojiMappingExtra)'], 'for': ['emoji'] }
-  call plug#end()
-
-  Assert exists(':EmojiCommandExtra'), 'EmojiCommandExtra not defined'
-  Assert !empty(mapcheck('<Plug>(EmojiMappingExtra)')), '<Plug>(EmojiMappingExtra) not defined'
-
-  setf emoji
-
-  Assert !exists(':EmojiCommandExtra'), 'EmojiCommandExtra defined'
-  Assert empty(mapcheck('<Plug>(EmojiMappingExtra)')), '<Plug>(EmojiMappingExtra) defined'
-
-**********************************************************************
-Execute (#131 Syntax error):
-  call plug#begin('/no-permission')
-  Plug 'junegunn/vim-emoji'
-  call plug#end()
-
-  redir => out
-  silent PlugInstall
-  redir END
-  Assert out =~ 'Invalid plug directory: /no-permission'
-
-Execute (Cleanup):
-  silent! call system('rm -rf '.temp_plugged)
-  silent! call system('rm -rf '.temp_plugged)
-  silent! call rename(fzf, expand('$PLUG_FIXTURES/fzf-staged'))
-  silent! unlet g:plugs
-  silent! unlet g:plug_home
-  silent! unlet g:plug_url_format
-  silent! unlet temp_plugged vader plug basertp save_rtp repo lnum fzf out tabnr found len
-  silent! delf PlugStatusSorted
-  silent! delf AssertExpect
-  silent! delf PlugUpdated
-  silent! delf EnsureLoaded
-  silent! delc AssertExpect
-  silent! unmap /
-  silent! unmap ?
-
-  Restore
 

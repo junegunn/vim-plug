@@ -1,0 +1,68 @@
+Execute (Initialize test environment):
+  Save &rtp, g:plugs, g:plug_home, g:plug_window
+
+  let first_rtp = split(&rtp, ',')[0]
+  let last_rtp  = split(&rtp, ',')[-1]
+
+  let vader = fnamemodify(globpath(&rtp, 'autoload/vader.vim'), ':h:h')
+  let plug  = fnamemodify(globpath(&rtp, 'autoload/plug.vim'), ':h:h')
+  set rtp=$HOME/.vim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,$HOME/.vim/after
+  execute 'set rtp^='.vader
+  execute 'set rtp^='.plug
+  let basertp = &rtp
+
+  unlet! g:plugs g:plug_home g:plug_window
+  let g:plug_url_format = 'file:///tmp/%s'
+
+  set t_Co=256
+  colo default
+  pclose
+
+  function! PlugStatusSorted()
+    PlugStatus
+    %y
+    q
+    normal! P
+    %sort
+    g/^$/d
+  endfunction
+
+  function! AssertExpect(bang, pat, cnt)
+    let op = a:bang ? '==#' : '=~#'
+    AssertEqual a:cnt, len(filter(getline(1, '$'), "v:val ".op." '".a:pat."'"))
+  endfunction
+  command! -nargs=+ -bang AssertExpect call AssertExpect('<bang>' == '!', <args>)
+
+  function! EnsureLoaded()
+    if has('vim_starting')
+      runtime! plugin/**/*.vim
+    endif
+  endfunction
+
+Execute (Print Ruby version):
+  redir => out
+  silent ruby puts RUBY_VERSION
+  redir END
+  Log substitute(out, '\n', '', 'g')
+
+Include: workflow.vader
+Include: regressions.vader
+
+Execute (Cleanup):
+  silent! call system('rm -rf '.temp_plugged)
+  silent! call system('rm -rf '.temp_plugged)
+  silent! call rename(fzf, expand('$PLUG_FIXTURES/fzf-staged'))
+  silent! unlet g:plugs
+  silent! unlet g:plug_home
+  silent! unlet g:plug_url_format
+  silent! unlet temp_plugged vader plug basertp save_rtp repo lnum fzf out tabnr found len
+  silent! delf PlugStatusSorted
+  silent! delf AssertExpect
+  silent! delf PlugUpdated
+  silent! delf EnsureLoaded
+  silent! delc AssertExpect
+  silent! unmap /
+  silent! unmap ?
+
+  Restore
+

@@ -1,0 +1,74 @@
+**********************************************************************
+Execute (#112 On-demand loading should not suppress messages from ftplugin):
+  call plug#begin('$PLUG_FIXTURES')
+  Plug '$PLUG_FIXTURES/ftplugin-msg', { 'for': 'c' }
+  call plug#end()
+
+  redir => out
+  tabnew a.c
+  redir END
+  Assert stridx(out, 'ftplugin') >= 0
+
+* The same applies to plug#load())
+  redir => out
+  call plug#load('ftplugin-msg')
+  redir END
+  Assert stridx(out, 'ftplugin') >= 0
+  q
+
+
+**********************************************************************
+Execute (#114 Should not contain empty path in &rtp):
+  call plug#begin('$TMPDIR/plugged')
+  call plug#end()
+
+  Log &rtp
+  Assert &rtp !~ ',,', 'Commas'
+  Assert &rtp !~ '^,', 'Comma prefix'
+  Assert &rtp !~ ',$', 'Comma suffix'
+
+**********************************************************************
+Execute (#130 Proper cleanup of on-demand loading triggers):
+  augroup PlugLOD
+    autocmd!
+  augroup END
+
+  " Cleared on command
+  call plug#begin('$TMPDIR/plugged')
+  Plug 'junegunn/vim-emoji', { 'on':  ['EmojiCommand', 'EmojiCommand2', '<Plug>(EmojiMapping)'] }
+  call plug#end()
+  PlugInstall | q
+
+  Assert exists(':EmojiCommand'), 'EmojiCommand not defined'
+  Assert exists(':EmojiCommand2'), 'EmojiCommand2 not defined'
+  Assert !empty(mapcheck('<Plug>(EmojiMapping)')), '<Plug>(EmojiMapping) not defined'
+
+  silent! EmojiCommand
+
+  Assert !exists(':EmojiCommand'), 'EmojiCommand defined'
+  Assert !exists(':EmojiCommand2'), 'EmojiCommand2 defined'
+  Assert empty(mapcheck('<Plug>(EmojiMapping)')), '<Plug>(EmojiMapping) defined'
+
+  " Cleared on FileType
+  call plug#begin('$TMPDIR/plugged')
+  Plug 'junegunn/vim-emoji', { 'on': ['EmojiCommandExtra', '<Plug>(EmojiMappingExtra)'], 'for': ['emoji'] }
+  call plug#end()
+
+  Assert exists(':EmojiCommandExtra'), 'EmojiCommandExtra not defined'
+  Assert !empty(mapcheck('<Plug>(EmojiMappingExtra)')), '<Plug>(EmojiMappingExtra) not defined'
+
+  setf emoji
+
+  Assert !exists(':EmojiCommandExtra'), 'EmojiCommandExtra defined'
+  Assert empty(mapcheck('<Plug>(EmojiMappingExtra)')), '<Plug>(EmojiMappingExtra) defined'
+
+**********************************************************************
+Execute (#131 Syntax error):
+  call plug#begin('/no-permission')
+  Plug 'junegunn/vim-emoji'
+  call plug#end()
+
+  redir => out
+  silent PlugInstall
+  redir END
+  Assert out =~ 'Invalid plug directory: /no-permission'
