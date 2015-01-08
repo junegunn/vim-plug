@@ -126,7 +126,7 @@ Execute (#139-2 Using yet another new remote branch):
   call system('cd $TMPDIR/new-branch && git checkout master &&'
       \. 'git checkout -b brand-new &&'
       \. 'echo "let g:baz = 1" > plugin/baz.vim && git add plugin/baz.vim &&'
-      \. 'git commit -m thirf')
+      \. 'git commit -m third')
 
   " Test Vim installer here
   call plug#begin('$TMPDIR/plugged')
@@ -149,3 +149,24 @@ Expect:
   - new-branch: OK
   Finished. 0 error(s).
   [=]
+
+Execute (#139-3 Should fail when not possible to fast-forward):
+  " Commit on cloned repo
+  call system('cd $TMPDIR/plugged/new-branch && git checkout master &&'
+      \. 'touch foobar && git add foobar && git commit -m foobar')
+
+  " Different commit on remote
+  call system('cd $TMPDIR/new-branch && git checkout master &&'
+      \. 'touch foobaz && git add foobaz && git commit -m foobaz')
+
+  for multi in [0, 1]
+    call plug#begin('$TMPDIR/plugged')
+    if multi
+      Plug 'junegunn/seoul256.vim'
+    endif
+    Plug expand('file:///$TMPDIR/new-branch')
+    call plug#end()
+    PlugUpdate
+    silent %y
+    Assert @" =~ 'Not possible to fast-forward', @"
+  endfor
