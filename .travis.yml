@@ -10,6 +10,8 @@ before_script: |
   make
   sudo make install
   cd -
+  git config --global user.email "you@example.com"
+  git config --global user.name "Your Name"
 
 script: |
   test/run !

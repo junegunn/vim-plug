@@ -51,6 +51,7 @@ EOF
 
 init() {
   rm -rf $PLUG_FIXTURES/{xxx,yyy,z1,z2}
+  rm -rf $TMPDIR/new-branch
 
   make_dirs xxx/ xxx
   make_dirs xxx/after xxx
@@ -64,6 +65,16 @@ DOC
 
   make_dirs z1/ z1
   make_dirs z2/ z2
+
+  (
+    cd $TMPDIR
+    git init new-branch
+    cd new-branch
+    mkdir plugin
+    echo 'let g:foo = 1' > plugin/foo.vim
+    git add plugin/foo.vim
+    git commit -m initial
+  )
 }
 
 cat > /tmp/mini-vimrc << VIMRC
