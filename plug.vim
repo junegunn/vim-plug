@@ -914,7 +914,7 @@ while 1 " Without TCO, Vim stack is bound to explode
     if valid
       if pull
         call s:spawn(name,
-          \ printf('git checkout -q %s 2>&1 && git pull --progress --no-rebase origin %s 2>&1 && git submodule update --init --recursive 2>&1',
+          \ printf('(git fetch --progress 2>&1 && git checkout -q %s 2>&1 && git merge --ff-only origin/%s 2>&1 && git submodule update --init --recursive 2>&1)',
           \ s:shellesc(spec.branch), s:shellesc(spec.branch)), { 'dir': spec.dir })
       else
         let s:jobs[name] = { 'running': 0, 'result': 'Already installed', 'error': 0 }
@@ -1125,7 +1125,7 @@ function! s:update_ruby()
               else
                 if pull
                   log.call name, 'Updating ...', :update
-                  bt.call "#{cd} #{dir} && git checkout -q #{branch} 2>&1 && (git pull --no-rebase origin #{branch} #{progress} 2>&1 && #{subm})", name, :update, nil
+                  bt.call "#{cd} #{dir} && (git fetch #{progress} 2>&1 && git checkout -q #{branch} 2>&1 && git merge --ff-only origin/#{branch} 2>&1 && #{subm})", name, :update, nil
                 else
                   [true, skip]
                 end
