@@ -564,14 +564,14 @@ function! s:prepare()
     silent %d _
   else
     call s:new_window()
-    nnoremap <silent> <buffer> q  :if b:plug_preview==1<bar>pc<bar>endif<bar>echo<bar>q<cr>
-    nnoremap <silent> <buffer> R  :silent! call <SID>retry()<cr>
-    nnoremap <silent> <buffer> D  :PlugDiff<cr>
-    nnoremap <silent> <buffer> S  :PlugStatus<cr>
-    nnoremap <silent> <buffer> U  :call <SID>status_update()<cr>
-    xnoremap <silent> <buffer> U  :call <SID>status_update()<cr>
-    nnoremap <silent> <buffer> ]] :silent! call <SID>section('')<cr>
-    nnoremap <silent> <buffer> [[ :silent! call <SID>section('b')<cr>
+    nnoremap <silent> <buffer> <nowait> q  :if b:plug_preview==1<bar>pc<bar>endif<bar>echo<bar>q<cr>
+    nnoremap <silent> <buffer> <nowait> R  :silent! call <SID>retry()<cr>
+    nnoremap <silent> <buffer> <nowait> D  :PlugDiff<cr>
+    nnoremap <silent> <buffer> <nowait> S  :PlugStatus<cr>
+    nnoremap <silent> <buffer> <nowait> U  :call <SID>status_update()<cr>
+    xnoremap <silent> <buffer> <nowait> U  :call <SID>status_update()<cr>
+    nnoremap <silent> <buffer> <nowait> ]] :silent! call <SID>section('')<cr>
+    nnoremap <silent> <buffer> <nowait> [[ :silent! call <SID>section('b')<cr>
     let b:plug_preview = -1
     let s:plug_tab = tabpagenr()
     let s:plug_buf = winbufnr(0)
@@ -1368,8 +1368,8 @@ function! s:status()
   setlocal nomodifiable
   if unloaded
     echo "Press 'L' on each line to load plugin, or 'U' to update"
-    nnoremap <silent> <buffer> L :call <SID>status_load(line('.'))<cr>
-    xnoremap <silent> <buffer> L :call <SID>status_load(line('.'))<cr>
+    nnoremap <silent> <buffer> <nowait> L :call <SID>status_load(line('.'))<cr>
+    xnoremap <silent> <buffer> <nowait> L :call <SID>status_load(line('.'))<cr>
   end
 endfunction
 
@@ -1471,8 +1471,8 @@ function! s:diff()
   endfor
 
   call setline(1, cnt == 0 ? 'No updates.' : 'Last update:')
-  nnoremap <silent> <buffer> <cr> :silent! call <SID>preview_commit()<cr>
-  nnoremap <silent> <buffer> X    :call <SID>revert()<cr>
+  nnoremap <silent> <buffer> <nowait> <cr> :silent! call <SID>preview_commit()<cr>
+  nnoremap <silent> <buffer> <nowait> X    :call <SID>revert()<cr>
   normal! gg
   setlocal nomodifiable
   if cnt > 0
