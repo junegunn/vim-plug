@@ -170,3 +170,34 @@ Execute (#139-3 Should fail when not possible to fast-forward):
     silent %y
     Assert @" =~ 'Not possible to fast-forward', @"
   endfor
+
+**********************************************************************
+Execute (#145: Merging on-demand loading triggers - cmd):
+  unlet! g:xxx g:yyy
+  call plug#begin()
+  Plug '$PLUG_FIXTURES/xxx', { 'on': 'XXX' }
+  Plug '$PLUG_FIXTURES/yyy', { 'on': ['XXX', 'YYY'] }
+  call plug#end()
+
+  silent! XXX
+
+  Assert exists('g:xxx'), 'xxx is not loaded'
+  Assert exists('g:yyy'), 'yyy is not loaded'
+  Assert !exists(':YYY')
+
+Execute (#145: Merging on-demand loading triggers - map):
+  unlet! g:xxx g:yyy
+
+  call plug#begin()
+  Plug '$PLUG_FIXTURES/xxx', { 'on': '<Plug>(xxx)' }
+  Plug '$PLUG_FIXTURES/yyy', { 'on': ['<Plug>(xxx)' ,'<Plug>(yyy)' ] }
+  call plug#end()
+
+  Assert !empty(mapcheck("<Plug>(xxx)"))
+  Assert !empty(mapcheck("<Plug>(yyy)"))
+
+# FIXME feedkeys() cannot be tested with Vader
+  call plug#load('xxx', 'yyy')
+  Assert empty(mapcheck("<Plug>(xxx)"))
+  Assert empty(mapcheck("<Plug>(yyy)"))
+

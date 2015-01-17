@@ -136,6 +136,10 @@ function! s:source(from, ...)
   endfor
 endfunction
 
+function! s:assoc(dict, key, val)
+  let a:dict[a:key] = add(get(a:dict, a:key, []), a:val)
+endfunction
+
 function! plug#end()
   if !exists('g:plugs')
     return s:err('Call plug#begin() first')
@@ -147,7 +151,7 @@ function! plug#end()
     augroup END
     augroup! PlugLOD
   endif
-  let lod = {}
+  let lod = { 'ft': {}, 'map': {}, 'cmd': {} }
 
   filetype off
   for name in g:plugs_order
@@ -162,19 +166,12 @@ function! plug#end()
       for cmd in s:to_a(plug.on)
         if cmd =~ '^<Plug>.\+'
           if empty(mapcheck(cmd)) && empty(mapcheck(cmd, 'i'))
-            for [mode, map_prefix, key_prefix] in
-                  \ [['i', '<C-O>', ''], ['n', '', ''], ['v', '', 'gv'], ['o', '', '']]
-              execute printf(
-              \ '%snoremap <silent> %s %s:<C-U>call <SID>lod_map(%s, %s, "%s")<CR>',
-              \ mode, cmd, map_prefix, string(cmd), string(name), key_prefix)
-            endfor
+            call s:assoc(lod.map, cmd, name)
           endif
           call add(s:triggers[name].map, cmd)
         elseif cmd =~ '^[A-Z]'
           if exists(':'.cmd) != 2
-            execute printf(
-            \ 'command! -nargs=* -range -bang %s call s:lod_cmd(%s, "<bang>", <line1>, <line2>, <q-args>, %s)',
-            \ cmd, string(cmd), string(name))
+            call s:assoc(lod.cmd, cmd, name)
           endif
           call add(s:triggers[name].cmd, cmd)
         endif
@@ -186,19 +183,31 @@ function! plug#end()
       if !empty(types)
         call s:source(s:rtp(plug), 'ftdetect/**/*.vim', 'after/ftdetect/**/*.vim')
       endif
-      for key in types
-        if !has_key(lod, key)
-          let lod[key] = []
-        endif
-        call add(lod[key], name)
+      for type in types
+        call s:assoc(lod.ft, type, name)
       endfor
     endif
   endfor
 
-  for [key, names] in items(lod)
+  for [cmd, names] in items(lod.cmd)
+    execute printf(
+    \ 'command! -nargs=* -range -bang %s call s:lod_cmd(%s, "<bang>", <line1>, <line2>, <q-args>, %s)',
+    \ cmd, string(cmd), string(names))
+  endfor
+
+  for [map, names] in items(lod.map)
+    for [mode, map_prefix, key_prefix] in
+          \ [['i', '<C-O>', ''], ['n', '', ''], ['v', '', 'gv'], ['o', '', '']]
+      execute printf(
+      \ '%snoremap <silent> %s %s:<C-U>call <SID>lod_map(%s, %s, "%s")<CR>',
+      \ mode, map, map_prefix, string(map), string(names), key_prefix)
+    endfor
+  endfor
+
+  for [ft, names] in items(lod.ft)
     augroup PlugLOD
       execute printf('autocmd FileType %s call <SID>lod_ft(%s, %s)',
-            \ key, string(key), string(names))
+            \ ft, string(ft), string(names))
     augroup END
   endfor
 
@@ -336,11 +345,11 @@ function! s:remove_triggers(name)
     return
   endif
   for cmd in s:triggers[a:name].cmd
-    execute 'delc' cmd
+    execute 'silent! delc' cmd
   endfor
   for map in s:triggers[a:name].map
-    execute 'unmap' map
-    execute 'iunmap' map
+    execute 'silent! unmap' map
+    execute 'silent! iunmap' map
   endfor
   call remove(s:triggers, a:name)
 endfunction
@@ -367,13 +376,13 @@ function! s:lod_ft(pat, names)
   doautocmd filetypeindent FileType
 endfunction
 
-function! s:lod_cmd(cmd, bang, l1, l2, args, name)
-  call s:lod([a:name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
+function! s:lod_cmd(cmd, bang, l1, l2, args, names)
+  call s:lod(a:names, ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
   execute printf('%s%s%s %s', (a:l1 == a:l2 ? '' : (a:l1.','.a:l2)), a:cmd, a:bang, a:args)
 endfunction
 
-function! s:lod_map(map, name, prefix)
-  call s:lod([a:name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
+function! s:lod_map(map, names, prefix)
+  call s:lod(a:names, ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
   let extra = ''
   while 1
     let c = getchar(0)
