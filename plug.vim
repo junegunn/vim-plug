@@ -1311,14 +1311,14 @@ function! s:upgrade()
   endtry
 
   if readfile(s:me) ==# readfile(new)
-    echo 'vim-plug is up-to-date'
+    echo 'vim-plug is already up-to-date'
     silent! call delete(new)
     return 0
   else
     call rename(s:me, s:me . '.old')
     call rename(new, s:me)
     unlet g:loaded_plug
-    echo 'vim-plug is upgraded'
+    echo 'vim-plug has been upgraded'
     return 1
   endif
 endfunction
