@@ -1187,7 +1187,7 @@ function! s:format_message(bullet, name, message)
 endfunction
 
 function! s:with_cd(cmd, dir)
-  return 'cd '.s:esc(a:dir).' && '.a:cmd
+  return (s:is_win ? 'cd /d ' : 'cd ').s:esc(a:dir).' && '.a:cmd
 endfunction
 
 function! s:system(cmd, ...)
