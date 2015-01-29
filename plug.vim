@@ -212,7 +212,7 @@ function! plug#end()
   endfor
 
   call s:reorg_rtp()
-  filetype plugin indent on
+  filetype on
   if has('vim_starting')
     syntax enable
   else
