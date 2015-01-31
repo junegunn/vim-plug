@@ -28,8 +28,7 @@ A minimalist Vim plugin manager.
 and put it in ~/.vim/autoload
 
 ```sh
-mkdir -p ~/.vim/autoload
-curl -fLo ~/.vim/autoload/plug.vim \
+curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 ```
 
