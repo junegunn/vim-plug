@@ -9,15 +9,18 @@ A minimalist Vim plugin manager.
 
 - Easier to setup: Single file. No boilerplate code required.
 - Easier to use: Concise, intuitive syntax
-- [Super-fast](https://raw.githubusercontent.com/junegunn/i/master/vim-plug/40-in-4.gif)
-  parallel installation/update (requires
-  [+ruby](https://github.com/junegunn/vim-plug/wiki/ruby) or
-  [Neovim](http://neovim.org/))
-- On-demand loading to achieve
-  [fast startup time](http://junegunn.kr/images/vim-startup-time.png)
+- [Super-fast][40/4] parallel installation/update
+  (with [+ruby][rb] or [Neovim][nv])
+- On-demand loading for [faster startup time][startup-time]
+- Can review and rollback updates
+- Branch/tag support
 - Post-update hooks
-- Can choose a specific branch or tag for each plugin
 - Support for externally managed plugins
+
+[40/4]: https://raw.githubusercontent.com/junegunn/i/master/vim-plug/40-in-4.gif
+[rb]: https://github.com/junegunn/vim-plug/wiki/ruby
+[nv]: http://neovim.org/
+[startup-time]: http://junegunn.kr/images/vim-startup-time.png
 
 ### Usage
 
