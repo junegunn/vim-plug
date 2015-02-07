@@ -777,7 +777,7 @@ function! s:job_abort()
   for [name, j] in items(s:jobs)
     silent! call jobstop(j.jobid)
     if j.new
-      call system('rm -rf ' . s:shellesc(g:plugs[name].dir))
+      call s:system('rm -rf ' . s:shellesc(g:plugs[name].dir))
     endif
   endfor
   let s:jobs = {}
@@ -1191,8 +1191,16 @@ function! s:with_cd(cmd, dir)
 endfunction
 
 function! s:system(cmd, ...)
-  let cmd = a:0 > 0 ? s:with_cd(a:cmd, a:1) : a:cmd
-  return system(s:is_win ? '('.cmd.')' : cmd)
+  try
+    let sh = &shell
+    if !s:is_win
+      set shell=sh
+    endif
+    let cmd = a:0 > 0 ? s:with_cd(a:cmd, a:1) : a:cmd
+    return system(s:is_win ? '('.cmd.')' : cmd)
+  finally
+    let &shell = sh
+  endtry
 endfunction
 
 function! s:system_chomp(...)
@@ -1280,7 +1288,7 @@ function! s:clean(force)
     if yes
       for dir in todo
         if isdirectory(dir)
-          call system((s:is_win ? 'rmdir /S /Q ' : 'rm -rf ') . s:shellesc(dir))
+          call s:system((s:is_win ? 'rmdir /S /Q ' : 'rm -rf ') . s:shellesc(dir))
         endif
       endfor
       call append(line('$'), 'Removed.')
@@ -1297,7 +1305,7 @@ function! s:upgrade()
   redraw
   try
     if executable('curl')
-      let output = system(printf('curl -fLo %s %s', s:shellesc(new), s:plug_src))
+      let output = s:system(printf('curl -fLo %s %s', s:shellesc(new), s:plug_src))
       if v:shell_error
         throw get(s:lines(output), -1, v:shell_error)
       endif
@@ -1535,7 +1543,7 @@ function! s:snapshot(...) abort
   if a:0 > 0
     let fn = s:esc(expand(a:1))
     call writefile(getline(1, '$'), fn)
-    if !s:is_win | call system('chmod +x ' . fn) | endif
+    if !s:is_win | call s:system('chmod +x ' . fn) | endif
     echo 'Saved to '.a:1
     silent execute 'e' fn
   endif

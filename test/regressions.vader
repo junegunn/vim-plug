@@ -201,3 +201,20 @@ Execute (#145: Merging on-demand loading triggers - map):
   Assert empty(mapcheck("<Plug>(xxx)"))
   Assert empty(mapcheck("<Plug>(yyy)"))
 
+**********************************************************************
+Execute (#159: shell=/bin/tcsh):
+  let org = &shell
+  try
+    set shell=/bin/tcsh
+    call plug#begin('$TMPDIR/plugged')
+    Plug 'junegunn/seoul256.vim'
+    call plug#end()
+
+    PlugStatus
+    Log getline(1, '$')
+    q
+    AssertEqual '/bin/tcsh', &shell
+  finally
+    let &shell = org
+  endtry
+
