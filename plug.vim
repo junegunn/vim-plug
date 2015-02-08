@@ -923,7 +923,7 @@ while 1 " Without TCO, Vim stack is bound to explode
     if valid
       if pull
         call s:spawn(name,
-          \ printf('(git fetch --progress 2>&1 && git checkout -q %s 2>&1 && git merge --ff-only origin/%s 2>&1 && git submodule update --init --recursive 2>&1)',
+          \ printf('(git fetch 2>&1 && git checkout -q %s 2>&1 && git merge --ff-only origin/%s 2>&1 && git submodule update --init --recursive 2>&1)',
           \ s:shellesc(spec.branch), s:shellesc(spec.branch)), { 'dir': spec.dir })
       else
         let s:jobs[name] = { 'running': 0, 'result': 'Already installed', 'error': 0 }
@@ -933,7 +933,7 @@ while 1 " Without TCO, Vim stack is bound to explode
     endif
   else
     call s:spawn(name,
-          \ printf('git clone --progress --recursive %s -b %s %s 2>&1',
+          \ printf('git clone --recursive %s -b %s %s 2>&1',
           \ s:shellesc(spec.uri),
           \ s:shellesc(spec.branch),
           \ s:shellesc(s:trim(spec.dir))), { 'new': 1 })
