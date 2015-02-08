@@ -1260,6 +1260,7 @@ function! s:clean(force)
 
   let allowed = {}
   for dir in dirs
+    let allowed[s:dirpath(fnamemodify(dir, ':h:h'))] = 1
     let allowed[dir] = 1
     for child in s:glob_dir(dir)
       let allowed[child] = 1
