@@ -736,7 +736,7 @@ function! s:update_impl(pull, force, args) abort
     catch
       let lines = getline(4, '$')
       let printed = {}
-      silent 4,$d _
+      silent! 4,$d _
       for line in lines
         let name = s:extract_name(line, '.', '')
         if empty(name) || !has_key(printed, name)
