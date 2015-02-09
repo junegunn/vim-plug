@@ -234,6 +234,23 @@ function! s:trim(str)
   return substitute(a:str, '[\/]\+$', '', '')
 endfunction
 
+function! s:git_version_requirement(...)
+  let s:git_version = get(s:, 'git_version',
+    \ map(split(split(s:system('git --version'))[-1], '\.'), 'str2nr(v:val)'))
+  for idx in range(0, a:0 - 1)
+    let v = get(s:git_version, idx, 0)
+    if     v < a:000[idx] | return 0
+    elseif v > a:000[idx] | return 1
+    endif
+  endfor
+  return 1
+endfunction
+
+function! s:progress_opt(base)
+  return a:base && !s:is_win &&
+        \ s:git_version_requirement(1, 7, 1) ? '--progress' : ''
+endfunction
+
 if s:is_win
   function! s:rtp(spec)
     return s:path(a:spec.dir . get(a:spec, 'rtp', ''))
@@ -901,6 +918,8 @@ function! s:update_vim()
 endfunction
 
 function! s:tick()
+  let pull = s:update.pull
+  let prog = s:progress_opt(s:nvim)
 while 1 " Without TCO, Vim stack is bound to explode
   if empty(s:update.todo)
     if empty(s:jobs) && !s:update.fin
@@ -912,9 +931,7 @@ while 1 " Without TCO, Vim stack is bound to explode
 
   let name = keys(s:update.todo)[0]
   let spec = remove(s:update.todo, name)
-  let pull = s:update.pull
   let new  = !isdirectory(spec.dir)
-  let prog = s:nvim ? '--progress' : ''
 
   call s:log(new ? '+' : '*', name, pull ? 'Updating ...' : 'Installing ...')
   redraw
@@ -1108,7 +1125,7 @@ function! s:update_ruby()
     end
   } if VIM::evaluate('s:mac_gui') == 1
 
-  progress = iswin ? '' : '--progress'
+  progress = VIM::evaluate('s:progress_opt(1)')
   nthr.times do
     mtx.synchronize do
       threads << Thread.new {
