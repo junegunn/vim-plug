@@ -73,6 +73,7 @@ let s:plug_tab = get(s:, 'plug_tab', -1)
 let s:plug_buf = get(s:, 'plug_buf', -1)
 let s:mac_gui = has('gui_macvim') && has('gui_running')
 let s:is_win = has('win32') || has('win64')
+let s:ruby = has('ruby') && has('patch-7.2.374')
 let s:nvim = has('nvim') && !s:is_win
 let s:me = resolve(expand('<sfile>:p'))
 let s:base_spec = { 'branch': 'master', 'frozen': 0 }
@@ -734,7 +735,7 @@ function! s:update_impl(pull, force, args) abort
     \ 'pull':    a:pull,
     \ 'force':   a:force,
     \ 'new':     {},
-    \ 'threads': (has('ruby') || s:nvim) ? min([len(todo), threads]) : 1,
+    \ 'threads': (s:ruby || s:nvim) ? min([len(todo), threads]) : 1,
     \ 'bar':     '',
     \ 'fin':     0
   \ }
@@ -743,7 +744,7 @@ function! s:update_impl(pull, force, args) abort
   call append(0, ['', ''])
   normal! 2G
 
-  if has('ruby') && s:update.threads > 1
+  if s:ruby && s:update.threads > 1
     try
       let imd = &imd
       if s:mac_gui
@@ -1329,7 +1330,7 @@ function! s:upgrade()
       if v:shell_error
         throw get(s:lines(output), -1, v:shell_error)
       endif
-    elseif has('ruby')
+    elseif s:ruby
       call s:upgrade_using_ruby(new)
     else
       return s:err('curl executable or ruby support not found')
