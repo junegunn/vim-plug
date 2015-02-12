@@ -39,9 +39,13 @@ Execute (Initialize test environment):
     endif
   endfunction
 
-Execute (Print Ruby version):
+Execute (Print Interpreter Version):
   redir => out
-  silent ruby puts RUBY_VERSION
+  if has('ruby')
+    silent ruby puts 'Ruby: ' + RUBY_VERSION
+  elseif has('python')
+    silent python import sys; svi = sys.version_info; print 'Python: {}.{}.{}'.format(svi[0], svi[1], svi[2])
+  endif
   redir END
   Log substitute(out, '\n', '', 'g')
 

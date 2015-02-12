@@ -1,8 +1,9 @@
 language: ruby
 rvm:
   - 1.8.7
-  - 2.0.0
   - 1.9.2 # Test with vim-nox package on ubuntu
+  - 1.9.3 # Test against python installer
+  - 2.0.0
 
 before_script: |
   if [ $(ruby -e 'puts RUBY_VERSION') = 1.9.2 ]; then
@@ -12,7 +13,13 @@ before_script: |
   else
     hg clone https://code.google.com/p/vim/
     cd vim
-    ./configure --with-features=huge --enable-rubyinterp
+    if [ $(ruby -e 'puts RUBY_VERSION') = 1.9.3 ]; then
+      sudo apt-get update -y
+      sudo apt-get install -y python2.7-dev
+      ./configure --with-features=huge --enable-pythoninterp
+    else
+      ./configure --with-features=huge --enable-rubyinterp
+    fi
     make
     sudo make install
     cd -
