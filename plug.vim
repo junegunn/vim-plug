@@ -719,7 +719,7 @@ function! s:update_impl(pull, force, args) abort
   endif
 
   if !s:is_win && s:git_version_requirement(2, 3)
-    let git_terminal_prompt = exists('$GIT_TERMINAL_PROMPT') ? $GIT_TERMINAL_PROMPT : ''
+    let s:git_terminal_prompt = exists('$GIT_TERMINAL_PROMPT') ? $GIT_TERMINAL_PROMPT : ''
     let $GIT_TERMINAL_PROMPT = 0
     for plug in values(todo)
       let plug.uri = substitute(plug.uri,
@@ -783,13 +783,12 @@ function! s:update_impl(pull, force, args) abort
   else
     call s:update_vim()
   endif
-
-  if exists('git_terminal_prompt')
-    let $GIT_TERMINAL_PROMPT = git_terminal_prompt
-  endif
 endfunction
 
 function! s:update_finish()
+  if exists('s:git_terminal_prompt')
+    let $GIT_TERMINAL_PROMPT = s:git_terminal_prompt
+  endif
   if s:switch_in()
     call s:do(s:update.pull, s:update.force, filter(copy(s:update.all), 'has_key(v:val, "do")'))
     call s:finish(s:update.pull)
