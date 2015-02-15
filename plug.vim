@@ -718,6 +718,15 @@ function! s:update_impl(pull, force, args) abort
     return
   endif
 
+  if !s:is_win && s:git_version_requirement(2, 3)
+    let git_terminal_prompt = exists('$GIT_TERMINAL_PROMPT') ? $GIT_TERMINAL_PROMPT : ''
+    let $GIT_TERMINAL_PROMPT = 0
+    for plug in values(todo)
+      let plug.uri = substitute(plug.uri,
+            \ '^https://git::@github\.com', 'https://github.com', '')
+    endfor
+  endif
+
   if !isdirectory(g:plug_home)
     try
       call mkdir(g:plug_home, 'p')
@@ -773,6 +782,10 @@ function! s:update_impl(pull, force, args) abort
     endtry
   else
     call s:update_vim()
+  endif
+
+  if exists('git_terminal_prompt')
+    let $GIT_TERMINAL_PROMPT = git_terminal_prompt
   endif
 endfunction
 
