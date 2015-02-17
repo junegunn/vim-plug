@@ -606,6 +606,7 @@ function! s:prepare()
   endif
   silent! unmap <buffer> <cr>
   silent! unmap <buffer> L
+  silent! unmap <buffer> o
   silent! unmap <buffer> X
   setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap cursorline modifiable
   setf vim-plug
@@ -1535,6 +1536,7 @@ function! s:diff()
 
   call setline(1, cnt == 0 ? 'No updates.' : 'Last update:')
   nnoremap <silent> <buffer> <cr> :silent! call <SID>preview_commit()<cr>
+  nnoremap <silent> <buffer> o    :silent! call <SID>preview_commit()<cr>
   nnoremap <silent> <buffer> X    :call <SID>revert()<cr>
   normal! gg
   setlocal nomodifiable
