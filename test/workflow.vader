@@ -32,7 +32,7 @@ Execute (Subsequent plug#begin() calls will reuse g:plug_home):
   AssertEqual temp_plugged, g:plug_home
 
 Execute (Test Plug command):
-  " Git repo with branch
+^ Git repo with branch (DEPRECATED. USE BRANCH OPTION)
   Plug 'junegunn/seoul256.vim', 'yes-t_co'
   AssertEqual 'file:///tmp/junegunn/seoul256.vim', g:plugs['seoul256.vim'].uri
   AssertEqual join([temp_plugged, 'seoul256.vim/'], '/'), g:plugs['seoul256.vim'].dir
@@ -41,14 +41,14 @@ Execute (Test Plug command):
   Plug 'junegunn/seoul256.vim', { 'branch': 'no-t_co' } " Using branch option
   AssertEqual 'no-t_co', g:plugs['seoul256.vim'].branch
 
-  " Git repo with tag
+^ Git repo with tag (DEPRECATED. USE TAG OPTION)
   Plug 'junegunn/goyo.vim', '1.5.2'
   AssertEqual 'file:///tmp/junegunn/goyo.vim', g:plugs['goyo.vim'].uri
   AssertEqual join([temp_plugged, 'goyo.vim/'], '/'), g:plugs['goyo.vim'].dir
   AssertEqual '1.5.2', g:plugs['goyo.vim'].branch
 
   Plug 'junegunn/goyo.vim', { 'tag': '1.5.3' } " Using tag option
-  AssertEqual '1.5.3', g:plugs['goyo.vim'].branch
+  AssertEqual '1.5.3', g:plugs['goyo.vim'].tag
 
   " Git URI
   Plug 'file:///tmp/jg/vim-emoji'
@@ -109,7 +109,27 @@ Execute (PlugStatus after installation):
   AssertExpect 'OK', 4
   q
 
+Execute (PlugUpdate - tagged plugin should not fail (#174)):
+  PlugUpdate goyo.vim
+  Log getline(1, '$')
+  AssertExpect '^- goyo.vim', 1
+  q
+
 Execute (Change tag of goyo.vim):
+  call plug#begin()
+  Plug 'junegunn/goyo.vim', { 'tag': '9.9.9' }
+  call plug#end()
+
+Execute (PlugStatus):
+  call PlugStatusSorted()
+
+Expect:
+      Invalid tag: 1.5.3 (expected: 9.9.9). Try PlugUpdate.
+  Finished. 1 error(s).
+  [=]
+  x goyo.vim:
+
+Execute (Remove tag of goyo.vim):
   call plug#begin()
   Plug 'junegunn/goyo.vim'
   call plug#end()
@@ -118,7 +138,7 @@ Execute (PlugStatus):
   call PlugStatusSorted()
 
 Expect:
-      Invalid branch/tag: 1.5.3 (expected: master). Try PlugUpdate.
+      Invalid branch: HEAD (expected: master). Try PlugUpdate.
   Finished. 1 error(s).
   [=]
   x goyo.vim:
@@ -142,10 +162,32 @@ Execute (PlugStatus):
   call PlugStatusSorted()
 
 Expect:
-      Invalid branch/tag: no-t_co (expected: master). Try PlugUpdate.
+      Invalid branch: no-t_co (expected: master). Try PlugUpdate.
   - vim-emoji: OK
   Finished. 1 error(s).
   [==]
+  x seoul256.vim:
+
+Execute (PlugUpdate to switch branch, then PlugStatus):
+  PlugUpdate
+  call PlugStatusSorted()
+
+Expect:
+  - seoul256.vim: OK
+  - vim-emoji: OK
+  Finished. 0 error(s).
+  [==]
+
+Execute (Change tag of seoul256.vim):
+  call plug#begin()
+  Plug 'junegunn/seoul256.vim', { 'tag': 'no-such-tag' }
+  call plug#end()
+  call PlugStatusSorted()
+
+Expect:
+      Invalid tag: N/A (expected: no-such-tag). Try PlugUpdate.
+  Finished. 1 error(s).
+  [=]
   x seoul256.vim:
 
 Execute (Change URI of seoul256.vim):

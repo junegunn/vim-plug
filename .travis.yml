@@ -2,14 +2,22 @@ language: ruby
 rvm:
   - 1.8.7
   - 2.0.0
+  - 1.9.2 # Test with vim-nox package on ubuntu
 
 before_script: |
-  hg clone https://code.google.com/p/vim/
-  cd vim
-  ./configure --with-features=huge --enable-rubyinterp
-  make
-  sudo make install
-  cd -
+  if [ $(ruby -e 'puts RUBY_VERSION') = 1.9.2 ]; then
+    sudo apt-get update -y
+    sudo apt-get install -y vim-nox
+    sudo ln -s /usr/bin/vim /usr/local/bin/vim
+  else
+    hg clone https://code.google.com/p/vim/
+    cd vim
+    ./configure --with-features=huge --enable-rubyinterp
+    make
+    sudo make install
+    cd -
+  fi
+
   git config --global user.email "you@example.com"
   git config --global user.name "Your Name"
 
