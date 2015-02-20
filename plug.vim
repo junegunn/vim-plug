@@ -236,16 +236,20 @@ function! s:trim(str)
   return substitute(a:str, '[\/]\+$', '', '')
 endfunction
 
-function! s:git_version_requirement(...)
-  let s:git_version = get(s:, 'git_version',
-    \ map(split(split(s:system('git --version'))[-1], '\.'), 'str2nr(v:val)'))
-  for idx in range(0, a:0 - 1)
-    let v = get(s:git_version, idx, 0)
-    if     v < a:000[idx] | return 0
-    elseif v > a:000[idx] | return 1
+function! s:version_requirement(val, min)
+  for idx in range(0, len(a:min) - 1)
+    let v = get(a:val, idx, 0)
+    if     v < a:min[idx] | return 0
+    elseif v > a:min[idx] | return 1
     endif
   endfor
   return 1
+endfunction
+
+function! s:git_version_requirement(...)
+  let s:git_version = get(s:, 'git_version',
+    \ map(split(split(s:system('git --version'))[-1], '\.'), 'str2nr(v:val)'))
+  return s:version_requirement(s:git_version, a:000)
 endfunction
 
 function! s:progress_opt(base)
@@ -755,6 +759,14 @@ function! s:update_impl(pull, force, args) abort
   call append(0, ['', ''])
   normal! 2G
 
+  " Python version requirement (>= 2.7)
+  if s:py2 && !s:ruby && !s:nvim && s:update.threads > 1
+    redir => pyv
+    silent python import platform; print(platform.python_version())
+    redir END
+    let s:py2 = s:version_requirement(
+          \ map(split(split(pyv)[0], '\.'), 'str2nr(v:val)'), [2, 7])
+  endif
   if (s:py2 || s:ruby) && !s:nvim && s:update.threads > 1
     try
       let imd = &imd
