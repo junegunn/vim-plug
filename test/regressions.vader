@@ -100,7 +100,7 @@ Execute (#139-1 Using new remote branch):
   " We're setting up two plugins so that parallel installer is used
   call plug#begin('$TMPDIR/plugged')
   Plug 'junegunn/seoul256.vim'
-  Plug expand('file:///$TMPDIR/new-branch'), 'new'
+  Plug expand('file:///$TMPDIR/new-branch'), { 'branch': 'new' }
   call plug#end()
   PlugUpdate
   silent %y
@@ -130,7 +130,7 @@ Execute (#139-2 Using yet another new remote branch):
 
   " Test Vim installer here
   call plug#begin('$TMPDIR/plugged')
-  Plug expand('file:///$TMPDIR/new-branch'), 'brand-new'
+  Plug expand('file:///$TMPDIR/new-branch'), { 'branch': 'brand-new' }
   call plug#end()
   PlugUpdate
   silent %y

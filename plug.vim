@@ -439,12 +439,9 @@ function! s:parse_options(arg)
   let opts = copy(s:base_spec)
   let type = type(a:arg)
   if type == s:TYPE.string
-    let opts.branch = a:arg
+    let opts.tag = a:arg
   elseif type == s:TYPE.dict
     call extend(opts, a:arg)
-    if has_key(opts, 'tag')
-      let opts.tag = remove(opts, 'tag')
-    endif
     if has_key(opts, 'dir')
       let opts.dir = s:dirpath(expand(opts.dir))
     endif

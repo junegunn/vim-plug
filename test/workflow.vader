@@ -33,7 +33,7 @@ Execute (Subsequent plug#begin() calls will reuse g:plug_home):
 
 Execute (Test Plug command):
 ^ Git repo with branch (DEPRECATED. USE BRANCH OPTION)
-  Plug 'junegunn/seoul256.vim', 'yes-t_co'
+  Plug 'junegunn/seoul256.vim', { 'branch': 'yes-t_co' }
   AssertEqual 'file:///tmp/junegunn/seoul256.vim', g:plugs['seoul256.vim'].uri
   AssertEqual join([temp_plugged, 'seoul256.vim/'], '/'), g:plugs['seoul256.vim'].dir
   AssertEqual 'yes-t_co', g:plugs['seoul256.vim'].branch
@@ -45,7 +45,7 @@ Execute (Test Plug command):
   Plug 'junegunn/goyo.vim', '1.5.2'
   AssertEqual 'file:///tmp/junegunn/goyo.vim', g:plugs['goyo.vim'].uri
   AssertEqual join([temp_plugged, 'goyo.vim/'], '/'), g:plugs['goyo.vim'].dir
-  AssertEqual '1.5.2', g:plugs['goyo.vim'].branch
+  AssertEqual '1.5.2', g:plugs['goyo.vim'].tag
 
   Plug 'junegunn/goyo.vim', { 'tag': '1.5.3' } " Using tag option
   AssertEqual '1.5.3', g:plugs['goyo.vim'].tag
