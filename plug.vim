@@ -1591,7 +1591,7 @@ EOF
 endfunction
 
 function! s:shellesc(arg)
-  return '"'.substitute(a:arg, '"', '\\"', 'g').'"'
+  return '"'.escape(a:arg, '"').'"'
 endfunction
 
 function! s:glob_dir(path)
@@ -1618,7 +1618,7 @@ function! s:format_message(bullet, name, message)
 endfunction
 
 function! s:with_cd(cmd, dir)
-  return printf('cd%s "%s" && %s', s:is_win ? ' /d' : '', escape(a:dir, '"'), a:cmd)
+  return printf('cd%s %s && %s', s:is_win ? ' /d' : '', s:shellesc(a:dir), a:cmd)
 endfunction
 
 function! s:system(cmd, ...)
@@ -1904,7 +1904,7 @@ function! s:preview_commit()
   execute 'pedit' sha
   wincmd P
   setlocal filetype=git buftype=nofile nobuflisted
-  execute 'silent read !cd "'.escape(g:plugs[name].dir, '"').'" && git show' sha
+  execute 'silent read !cd' s:shellesc(g:plugs[name].dir) '&& git show' sha
   normal! gg"_dd
   wincmd p
 endfunction
