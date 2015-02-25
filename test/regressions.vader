@@ -226,3 +226,17 @@ Execute (#154: Spaces in &rtp should not be escaped):
   Log &rtp
   Assert stridx(&rtp, 'plug it/seoul256 vim') >= 0
 
+**********************************************************************
+Execute (#184: Duplicate entries in &rtp):
+  call plug#begin('$TMPDIR/plugged')
+  Plug 'plugin1'
+    \| Plug 'plugin0'
+
+  Plug 'plugin2'
+    \| Plug 'plugin0'
+    \| Plug 'plugin1'
+  call plug#end()
+
+  Log &rtp
+  AssertEqual 3, len(uniq(filter(split(&rtp, ','), 'stridx(v:val, "plugged") >= 0')))
+

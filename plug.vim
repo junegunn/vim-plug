@@ -427,8 +427,10 @@ function! s:add(repo, ...)
     let name = fnamemodify(repo, ':t:s?\.git$??')
     let spec = extend(s:infer_properties(name, repo),
                     \ a:0 == 1 ? s:parse_options(a:1) : s:base_spec)
+    if !has_key(g:plugs, name)
+      call add(g:plugs_order, name)
+    endif
     let g:plugs[name] = spec
-    let g:plugs_order += [name]
     let s:loaded[name] = 0
   catch
     return s:err(v:exception)
