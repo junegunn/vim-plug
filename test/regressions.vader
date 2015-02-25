@@ -238,5 +238,5 @@ Execute (#184: Duplicate entries in &rtp):
   call plug#end()
 
   Log &rtp
-  AssertEqual 3, len(uniq(filter(split(&rtp, ','), 'stridx(v:val, "plugged") >= 0')))
+  AssertEqual 3, len(filter(split(&rtp, ','), 'stridx(v:val, "plugged") >= 0'))
 
