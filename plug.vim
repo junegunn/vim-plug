@@ -764,7 +764,7 @@ function! s:update_impl(pull, force, args) abort
     silent python import platform; print(platform.python_version())
     redir END
     let s:py2 = s:version_requirement(
-          \ map(split(split(pyv)[0], '\.'), 'str2nr(v:val)'), [2, 7])
+          \ map(split(split(pyv)[0], '\.'), 'str2nr(v:val)'), [2, 6])
   endif
   if (s:py2 || s:ruby) && !s:nvim && s:update.threads > 1
     try
@@ -1052,7 +1052,7 @@ class GLog(object):
     fname = cls.LOGDIR + os.path.sep + name
     with open(fname, 'ab') as flog:
       ltime = datetime.datetime.now().strftime("%H:%M:%S.%f")
-      msg = '[{},{}] {}{}'.format(name, ltime, msg, '\n')
+      msg = '[{0},{1}] {2}{3}'.format(name, ltime, msg, '\n')
       flog.write(msg)
 
 class Buffer(object):
@@ -1067,7 +1067,7 @@ class Buffer(object):
   def _where(self, name):
     """ Find first line with name in current buffer. Return line num. """
     found, lnum = False, 0
-    matcher = re.compile('^[-+x*] {}:'.format(name))
+    matcher = re.compile('^[-+x*] {0}:'.format(name))
     for line in vim.current.buffer:
       if matcher.search(line) is not None:
         found = True
@@ -1080,10 +1080,10 @@ class Buffer(object):
 
   def header(self):
     curbuf = vim.current.buffer
-    curbuf[0] = self.event + ' plugins ({}/{})'.format(len(self.bar), self.num_plugs)
+    curbuf[0] = self.event + ' plugins ({0}/{1})'.format(len(self.bar), self.num_plugs)
 
     num_spaces = self.num_plugs - len(self.bar)
-    curbuf[1] = '[{}{}]'.format(self.bar, num_spaces * ' ')
+    curbuf[1] = '[{0}{1}]'.format(self.bar, num_spaces * ' ')
 
     vim.command('normal! 2G')
     if not self.is_win:
@@ -1095,14 +1095,14 @@ class Buffer(object):
 
   def _write(self, action, name, lines):
     first, rest = lines[0], lines[1:]
-    msg = ['{} {}{}{}'.format(action, name, ': ' if first else '', first)]
+    msg = ['{0} {1}{2}{3}'.format(action, name, ': ' if first else '', first)]
     padded_rest = ['    ' + line for line in rest]
     msg.extend(padded_rest)
 
     try:
       if action == Action.ERROR:
         self.bar += 'x'
-        vim.command("call add(s:update.errors, '{}')".format(name))
+        vim.command("call add(s:update.errors, '{0}')".format(name))
       elif action == Action.DONE:
         self.bar += '='
 
@@ -1110,7 +1110,7 @@ class Buffer(object):
       lnum = self._where(name)
       if lnum != -1: # Found matching line num
         del curbuf[lnum]
-        if lnum > self.maxy and action in {Action.INSTALL, Action.UPDATE}:
+        if lnum > self.maxy and action in set([Action.INSTALL, Action.UPDATE]):
           lnum = 3
       else:
         lnum = 3
@@ -1145,7 +1145,7 @@ class Command(object):
           for count in range(3, 0, -1):
             if G_STOP.is_set():
               raise KeyboardInterrupt
-            msg = 'Timeout. Will retry in {} second{} ...'.format(
+            msg = 'Timeout. Will retry in {0} second{1} ...'.format(
                 count, 's' if count != 1 else '')
             self.callback([msg])
             time.sleep(1)
@@ -1217,7 +1217,7 @@ class Plugin(object):
       else:
         self.install()
         with self.lock:
-          vim.command("let s:update.new['{}'] = 1".format(self.name))
+          vim.command("let s:update.new['{0}'] = 1".format(self.name))
     except (CmdTimedOut, CmdFailed, InvalidURI) as exc:
       self.write(Action.ERROR, self.name, exc.message)
     except KeyboardInterrupt:
@@ -1225,7 +1225,7 @@ class Plugin(object):
       self.write(Action.ERROR, self.name, ['Interrupted!'])
     except:
       # Any exception except those above print stack trace
-      msg = 'Trace:\n{}'.format(traceback.format_exc().rstrip())
+      msg = 'Trace:\n{0}'.format(traceback.format_exc().rstrip())
       self.write(Action.ERROR, self.name, msg.split('\n'))
       raise
 
@@ -1242,7 +1242,7 @@ class Plugin(object):
 
     self.write(Action.INSTALL, self.name, ['Installing ...'])
     callback = functools.partial(self.buf.write, Action.INSTALL, self.name)
-    cmd = 'git clone {} --recursive {} -b {} {} 2>&1'.format(
+    cmd = 'git clone {0} --recursive {1} -b {2} {3} 2>&1'.format(
         G_PROGRESS, self.args['uri'], self.checkout, esc(target))
     com = Command(cmd, None, G_TIMEOUT, G_RETRIES, callback, clean(target))
     result = com.attempt_cmd()
@@ -1254,17 +1254,17 @@ class Plugin(object):
     expect_uri = re.sub(match, '', self.args['uri'])
     if actual_uri != expect_uri:
       msg = ['',
-             'Invalid URI: {}'.format(actual_uri),
-             'Expected     {}'.format(expect_uri),
+             'Invalid URI: {0}'.format(actual_uri),
+             'Expected     {0}'.format(expect_uri),
              'PlugClean required.']
       raise InvalidURI(msg)
 
     if G_PULL:
       self.write(Action.UPDATE, self.name, ['Updating ...'])
       callback = functools.partial(self.buf.write, Action.UPDATE, self.name)
-      cmds = ['git fetch {}'.format(G_PROGRESS),
-              'git checkout -q {}'.format(self.checkout),
-              'git merge --ff-only {}'.format(self.merge),
+      cmds = ['git fetch {0}'.format(G_PROGRESS),
+              'git checkout -q {0}'.format(self.checkout),
+              'git merge --ff-only {0}'.format(self.merge),
               'git submodule update --init --recursive']
       cmd = ' 2>&1 && '.join(cmds)
       GLog.write(cmd)
@@ -1282,7 +1282,7 @@ class Plugin(object):
     return result[-1]
 
   def write(self, action, name, msg):
-    GLog.write('{} {}: {}'.format(action, name, '\n'.join(msg)))
+    GLog.write('{0} {1}: {2}'.format(action, name, '\n'.join(msg)))
     self.buf.write(action, name, msg)
 
 class PlugThread(thr.Thread):
@@ -1298,7 +1298,7 @@ class PlugThread(thr.Thread):
     try:
       while not G_STOP.is_set():
         name, args = work_q.get_nowait()
-        GLog.write('{}: Dir {}'.format(name, args['dir']))
+        GLog.write('{0}: Dir {1}'.format(name, args['dir']))
         plug = Plugin(name, args, buf, lock)
         plug.manage()
         work_q.task_done()
@@ -1348,9 +1348,9 @@ def main():
   plugs = vim.eval('s:update.todo')
   mac_gui = vim.eval('s:mac_gui') == '1'
   is_win = vim.eval('s:is_win') == '1'
-  GLog.write('Plugs: {}'.format(plugs))
-  GLog.write('PULL: {}, WIN: {}, MAC: {}'.format(G_PULL, is_win, mac_gui))
-  GLog.write('Num Threads: {}'.format(nthreads))
+  GLog.write('Plugs: {0}'.format(plugs))
+  GLog.write('PULL: {0}, WIN: {1}, MAC: {2}'.format(G_PULL, is_win, mac_gui))
+  GLog.write('Num Threads: {0}'.format(nthreads))
 
   lock = thr.Lock()
   buf = Buffer(lock, len(plugs))
