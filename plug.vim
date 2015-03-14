@@ -710,7 +710,7 @@ endfunction
 function! s:update_impl(pull, force, args) abort
   let args = copy(a:args)
   let threads = (len(args) > 0 && args[-1] =~ '^[1-9][0-9]*$') ?
-                  \ remove(args, -1) : get(g:, 'plug_threads', 16)
+                  \ remove(args, -1) : get(g:, 'plug_threads', s:is_win ? 1 : 16)
 
   let managed = filter(copy(g:plugs), 's:is_managed(v:key)')
   let todo = empty(args) ? filter(managed, '!v:val.frozen || !isdirectory(v:val.dir)') :
