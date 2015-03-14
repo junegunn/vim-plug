@@ -1,5 +1,5 @@
-<img src="https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.png" height="56" alt="vim-plug">
-[![travis-ci](https://travis-ci.org/junegunn/vim-plug.svg?branch=master)](https://travis-ci.org/junegunn/vim-plug)
+<img src="https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.png" height="75" alt="vim-plug">[![travis-ci](https://travis-ci.org/junegunn/vim-plug.svg?branch=master)](https://travis-ci.org/junegunn/vim-plug)
+===
 
 A minimalist Vim plugin manager.
 
