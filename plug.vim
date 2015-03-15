@@ -1749,9 +1749,9 @@ function! s:upgrade()
       if v:shell_error
         throw get(s:lines(output), -1, v:shell_error)
       endif
-    elseif s:ruby
+    elseif has('ruby')
       call s:upgrade_using_ruby(new)
-    elseif s:py2
+    elseif has('python')
       call s:upgrade_using_python(new)
     else
       return s:err('Missing: curl executable, ruby support or python support')
