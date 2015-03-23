@@ -602,6 +602,9 @@ function! s:prepare()
     xnoremap <silent> <buffer> U  :call <SID>status_update()<cr>
     nnoremap <silent> <buffer> ]] :silent! call <SID>section('')<cr>
     nnoremap <silent> <buffer> [[ :silent! call <SID>section('b')<cr>
+    if s:nvim
+      nnoremap <silent> <buffer> <C-C> :call <SID>job_abort(1)<cr>
+    endif
     let b:plug_preview = -1
     let s:plug_tab = tabpagenr()
     let s:plug_buf = winbufnr(0)
@@ -813,7 +816,7 @@ function! s:update_finish()
   endif
 endfunction
 
-function! s:job_abort()
+function! s:job_abort(...)
   if !s:nvim || !exists('s:jobs')
     return
   endif
@@ -824,6 +827,9 @@ function! s:job_abort()
     silent! call jobstop(j.jobid)
     if j.new
       call s:system('rm -rf ' . s:shellesc(g:plugs[name].dir))
+    endif
+    if len(a:000) != 0
+      call s:log('x', name, "Interrupted!\n")
     endif
   endfor
   let s:jobs = {}
@@ -1610,7 +1616,7 @@ function! s:compare_git_uri(a, b)
 endfunction
 
 function! s:format_message(bullet, name, message)
-  if a:bullet != 'x'
+  if a:bullet != 'x' || a:message == "Interrupted!\n"
     return [printf('%s %s: %s', a:bullet, a:name, s:lastline(a:message))]
   else
     let lines = map(s:lines(a:message), '"    ".v:val')
