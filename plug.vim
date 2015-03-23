@@ -849,7 +849,7 @@ function! s:job_handler(name) abort
     call s:reap(a:name)
     call s:tick()
   else
-    let job.result .= s:to_s(v:job_data[2])
+    let job.result .= substitute(s:to_s(v:job_data[2]), '[\r\n]', '', 'g') . "\n"
     " To reduce the number of buffer updates
     let job.tick = get(job, 'tick', -1) + 1
     if job.tick % len(s:jobs) == 0
