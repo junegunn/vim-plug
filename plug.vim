@@ -829,49 +829,40 @@ endfunction
 
 " When a:event == 'stdout', data = list of strings
 " When a:event == 'exit', data = returncode
-function! s:job_handler(job_id, data, name, event) abort
+function! s:job_handler(job_id, data, event) abort
   if !s:plug_window_exists() " plug window closed
     return s:job_abort()
   endif
 
-  if !has_key(s:jobs, a:name)
-    return
-  endif
-  let job = s:jobs[a:name]
-
   if a:event == 'stdout'
-    let job.result .= substitute(s:to_s(a:data), '[\r\n]', '', 'g') . "\n"
+    let self.result .= substitute(s:to_s(a:data), '[\r\n]', '', 'g') . "\n"
     " To reduce the number of buffer updates
-    let job.tick = get(job, 'tick', -1) + 1
-    if job.tick % len(s:jobs) == 0
-      call s:log(job.new ? '+' : '*', a:name, job.result)
+    let self.tick = get(self, 'tick', -1) + 1
+    if self.tick % len(s:jobs) == 0
+      call s:log(self.new ? '+' : '*', self.name, self.result)
     endif
   elseif a:event == 'exit'
-    let job.running = 0
+    let self.running = 0
     if a:data != 0
-      let job.error = 1
+      let self.error = 1
     endif
-    call s:reap(a:name)
+    call s:reap(self.name)
     call s:tick()
   endif
 endfunction
 
 function! s:spawn(name, cmd, opts)
-  let job = { 'running': 1, 'new': get(a:opts, 'new', 0),
-            \ 'error': 0, 'result': '' }
+  let job = { 'name': a:name, 'running': 1, 'error': 0, 'result': '',
+            \ 'new': get(a:opts, 'new', 0),
+            \ 'on_stdout': function('s:job_handler'),
+            \ 'on_exit' : function('s:job_handler'),
+            \ }
   let s:jobs[a:name] = job
 
   if s:nvim
-    let opts = {
-        \ 'on_stdout': function('s:job_handler'),
-        \ 'on_exit': function('s:job_handler'),
-        \ 'user': a:name,
-        \ }
-    let argv = [
-        \ 'sh', '-c',
-        \ (has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd),
-        \ ]
-    let jid = jobstart(argv, opts)
+    let argv = [ 'sh', '-c',
+               \ (has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd) ]
+    let jid = jobstart(argv, job)
     if jid > 0
       let job.jobid = jid
     else
