@@ -72,9 +72,9 @@ let s:plug_tab = get(s:, 'plug_tab', -1)
 let s:plug_buf = get(s:, 'plug_buf', -1)
 let s:mac_gui = has('gui_macvim') && has('gui_running')
 let s:is_win = has('win32') || has('win64')
-let s:py2 = has('python') && !s:is_win && !has('win32unix')
-let s:ruby = has('ruby') && (v:version >= 703 || v:version == 702 && has('patch374'))
-let s:nvim = has('nvim') && !s:is_win
+let s:py2 = has('python') && !has('nvim') && !s:is_win && !has('win32unix')
+let s:ruby = has('ruby') && !has('nvim') && (v:version >= 703 || v:version == 702 && has('patch374'))
+let s:nvim = has('nvim') && !exists('##JobActivity') && !s:is_win
 let s:me = resolve(expand('<sfile>:p'))
 let s:base_spec = { 'branch': 'master', 'frozen': 0 }
 let s:TYPE = {
@@ -817,9 +817,7 @@ function! s:job_abort()
   if !s:nvim || !exists('s:jobs')
     return
   endif
-  augroup PlugJobControl
-    autocmd!
-  augroup END
+
   for [name, j] in items(s:jobs)
     silent! call jobstop(j.jobid)
     if j.new
@@ -829,52 +827,48 @@ function! s:job_abort()
   let s:jobs = {}
 endfunction
 
-function! s:job_handler(name) abort
+" When a:event == 'stdout', data = list of strings
+" When a:event == 'exit', data = returncode
+function! s:job_handler(job_id, data, event) abort
   if !s:plug_window_exists() " plug window closed
     return s:job_abort()
   endif
 
-  if !has_key(s:jobs, a:name)
-    return
-  endif
-  let job = s:jobs[a:name]
-
-  if v:job_data[1] == 'exit'
-    let job.running = 0
-    if s:lastline(job.result) ==# 'Error'
-      let job.error = 1
-      let job.result = substitute(job.result, "Error[\r\n]$", '', '')
-    endif
-    call s:reap(a:name)
-    call s:tick()
-  else
-    let job.result .= substitute(s:to_s(v:job_data[2]), '[\r\n]', '', 'g') . "\n"
+  if a:event == 'stdout'
+    let self.result .= substitute(s:to_s(a:data), '[\r\n]', '', 'g') . "\n"
     " To reduce the number of buffer updates
-    let job.tick = get(job, 'tick', -1) + 1
-    if job.tick % len(s:jobs) == 0
-      call s:log(job.new ? '+' : '*', a:name, job.result)
+    let self.tick = get(self, 'tick', -1) + 1
+    if self.tick % len(s:jobs) == 0
+      call s:log(self.new ? '+' : '*', self.name, self.result)
     endif
+  elseif a:event == 'exit'
+    let self.running = 0
+    if a:data != 0
+      let self.error = 1
+    endif
+    call s:reap(self.name)
+    call s:tick()
   endif
 endfunction
 
 function! s:spawn(name, cmd, opts)
-  let job = { 'running': 1, 'new': get(a:opts, 'new', 0),
-            \ 'error': 0, 'result': '' }
+  let job = { 'name': a:name, 'running': 1, 'error': 0, 'result': '',
+            \ 'new': get(a:opts, 'new', 0),
+            \ 'on_stdout': function('s:job_handler'),
+            \ 'on_exit' : function('s:job_handler'),
+            \ }
   let s:jobs[a:name] = job
 
   if s:nvim
-    let x = jobstart(a:name, 'sh', ['-c',
-            \ (has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd)
-            \ . ' || echo Error'])
-    if x > 0
-      let job.jobid = x
-      augroup PlugJobControl
-        execute 'autocmd JobActivity' a:name printf('call s:job_handler(%s)', string(a:name))
-      augroup END
+    let argv = [ 'sh', '-c',
+               \ (has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd) ]
+    let jid = jobstart(argv, job)
+    if jid > 0
+      let job.jobid = jid
     else
       let job.running = 0
       let job.error   = 1
-      let job.result  = x < 0 ? 'sh is not executable' :
+      let job.result  = jid < 0 ? 'sh is not executable' :
             \ 'Invalid arguments (or job table is full)'
     endif
   else
@@ -886,10 +880,6 @@ function! s:spawn(name, cmd, opts)
 endfunction
 
 function! s:reap(name)
-  if s:nvim
-    silent! execute 'autocmd! PlugJobControl JobActivity' a:name
-  endif
-
   let job = s:jobs[a:name]
   if job.error
     call add(s:update.errors, a:name)
