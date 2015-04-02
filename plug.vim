@@ -67,7 +67,7 @@ let g:loaded_plug = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
-let s:plug_src = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+let s:plug_src = 'https://github.com/junegunn/vim-plug.git'
 let s:plug_tab = get(s:, 'plug_tab', -1)
 let s:plug_buf = get(s:, 'plug_buf', -1)
 let s:mac_gui = has('gui_macvim') && has('gui_running')
@@ -1668,6 +1668,12 @@ function! s:git_valid(spec, check_branch)
   return [ret, msg]
 endfunction
 
+function! s:rm_rf(dir)
+  if isdirectory(a:dir)
+    call s:system((s:is_win ? 'rmdir /S /Q ' : 'rm -rf ') . s:shellesc(a:dir))
+  endif
+endfunction
+
 function! s:clean(force)
   call s:prepare()
   call append(0, 'Searching for unused plugins in '.g:plug_home)
@@ -1716,9 +1722,7 @@ function! s:clean(force)
     call inputrestore()
     if yes
       for dir in todo
-        if isdirectory(dir)
-          call s:system((s:is_win ? 'rmdir /S /Q ' : 'rm -rf ') . s:shellesc(dir))
-        endif
+        call s:rm_rf(dir)
       endfor
       call append(line('$'), 'Removed.')
     else
@@ -1729,55 +1733,30 @@ function! s:clean(force)
 endfunction
 
 function! s:upgrade()
-  let new = s:me . '.new'
-  echo 'Downloading '. s:plug_src
+  echo 'Downloading the latest version of vim-plug'
   redraw
+  let tmp = tempname()
+  let new = tmp . '/plug.vim'
+
   try
-    if executable('curl')
-      let output = s:system(printf('curl -fLo %s %s', s:shellesc(new), s:plug_src))
-      if v:shell_error
-        throw get(s:lines(output), -1, v:shell_error)
-      endif
-    elseif has('ruby')
-      call s:upgrade_using_ruby(new)
-    elseif has('python')
-      call s:upgrade_using_python(new)
-    else
-      return s:err('Missing: curl executable, ruby support or python support')
+    let out = s:system(printf('git clone --depth 1 %s %s', s:plug_src, tmp))
+    if v:shell_error
+      return s:err('Error upgrading vim-plug: '. out)
     endif
-  catch
-    return s:err('Error upgrading vim-plug: '. v:exception)
+
+    if readfile(s:me) ==# readfile(new)
+      echo 'vim-plug is already up-to-date'
+      return 0
+    else
+      call rename(s:me, s:me . '.old')
+      call rename(new, s:me)
+      unlet g:loaded_plug
+      echo 'vim-plug has been upgraded'
+      return 1
+    endif
+  finally
+    silent! call s:rm_rf(tmp)
   endtry
-
-  if readfile(s:me) ==# readfile(new)
-    echo 'vim-plug is already up-to-date'
-    silent! call delete(new)
-    return 0
-  else
-    call rename(s:me, s:me . '.old')
-    call rename(new, s:me)
-    unlet g:loaded_plug
-    echo 'vim-plug has been upgraded'
-    return 1
-  endif
-endfunction
-
-function! s:upgrade_using_ruby(new)
-  ruby << EOF
-  require 'open-uri'
-  File.open(VIM::evaluate('a:new'), 'w') do |f|
-    f << open(VIM::evaluate('s:plug_src')).read
-  end
-EOF
-endfunction
-
-function! s:upgrade_using_python(new)
-python << EOF
-import urllib
-import vim
-psrc, dest = vim.eval('s:plug_src'), vim.eval('a:new')
-urllib.urlretrieve(psrc, dest)
-EOF
 endfunction
 
 function! s:upgrade_specs()
