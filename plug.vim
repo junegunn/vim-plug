@@ -270,7 +270,7 @@ if s:is_win
   endfunction
 
   function! s:is_local_plug(repo)
-    return a:repo =~? '^[a-z]:'
+    return a:repo =~? '^[a-z]:\|^[%~]'
   endfunction
 else
   function! s:rtp(spec)
