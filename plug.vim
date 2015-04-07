@@ -740,6 +740,12 @@ function! s:update_impl(pull, force, args) abort
     endtry
   endif
 
+  if has('nvim') && !exists('*jobwait') && threads > 1
+    echohl WarningMsg
+    echomsg 'vim-plug: update Neovim for parallel installer'
+    echohl None
+  endif
+
   let s:update = {
     \ 'start':   reltime(),
     \ 'all':     todo,
