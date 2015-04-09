@@ -72,7 +72,8 @@ let s:plug_tab = get(s:, 'plug_tab', -1)
 let s:plug_buf = get(s:, 'plug_buf', -1)
 let s:mac_gui = has('gui_macvim') && has('gui_running')
 let s:is_win = has('win32') || has('win64')
-let s:py2 = has('python') && !has('nvim') && !s:is_win && !has('win32unix')
+let s:py = (has('python') || has('python3')) && !has('nvim') && !s:is_win && !has('win32unix')
+let s:py_exe = has('python3') ? 'python3' : 'python'
 let s:ruby = has('ruby') && !has('nvim') && (v:version >= 703 || v:version == 702 && has('patch374'))
 let s:nvim = has('nvim') && exists('*jobwait') && !s:is_win
 let s:me = resolve(expand('<sfile>:p'))
@@ -754,7 +755,7 @@ function! s:update_impl(pull, force, args) abort
     \ 'pull':    a:pull,
     \ 'force':   a:force,
     \ 'new':     {},
-    \ 'threads': (s:py2 || s:ruby || s:nvim) ? min([len(todo), threads]) : 1,
+    \ 'threads': (s:py || s:ruby || s:nvim) ? min([len(todo), threads]) : 1,
     \ 'bar':     '',
     \ 'fin':     0
   \ }
@@ -767,14 +768,14 @@ function! s:update_impl(pull, force, args) abort
         \ '--depth 1' . (s:git_version_requirement(1, 7, 10) ? ' --no-single-branch' : '') : ''
 
   " Python version requirement (>= 2.7)
-  if s:py2 && !s:ruby && !s:nvim && s:update.threads > 1
+  if s:py && !has('python3') && !s:ruby && !s:nvim && s:update.threads > 1
     redir => pyv
     silent python import platform; print(platform.python_version())
     redir END
-    let s:py2 = s:version_requirement(
+    let s:py = s:version_requirement(
           \ map(split(split(pyv)[0], '\.'), 'str2nr(v:val)'), [2, 6])
   endif
-  if (s:py2 || s:ruby) && !s:nvim && s:update.threads > 1
+  if (s:py || s:ruby) && !s:nvim && s:update.threads > 1
     try
       let imd = &imd
       if s:mac_gui
@@ -1002,12 +1003,15 @@ endwhile
 endfunction
 
 function! s:update_python()
-python << EOF
+execute s:py_exe "<< EOF"
 """ Due to use of signals this function is POSIX only. """
 import datetime
 import functools
 import os
-import Queue
+try:
+  import queue
+except ImportError:
+  import Queue as queue
 import random
 import re
 import shutil
@@ -1027,11 +1031,19 @@ G_PROGRESS = vim.eval('s:progress_opt(1)')
 G_LOG_PROB = 1.0 / int(vim.eval('s:update.threads'))
 G_STOP = thr.Event()
 
-class CmdTimedOut(Exception):
+class BaseExc(Exception):
+  def __init__(self, msg):
+    self.msg = msg
+  def _get_msg(self):
+    return self.msg
+  def _set_msg(self, msg):
+    self._msg = msg
+  message = property(_get_msg, _set_msg)
+class CmdTimedOut(BaseExc):
   pass
-class CmdFailed(Exception):
+class CmdFailed(BaseExc):
   pass
-class InvalidURI(Exception):
+class InvalidURI(BaseExc):
   pass
 class Action(object):
   INSTALL, UPDATE, ERROR, DONE = ['+', '*', 'x', '-']
@@ -1055,7 +1067,7 @@ class GLog(object):
     with open(fname, 'ab') as flog:
       ltime = datetime.datetime.now().strftime("%H:%M:%S.%f")
       msg = '[{0},{1}] {2}{3}'.format(name, ltime, msg, '\n')
-      flog.write(msg)
+      flog.write(msg.encode())
 
 class Buffer(object):
   def __init__(self, lock, num_plugs):
@@ -1166,7 +1178,7 @@ class Command(object):
     proc = None
     first_line = True
     try:
-      tfile = tempfile.NamedTemporaryFile()
+      tfile = tempfile.NamedTemporaryFile(mode='w+b', delete=False)
       proc = subprocess.Popen(self.cmd, cwd=self.cmd_dir, stdout=tfile,
           stderr=subprocess.STDOUT, shell=True, preexec_fn=os.setsid)
       while proc.poll() is None:
@@ -1187,7 +1199,7 @@ class Command(object):
           raise CmdTimedOut(['Timeout!'])
 
       tfile.seek(0)
-      result = [line.rstrip() for line in tfile]
+      result = [line.decode().rstrip() for line in tfile]
 
       if proc.returncode != 0:
         msg = ['']
@@ -1199,6 +1211,8 @@ class Command(object):
       if self.clean:
         self.clean()
       raise
+    finally:
+      os.remove(tfile.name)
 
     return result
 
@@ -1222,7 +1236,7 @@ class Plugin(object):
         with self.lock:
           vim.command("let s:update.new['{0}'] = 1".format(self.name))
     except (CmdTimedOut, CmdFailed, InvalidURI) as exc:
-      self.write(Action.ERROR, self.name, exc.message)
+      self.write(Action.ERROR, self.name, exc.msg)
     except KeyboardInterrupt:
       G_STOP.set()
       self.write(Action.ERROR, self.name, ['Interrupted!'])
@@ -1306,7 +1320,7 @@ class PlugThread(thr.Thread):
         plug = Plugin(name, args, buf, lock)
         plug.manage()
         work_q.task_done()
-    except Queue.Empty:
+    except queue.Empty:
       GLog.write('Queue now empty.')
 
 class RefreshThread(thr.Thread):
@@ -1330,7 +1344,7 @@ def esc(name):
 def nonblock_read(fname):
   """ Read a file with nonblock flag. Return the last line. """
   fread = os.open(fname, os.O_RDONLY | os.O_NONBLOCK)
-  buf = os.read(fread, 100000)
+  buf = os.read(fread, 100000).decode()
   os.close(fread)
 
   line = buf.rstrip('\r\n')
@@ -1358,7 +1372,7 @@ def main():
 
   lock = thr.Lock()
   buf = Buffer(lock, len(plugs))
-  work_q = Queue.Queue()
+  work_q = queue.Queue()
   for work in plugs.items():
     work_q.put(work)
 
