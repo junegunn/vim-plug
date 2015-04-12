@@ -165,7 +165,7 @@ function! plug#end()
     if has_key(plug, 'on')
       let s:triggers[name] = { 'map': [], 'cmd': [] }
       for cmd in s:to_a(plug.on)
-        if cmd =~ '^<Plug>.\+'
+        if cmd =~? '^<Plug>.\+'
           if empty(mapcheck(cmd)) && empty(mapcheck(cmd, 'i'))
             call s:assoc(lod.map, cmd, name)
           endif
