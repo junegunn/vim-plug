@@ -763,6 +763,9 @@ function! s:update_impl(pull, force, args) abort
   call append(0, ['', ''])
   normal! 2G
 
+  let s:clone_opt = get(g:, 'plug_shallow', 1) ?
+        \ '--depth 1' . (s:git_version_requirement(1, 7, 10) ? ' --no-single-branch' : '') : ''
+
   " Python version requirement (>= 2.7)
   if s:py2 && !s:ruby && !s:nvim && s:update.threads > 1
     redir => pyv
@@ -961,16 +964,18 @@ while 1 " Without TCO, Vim stack is bound to explode
   call s:log(new ? '+' : '*', name, pull ? 'Updating ...' : 'Installing ...')
   redraw
 
-  let checkout = s:shellesc(has_key(spec, 'tag') ? spec.tag : spec.branch)
-  let merge = s:shellesc(has_key(spec, 'tag') ? spec.tag : 'origin/'.spec.branch)
+  let has_tag = has_key(spec, 'tag')
+  let checkout = s:shellesc(has_tag ? spec.tag : spec.branch)
+  let merge = s:shellesc(has_tag ? spec.tag : 'origin/'.spec.branch)
 
   if !new
     let [valid, msg] = s:git_valid(spec, 0)
     if valid
       if pull
+        let fetch_opt = (has_tag && !empty(globpath(spec.dir, '.git/shallow'))) ? '--depth 99999999' : ''
         call s:spawn(name,
-          \ printf('(git fetch %s 2>&1 && git checkout -q %s 2>&1 && git merge --ff-only %s 2>&1 && git submodule update --init --recursive 2>&1)',
-          \ prog, checkout, merge), { 'dir': spec.dir })
+          \ printf('(git fetch %s %s 2>&1 && git checkout -q %s 2>&1 && git merge --ff-only %s 2>&1 && git submodule update --init --recursive 2>&1)',
+          \ fetch_opt, prog, checkout, merge), { 'dir': spec.dir })
       else
         let s:jobs[name] = { 'running': 0, 'result': 'Already installed', 'error': 0 }
       endif
@@ -979,7 +984,8 @@ while 1 " Without TCO, Vim stack is bound to explode
     endif
   else
     call s:spawn(name,
-          \ printf('git clone %s --recursive %s -b %s %s 2>&1',
+          \ printf('git clone %s %s --recursive %s -b %s %s 2>&1',
+          \ has_tag ? '' : s:clone_opt,
           \ prog,
           \ s:shellesc(spec.uri),
           \ checkout,
@@ -1016,6 +1022,7 @@ import vim
 G_PULL = vim.eval('s:update.pull') == '1'
 G_RETRIES = int(vim.eval('get(g:, "plug_retries", 2)')) + 1
 G_TIMEOUT = int(vim.eval('get(g:, "plug_timeout", 60)'))
+G_CLONE_OPT = vim.eval('s:clone_opt')
 G_PROGRESS = vim.eval('s:progress_opt(1)')
 G_LOG_PROB = 1.0 / int(vim.eval('s:update.threads'))
 G_STOP = thr.Event()
@@ -1204,6 +1211,7 @@ class Plugin(object):
     tag = args.get('tag', 0)
     self.checkout = esc(tag if tag else args['branch'])
     self.merge = esc(tag if tag else 'origin/' + args['branch'])
+    self.tag = tag
 
   def manage(self):
     try:
@@ -1237,8 +1245,8 @@ class Plugin(object):
 
     self.write(Action.INSTALL, self.name, ['Installing ...'])
     callback = functools.partial(self.buf.write, Action.INSTALL, self.name)
-    cmd = 'git clone {0} --recursive {1} -b {2} {3} 2>&1'.format(
-        G_PROGRESS, self.args['uri'], self.checkout, esc(target))
+    cmd = 'git clone {0} {1} --recursive {2} -b {3} {4} 2>&1'.format(
+        '' if self.tag else G_CLONE_OPT, G_PROGRESS, self.args['uri'], self.checkout, esc(target))
     com = Command(cmd, None, G_TIMEOUT, G_RETRIES, callback, clean(target))
     result = com.attempt_cmd()
     self.write(Action.DONE, self.name, result[-1:])
@@ -1257,7 +1265,8 @@ class Plugin(object):
     if G_PULL:
       self.write(Action.UPDATE, self.name, ['Updating ...'])
       callback = functools.partial(self.buf.write, Action.UPDATE, self.name)
-      cmds = ['git fetch {0}'.format(G_PROGRESS),
+      fetch_opt = '--depth 99999999' if self.tag and os.path.isfile(os.path.join(self.args['dir'], '.git/shallow')) else ''
+      cmds = ['git fetch {0} {1}'.format(fetch_opt, G_PROGRESS),
               'git checkout -q {0}'.format(self.checkout),
               'git merge --ff-only {0}'.format(self.merge),
               'git submodule update --init --recursive']
@@ -1533,6 +1542,7 @@ function! s:update_ruby()
     end
   } if VIM::evaluate('s:mac_gui') == 1
 
+  clone_opt = VIM::evaluate('s:clone_opt')
   progress = VIM::evaluate('s:progress_opt(1)')
   nthr.times do
     mtx.synchronize do
@@ -1562,7 +1572,8 @@ function! s:update_ruby()
               else
                 if pull
                   log.call name, 'Updating ...', :update
-                  bt.call "#{cd} #{dir} && git fetch #{progress} 2>&1 && git checkout -q #{checkout} 2>&1 && git merge --ff-only #{merge} 2>&1 && #{subm}", name, :update, nil
+                  fetch_opt = (tag && File.exist?(File.join(dir, '.git/shallow'))) ? '--depth 99999999' : ''
+                  bt.call "#{cd} #{dir} && git fetch #{fetch_opt} #{progress} 2>&1 && git checkout -q #{checkout} 2>&1 && git merge --ff-only #{merge} 2>&1 && #{subm}", name, :update, nil
                 else
                   [true, skip]
                 end
@@ -1570,7 +1581,7 @@ function! s:update_ruby()
             else
               d = esc dir.sub(%r{[\\/]+$}, '')
               log.call name, 'Installing ...', :install
-              bt.call "git clone #{progress} --recursive #{uri} -b #{checkout} #{d} 2>&1", name, :install, proc {
+              bt.call "git clone #{clone_opt unless tag} #{progress} --recursive #{uri} -b #{checkout} #{d} 2>&1", name, :install, proc {
                 FileUtils.rm_rf dir
               }
             end
