@@ -270,9 +270,11 @@ Execute (PlugDiff - 'No updates.'):
   AssertEqual 'No updates.', getline(1)
   q
 
-Execute (Rollback recent updates, PlugUpdate, then PlugDiff):
+Execute (New commits on remote, PlugUpdate, then PlugDiff):
   for repo in ['seoul256.vim', 'vim-emoji']
-    call system(printf('cd %s/%s && git reset HEAD^^ --hard', g:plug_home, repo))
+    for _ in range(2)
+      call system(printf('cd /tmp/junegunn/%s && git commit --allow-empty -m "update"', repo))
+    endfor
   endfor
   PlugUpdate
 
@@ -639,8 +641,8 @@ Execute (On update):
   Plug 'junegunn/vim-pseudocl', { 'do': 'touch updated' }
   call plug#end()
 
-  " Reset for updates
-  call system('cd '.g:plugs['vim-pseudocl'].dir.' && git reset --hard HEAD^')
+  " New commits on remote
+  call system('cd /tmp/junegunn/vim-pseudocl && git commit --allow-empty -m "update"')
 
   silent PlugUpdate
   Log getline(1, '$')
@@ -703,6 +705,7 @@ Execute (Using Funcref):
   Plug 'junegunn/vim-pseudocl',   { 'do': function('PlugUpdated') }
   call plug#end()
 
+  call system('cd /tmp/junegunn/vim-easy-align && git commit --allow-empty -m "update"')
   call system('cd '.g:plugs['vim-easy-align'].dir.' && git reset --hard HEAD^')
   call system('rm -rf '.g:plugs['vim-pseudocl'].dir)
 
