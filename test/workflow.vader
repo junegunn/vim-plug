@@ -1089,10 +1089,29 @@ Execute (#221 Shallow-clone and tag option):
 
   Plug 'junegunn/goyo.vim', { 'tag': '1.5.3' }
   PlugUpdate
+  q
+
   Assert len(split(system('git log --oneline'), '\n')) > 1
   Assert system('git describe --tag') =~ '^1.5.3'
   Assert !filereadable('.git/shallow')
-
   cd -
+
+Execute (#221 Shallow-clone disabled by g:plug_shallow = 0):
+  call plug#begin(temp_plugged)
+  call plug#end()
+  PlugClean!
+
+  let g:plug_shallow = 0
+  call plug#begin(temp_plugged)
+  Plug 'junegunn/goyo.vim'
+  call plug#end()
+  PlugInstall
   q
+
+  execute 'cd' g:plugs['goyo.vim'].dir
+  Assert len(split(system('git log --oneline'), '\n')) > 1, 'not shallow'
+  Assert !filereadable('.git/shallow'), 'not shallow'
+  cd -
+Then:
+  unlet g:plug_shallow
 
