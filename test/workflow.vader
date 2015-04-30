@@ -270,9 +270,11 @@ Execute (PlugDiff - 'No updates.'):
   AssertEqual 'No updates.', getline(1)
   q
 
-Execute (Rollback recent updates, PlugUpdate, then PlugDiff):
+Execute (New commits on remote, PlugUpdate, then PlugDiff):
   for repo in ['seoul256.vim', 'vim-emoji']
-    call system(printf('cd %s/%s && git reset HEAD^^ --hard', g:plug_home, repo))
+    for _ in range(2)
+      call system(printf('cd /tmp/junegunn/%s && git commit --allow-empty -m "update"', repo))
+    endfor
   endfor
   PlugUpdate
 
@@ -639,8 +641,8 @@ Execute (On update):
   Plug 'junegunn/vim-pseudocl', { 'do': 'touch updated' }
   call plug#end()
 
-  " Reset for updates
-  call system('cd '.g:plugs['vim-pseudocl'].dir.' && git reset --hard HEAD^')
+  " New commits on remote
+  call system('cd /tmp/junegunn/vim-pseudocl && git commit --allow-empty -m "update"')
 
   silent PlugUpdate
   Log getline(1, '$')
@@ -703,6 +705,7 @@ Execute (Using Funcref):
   Plug 'junegunn/vim-pseudocl',   { 'do': function('PlugUpdated') }
   call plug#end()
 
+  call system('cd /tmp/junegunn/vim-easy-align && git commit --allow-empty -m "update"')
   call system('cd '.g:plugs['vim-easy-align'].dir.' && git reset --hard HEAD^')
   call system('rm -rf '.g:plugs['vim-pseudocl'].dir)
 
@@ -1072,4 +1075,62 @@ Execute (PlugSnapshot / #154 issues with paths containing spaces):
   AssertEqual 'sh', &filetype
   AssertEqual 'snapshot.sh', fnamemodify(expand('%'), ':t')
   q
+
+**********************************************************************
+Execute (#221 Shallow-clone and tag option):
+  call plug#begin(temp_plugged)
+  Plug 'junegunn/goyo.vim'
+  call plug#end()
+  PlugInstall
+
+  execute 'cd' g:plugs['goyo.vim'].dir
+  Assert len(split(system('git log --oneline'), '\n')) == 1
+  Assert filereadable('.git/shallow')
+
+  Plug 'junegunn/goyo.vim', { 'tag': '1.5.3' }
+  PlugUpdate
+  q
+
+  Assert len(split(system('git log --oneline'), '\n')) > 1
+  Assert system('git describe --tag') =~ '^1.5.3'
+  Assert !filereadable('.git/shallow')
+  cd -
+
+Execute (#221 Shallow-clone disabled by g:plug_shallow = 0):
+  call plug#begin(temp_plugged)
+  call plug#end()
+  PlugClean!
+
+  let g:plug_shallow = 0
+  call plug#begin(temp_plugged)
+  Plug 'junegunn/goyo.vim'
+  call plug#end()
+  PlugInstall
+  q
+
+  execute 'cd' g:plugs['goyo.vim'].dir
+  Assert len(split(system('git log --oneline'), '\n')) > 1, 'not shallow'
+  Assert !filereadable('.git/shallow'), 'not shallow'
+  cd -
+Then:
+  unlet g:plug_shallow
+
+Execute (#221 Shallow-clone disabled by tag):
+  call plug#begin(temp_plugged)
+  call plug#end()
+  PlugClean!
+
+  call plug#begin(temp_plugged)
+  Plug 'junegunn/goyo.vim', { 'tag': '1.5.3' }
+  call plug#end()
+  Assert !isdirectory(g:plugs['goyo.vim'].dir)
+  PlugInstall
+  Assert isdirectory(g:plugs['goyo.vim'].dir)
+  q
+
+  execute 'cd' g:plugs['goyo.vim'].dir
+  Assert system('git describe --tag') =~ '^1.5.3'
+  Assert len(split(system('git log --oneline'), '\n')) > 1
+  Assert !filereadable('.git/shallow')
+  cd -
 

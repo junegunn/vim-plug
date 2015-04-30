@@ -170,6 +170,7 @@ Execute (#139-3 Should fail when not possible to fast-forward):
     silent %y
     Assert @" =~ 'Not possible to fast-forward', @"
   endfor
+  q
 
 **********************************************************************
 Execute (#145: Merging on-demand loading triggers - cmd):
