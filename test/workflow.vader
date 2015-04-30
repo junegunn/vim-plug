@@ -1115,3 +1115,22 @@ Execute (#221 Shallow-clone disabled by g:plug_shallow = 0):
 Then:
   unlet g:plug_shallow
 
+Execute (#221 Shallow-clone disabled by tag):
+  call plug#begin(temp_plugged)
+  call plug#end()
+  PlugClean!
+
+  call plug#begin(temp_plugged)
+  Plug 'junegunn/goyo.vim', { 'tag': '1.5.3' }
+  call plug#end()
+  Assert !isdirectory(g:plugs['goyo.vim'].dir)
+  PlugInstall
+  Assert isdirectory(g:plugs['goyo.vim'].dir)
+  q
+
+  execute 'cd' g:plugs['goyo.vim'].dir
+  Assert system('git describe --tag') =~ '^1.5.3'
+  Assert len(split(system('git log --oneline'), '\n')) > 1
+  Assert !filereadable('.git/shallow')
+  cd -
+
