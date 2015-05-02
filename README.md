@@ -10,7 +10,8 @@ A minimalist Vim plugin manager.
 - Easier to setup: Single file. No boilerplate code required.
 - Easier to use: Concise, intuitive syntax
 - [Super-fast][40/4] parallel installation/update
-  (with [+python][py] or +python3 or [+ruby][rb] or [Neovim][nv])
+  (with any of `+python`, `+python3`, `+ruby`, or [Neovim][nv])
+- Creates shallow clones to minimize disk space usage and download time
 - On-demand loading for [faster startup time][startup-time]
 - Can review and rollback updates
 - Branch/tag support
