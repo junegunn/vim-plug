@@ -19,8 +19,6 @@ A minimalist Vim plugin manager.
 - Support for externally managed plugins
 
 [40/4]: https://raw.githubusercontent.com/junegunn/i/master/vim-plug/40-in-4.gif
-[py]: https://github.com/junegunn/vim-plug/wiki/python
-[rb]: https://github.com/junegunn/vim-plug/wiki/ruby
 [nv]: http://neovim.org/
 [startup-time]: http://junegunn.kr/images/vim-startup-time.png
 
@@ -51,7 +49,7 @@ Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 Plug 'https://github.com/junegunn/vim-github-dashboard.git'
 
 " Plugin options
-Plug 'nsf/gocode', { 'tag': 'go.weekly.2012-03-13', 'rtp': 'vim' }
+Plug 'nsf/gocode', { 'tag': 'v.20150303', 'rtp': 'vim' }
 
 " Plugin outside ~/.vim/plugged with post-update hook
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install' }

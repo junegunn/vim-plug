@@ -22,7 +22,7 @@
 "   Plug 'https://github.com/junegunn/vim-github-dashboard.git'
 "
 "   " Plugin options
-"   Plug 'nsf/gocode', { 'tag': 'go.weekly.2012-03-13', 'rtp': 'vim' }
+"   Plug 'nsf/gocode', { 'tag': 'v.20150303', 'rtp': 'vim' }
 "
 "   " Plugin outside ~/.vim/plugged with post-update hook
 "   Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install' }
