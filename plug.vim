@@ -424,7 +424,7 @@ function! s:add(repo, ...)
 
   try
     let repo = s:trim(a:repo)
-    let name = fnamemodify(repo, ':t:s?\.git$??')
+    let name = fnamemodify(repo, get(g:, 'plug_name_modifier', ':t:s?\.git$??'))
     let spec = extend(s:infer_properties(name, repo),
                     \ a:0 == 1 ? s:parse_options(a:1) : s:base_spec)
     if !has_key(g:plugs, name)
