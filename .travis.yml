@@ -7,19 +7,17 @@ rvm:
   - 2.1.0 # Test against python3 installer
 
 before_script: |
+  sudo apt-get update -y
   if [ $(ruby -e 'puts RUBY_VERSION') = 1.9.2 ]; then
-    sudo apt-get update -y
     sudo apt-get install -y vim-nox
     sudo ln -s /usr/bin/vim /usr/local/bin/vim
   else
     git clone --depth 1 https://github.com/vim/vim
     cd vim
     if [ $(ruby -e 'puts RUBY_VERSION') = 1.9.3 ]; then
-      sudo apt-get update -y
       sudo apt-get install -y python2.7-dev
       ./configure --with-features=huge --enable-pythoninterp
     elif [ $(ruby -e 'puts RUBY_VERSION') = 2.1.0 ]; then
-      sudo apt-get update -y
       sudo apt-get install -y python3-dev
       ./configure --with-features=huge --enable-python3interp
     else
