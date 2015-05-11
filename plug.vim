@@ -764,6 +764,7 @@ function! s:update_impl(pull, force, args) abort
   call s:prepare()
   call append(0, ['', ''])
   normal! 2G
+  try | redraw | catch | endtry
 
   let s:clone_opt = get(g:, 'plug_shallow', 1) ?
         \ '--depth 1' . (s:git_version_requirement(1, 7, 10) ? ' --no-single-branch' : '') : ''
