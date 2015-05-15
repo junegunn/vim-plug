@@ -1665,14 +1665,14 @@ endfunction
 
 function! s:system(cmd, ...)
   try
-    let sh = &shell
+    let [sh, shrd] = [&shell, &shellredir]
     if !s:is_win
-      set shell=sh
+      set shell=sh shellredir=>%s\ 2>&1
     endif
     let cmd = a:0 > 0 ? s:with_cd(a:cmd, a:1) : a:cmd
     return system(s:is_win ? '('.cmd.')' : cmd)
   finally
-    let &shell = sh
+    let [&shell, &shellredir] = [sh, shrd]
   endtry
 endfunction
 
