@@ -388,6 +388,9 @@ function! s:lod(names, types)
     for dir in a:types
       call s:source(rtp, dir.'/**/*.vim')
     endfor
+    if exists('#User#'.name)
+      execute 'doautocmd User' name
+    endif
   endfor
 endfunction
 
