@@ -134,6 +134,10 @@ Plug 'kovisoft/paredit', { 'for': ['clojure', 'scheme'] }
 
 " On-demand loading on both conditions
 Plug 'junegunn/vader.vim',  { 'on': 'Vader', 'for': 'vader' }
+
+" Code to execute when the plugin is loaded on demand
+Plug 'Valloric/YouCompleteMe', { 'for': 'cpp' }
+autocmd! User YouCompleteMe call youcompleteme#Enable()
 ```
 
 `for` option is generally not needed as most plugins for specific file types

@@ -371,11 +371,16 @@ Execute (New set of plugins):
   Plug 'junegunn/vim-pseudocl'
   Plug 'junegunn/vim-easy-align', { 'on': 'EasyAlign' }
   Plug 'junegunn/vim-redis',      { 'for': 'redis' }
+  let user_autocmd = {}
+  autocmd! User vim-fnr let user_autocmd.fnr = 1
+  autocmd! User vim-easy-align let user_autocmd.easy_align = 1
+  autocmd! User vim-redis let user_autocmd.redis = 1
   call plug#end()
 
 Execute (Check commands):
   Assert !exists(':FNR'),          'FNR command should not be found'
   Assert !exists(':RedisExecute'), 'RedisExecute command should not be found'
+  Assert empty(user_autocmd)
 
 Execute (Partial PlugInstall):
   PlugInstall vim-fnr vim-easy-align
@@ -405,6 +410,10 @@ Expect (Aligned code):
   a  = 1
   aa = 2
 
+Then (autocmd executed):
+  Assert user_autocmd.easy_align
+  AssertEqual 1, len(user_autocmd)
+
 Given:
 Execute (Partial PlugUpdate):
   PlugUpdate vim-redis
@@ -414,6 +423,12 @@ Execute (On-demand loading based on filetypes):
   Assert !exists(':RedisExecute'), 'RedisExecute command still should not be found'
   set ft=redis
   Assert exists(':RedisExecute'), 'RedisExecute command is now found'
+  Assert user_autocmd.redis
+  AssertEqual 2, len(user_autocmd)
+
+Then:
+  autocmd! User
+  unlet user_autocmd
 
 **********************************************************************
 ~ Local (unmanaged) plugins
