@@ -14,6 +14,9 @@
 "   Plug 'junegunn/seoul256.vim'
 "   Plug 'junegunn/vim-easy-align'
 "
+"   " Group dependencies, vim-snippets depends on ultisnips
+"   Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
+"
 "   " On-demand loading
 "   Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
 "   Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
