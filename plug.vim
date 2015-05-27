@@ -440,7 +440,7 @@ function! s:add(repo, ...)
       call add(g:plugs_order, name)
     endif
     let g:plugs[name] = spec
-    let s:loaded[name] = 0
+    let s:loaded[name] = get(s:loaded, name, 0)
   catch
     return s:err(v:exception)
   endtry
