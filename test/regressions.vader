@@ -66,14 +66,14 @@ Execute (#130 Proper cleanup of on-demand loading triggers):
 
 **********************************************************************
 Execute (#131 Syntax error):
-  call plug#begin('/no-permission')
+  call plug#begin('/proc/no-permission')
   Plug 'junegunn/vim-emoji'
   call plug#end()
 
   redir => out
   silent PlugInstall
   redir END
-  Assert out =~ 'Invalid plug directory: /no-permission'
+  Assert out =~ 'Invalid plug directory: /proc/no-permission', out
 
 **********************************************************************
 Execute (#139-1 Using new remote branch):

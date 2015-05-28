@@ -11,6 +11,11 @@ Execute (Initialize test environment):
     let $PLUG_SRC = globpath(&rtp, 'autoload/plug.vim')
   endif
 
+  " Temporarily patch plug.vim
+  call system('cp $PLUG_SRC $PLUG_SRC.org')
+  call writefile(extend(readfile($PLUG_SRC),
+  \ ['function! ResetPlug()', 'let s:loaded = {}', 'endfunction']), $PLUG_SRC)
+
   set t_Co=256
   colo default
   pclose
@@ -40,22 +45,13 @@ Execute (Initialize test environment):
     call system(printf('rm -rf "%s"', a:file))
   endfunction
 
-  " Reload vim-plug to reset s:-variables
   function! ReloadPlug()
-    let tmpdir = tempname()
-    let tmp = tmpdir.'/plug.vim'
-    call mkdir(tmpdir, 'p')
-    try
-      call writefile(readfile($PLUG_SRC), tmp)
-      unlet! g:loaded_plug
-      execute 'source' tmp
-      let &rtp = g:base_rtp
-    finally
-      call RmRf(tmpdir)
-    endtry
+    call ResetPlug()
+    source $PLUG_SRC
+    let &rtp = g:base_rtp
   endfunction
 
-  call ReloadPlug()
+  source $PLUG_SRC
 
 Execute (Print Interpreter Version):
   redir => out
@@ -84,6 +80,7 @@ Execute (Cleanup):
   silent! delc AssertExpect
   silent! unmap /
   silent! unmap ?
+  call system('mv $PLUG_SRC.org $PLUG_SRC')
 
   Restore
 
