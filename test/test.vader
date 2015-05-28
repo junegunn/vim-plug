@@ -1,18 +1,15 @@
 Execute (Initialize test environment):
   Save &rtp, g:plugs, g:plug_home, g:plug_window
-
-  let first_rtp = split(&rtp, ',')[0]
-  let last_rtp  = split(&rtp, ',')[-1]
-
-  let vader = fnamemodify(globpath(&rtp, 'autoload/vader.vim'), ':h:h')
-  let plug  = fnamemodify(globpath(&rtp, 'autoload/plug.vim'), ':h:h')
-  set rtp=$HOME/.vim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,$HOME/.vim/after
-  execute 'set rtp^='.vader
-  execute 'set rtp^='.plug
-  let basertp = &rtp
-
   unlet! g:plugs g:plug_home g:plug_window
+
   let g:plug_url_format = 'file:///tmp/%s'
+  let g:base_rtp        = &rtp
+  let g:first_rtp       = split(&rtp, ',')[0]
+  let g:last_rtp        = split(&rtp, ',')[-1]
+  let g:temp_plugged    = tempname()
+  if !exists('$PLUG_SRC')
+    let $PLUG_SRC = globpath(&rtp, 'autoload/plug.vim')
+  endif
 
   set t_Co=256
   colo default
@@ -39,18 +36,26 @@ Execute (Initialize test environment):
     endif
   endfunction
 
+  function! RmRf(file)
+    call system(printf('rm -rf "%s"', a:file))
+  endfunction
+
   " Reload vim-plug to reset s:-variables
   function! ReloadPlug()
-    let tmp = tempname()
+    let tmpdir = tempname()
+    let tmp = tmpdir.'/plug.vim'
+    call mkdir(tmpdir, 'p')
     try
-      call writefile(readfile(globpath(&rtp, 'autoload/plug.vim')), tmp)
-      unlet g:loaded_plug
+      call writefile(readfile($PLUG_SRC), tmp)
+      unlet! g:loaded_plug
       execute 'source' tmp
-      let &rtp = g:basertp
+      let &rtp = g:base_rtp
     finally
-      call delete(tmp)
+      call RmRf(tmpdir)
     endtry
   endfunction
+
+  call ReloadPlug()
 
 Execute (Print Interpreter Version):
   redir => out
@@ -68,13 +73,9 @@ Include: workflow.vader
 Include: regressions.vader
 
 Execute (Cleanup):
-  silent! call system('rm -rf '.temp_plugged)
-  silent! call system('rm -rf '.temp_plugged)
-  silent! call rename(fzf, expand('$PLUG_FIXTURES/fzf-staged'))
-  silent! unlet g:plugs
-  silent! unlet g:plug_home
-  silent! unlet g:plug_url_format
-  silent! unlet temp_plugged vader plug basertp save_rtp repo lnum fzf out tabnr found len
+  silent! call RmRf(g:temp_plugged)
+  silent! unlet g:plugs g:plug_home g:plug_url_format
+  silent! unlet g:temp_plugged g:first_rtp g:last_rtp g:base_rtp out
   silent! delf PlugStatusSorted
   silent! delf AssertExpect
   silent! delf PlugUpdated

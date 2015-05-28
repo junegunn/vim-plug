@@ -1,11 +1,16 @@
 #!/bin/bash
 
-cd $(dirname $BASH_SOURCE)
-cd ..
-PLUG_SRC=$(pwd)/plug.vim
-cd - > /dev/null
+cd $(dirname "${BASH_SOURCE[0]}")
 
-export PLUG_FIXTURES=$(pwd)/fixtures
+export BASE="$PWD"
+export PLUG_SRC="$PWD/../plug.vim"
+export PLUG_FIXTURES="$PWD/fixtures"
+mkdir -p "$PLUG_FIXTURES"
+
+cat > /tmp/mini-vimrc << VIMRC
+set rtp+=/tmp/junegunn/vader.vim
+set shell=/bin/bash
+VIMRC
 
 clone() {
   if [ ! -d $2 ]; then
@@ -13,25 +18,25 @@ clone() {
   fi
 }
 
-# Clone
-cd /tmp
-mkdir -p junegunn vim-scripts jg
-for repo in vader.vim goyo.vim rust.vim seoul256.vim vim-easy-align vim-fnr \
-            vim-oblique vim-pseudocl vim-redis vim-emoji; do
-  clone https://github.com/junegunn/${repo}.git junegunn/$repo &
-done
-clone https://github.com/vim-scripts/beauty256.git vim-scripts/beauty256 &
+clone_repos() {
+  cd /tmp
+  mkdir -p junegunn vim-scripts jg
+  for repo in vader.vim goyo.vim rust.vim seoul256.vim vim-easy-align vim-fnr \
+              vim-oblique vim-pseudocl vim-redis vim-emoji; do
+    clone https://github.com/junegunn/${repo}.git junegunn/$repo &
+  done
+  clone https://github.com/vim-scripts/beauty256.git vim-scripts/beauty256 &
+  clone https://github.com/junegunn/fzf.git fzf &
+  wait
 
-rm -rf $PLUG_FIXTURES/fzf
-clone https://github.com/junegunn/fzf.git $PLUG_FIXTURES/fzf-staged &
-wait
+  clone junegunn/vim-emoji jg/vim-emoji
+  cd junegunn/seoul256.vim && git checkout no-t_co && git checkout master
 
-(cd junegunn/seoul256.vim &&
-  git checkout no-t_co && git checkout master) > /dev/null 2>&1
-clone junegunn/vim-emoji jg/vim-emoji
-cd - > /dev/null
+  cd "$BASE"
+}
 
 make_dirs() {
+  rm -rf "$PLUG_FIXTURES/$1"
   mkdir -p "$PLUG_FIXTURES/$1"
   cd "$PLUG_FIXTURES/$1"
   mkdir -p autoload colors ftdetect ftplugin indent plugin syntax
@@ -46,17 +51,15 @@ make_dirs() {
     call add(g:total_order, s:name)
 EOF
   done
-  cd - > /dev/null
+
+  cd "$BASE"
 }
 
-init() {
-  rm -rf $PLUG_FIXTURES/{xxx,yyy,z1,z2}
-  rm -rf $TMPDIR/new-branch
-
+prepare() {
   make_dirs xxx/ xxx
   make_dirs xxx/after xxx
-  mkdir -p $PLUG_FIXTURES/xxx/doc
-  cat > $PLUG_FIXTURES/xxx/doc/xxx.txt << DOC
+  mkdir -p "$PLUG_FIXTURES/xxx/doc"
+  cat > "$PLUG_FIXTURES/xxx/doc/xxx.txt" << DOC
 hello *xxx*
 DOC
 
@@ -66,28 +69,27 @@ DOC
   make_dirs z1/ z1
   make_dirs z2/ z2
 
-  (
-    cd $TMPDIR
-    git init new-branch
-    cd new-branch
-    mkdir plugin
-    echo 'let g:foo = 1' > plugin/foo.vim
-    git add plugin/foo.vim
-    git commit -m initial
-  )
+  rm -rf "$PLUG_FIXTURES/ftplugin-msg"
+  mkdir -p "$PLUG_FIXTURES/ftplugin-msg/ftplugin"
+  echo "echomsg 'ftplugin'" > "$PLUG_FIXTURES/ftplugin-msg/ftplugin/c.vim"
+
+  rm -rf /tmp/new-branch
+  cd /tmp
+  git init new-branch
+  cd new-branch
+  mkdir plugin
+  echo 'let g:foo = 1' > plugin/foo.vim
+  git add plugin/foo.vim
+  git commit -m initial
+
+  cd "$BASE"
 }
 
-cat > /tmp/mini-vimrc << VIMRC
-set rtp+=/tmp/junegunn/vader.vim
-set shell=/bin/bash
-source $PLUG_SRC
-VIMRC
-
-[ -z "$TMPDIR" ] && export TMPDIR=/tmp/
-init
+clone_repos
+prepare
 if [ "$1" = '!' ]; then
   /usr/local/bin/vim -Nu /tmp/mini-vimrc -c 'Vader! test.vader' > /dev/null &&
-  init &&
+  prepare &&
   /usr/local/bin/vim -Nu /tmp/mini-vimrc -c 'let g:plug_threads = 1 | Vader! test.vader' > /dev/null
 else
   /usr/local/bin/vim -Nu /tmp/mini-vimrc -c 'Vader test.vader'

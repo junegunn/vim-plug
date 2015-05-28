@@ -17,25 +17,25 @@ Execute (plug#begin() without path argument with empty &rtp):
   redir END
   Assert stridx(out, 'Unable to determine plug home') >= 0
   let &rtp = save_rtp
+  unlet save_rtp
 
 Execute (plug#begin(path)):
-  let temp_plugged = tempname()
-  call plug#begin(temp_plugged.'/')
+  call plug#begin(g:temp_plugged.'/')
   Assert g:plug_home !~ '[/\\]$', 'Trailing / should be stripped from g:plug_home'
 
   AssertEqual 0, len(g:plugs)
-  AssertEqual temp_plugged, g:plug_home
-  AssertEqual basertp, &rtp
+  AssertEqual g:temp_plugged, g:plug_home
+  AssertEqual g:base_rtp, &rtp
 
 Execute (Subsequent plug#begin() calls will reuse g:plug_home):
   call plug#begin()
-  AssertEqual temp_plugged, g:plug_home
+  AssertEqual g:temp_plugged, g:plug_home
 
 Execute (Test Plug command):
 ^ Git repo with branch (DEPRECATED. USE BRANCH OPTION)
   Plug 'junegunn/seoul256.vim', { 'branch': 'yes-t_co' }
   AssertEqual 'file:///tmp/junegunn/seoul256.vim', g:plugs['seoul256.vim'].uri
-  AssertEqual join([temp_plugged, 'seoul256.vim/'], '/'), g:plugs['seoul256.vim'].dir
+  AssertEqual join([g:temp_plugged, 'seoul256.vim/'], '/'), g:plugs['seoul256.vim'].dir
   AssertEqual 'yes-t_co', g:plugs['seoul256.vim'].branch
 
   Plug 'junegunn/seoul256.vim', { 'branch': 'no-t_co' } " Using branch option
@@ -44,7 +44,7 @@ Execute (Test Plug command):
 ^ Git repo with tag (DEPRECATED. USE TAG OPTION)
   Plug 'junegunn/goyo.vim', '1.5.2'
   AssertEqual 'file:///tmp/junegunn/goyo.vim', g:plugs['goyo.vim'].uri
-  AssertEqual join([temp_plugged, 'goyo.vim/'], '/'), g:plugs['goyo.vim'].dir
+  AssertEqual join([g:temp_plugged, 'goyo.vim/'], '/'), g:plugs['goyo.vim'].dir
   AssertEqual '1.5.2', g:plugs['goyo.vim'].tag
 
   Plug 'junegunn/goyo.vim', { 'tag': '1.5.3' } " Using tag option
@@ -54,7 +54,7 @@ Execute (Test Plug command):
   Plug 'file:///tmp/jg/vim-emoji'
   AssertEqual 'file:///tmp/jg/vim-emoji', g:plugs['vim-emoji'].uri
   AssertEqual 'master', g:plugs['vim-emoji'].branch
-  AssertEqual join([temp_plugged, 'vim-emoji/'], '/'), g:plugs['vim-emoji'].dir
+  AssertEqual join([g:temp_plugged, 'vim-emoji/'], '/'), g:plugs['vim-emoji'].dir
 
   " vim-scripts/
   Plug 'beauty256'
@@ -66,7 +66,7 @@ Execute (Test Plug command):
 Execute (Plug command with dictionary option):
   Log string(g:plugs)
   Plug 'junegunn/seoul256.vim', { 'branch': 'no-t_co', 'rtp': '././' }
-  AssertEqual join([temp_plugged, 'seoul256.vim/'], '/'), g:plugs['seoul256.vim'].dir
+  AssertEqual join([g:temp_plugged, 'seoul256.vim/'], '/'), g:plugs['seoul256.vim'].dir
   AssertEqual '././', g:plugs['seoul256.vim'].rtp
 
   Log string(g:plugs)
@@ -84,9 +84,9 @@ Execute (PlugClean before installation):
 
 Execute (plug#end() updates &rtp):
   call plug#end()
-  Assert len(&rtp) > len(basertp)
-  AssertEqual first_rtp, split(&rtp, ',')[0]
-  AssertEqual last_rtp, split(&rtp, ',')[-1]
+  Assert len(&rtp) > len(g:base_rtp)
+  AssertEqual g:first_rtp, split(&rtp, ',')[0]
+  AssertEqual g:last_rtp, split(&rtp, ',')[-1]
 
 Execute (Yet, plugins are not available):
   Assert empty(globpath(&rtp, 'autoload/emoji.vim'))
@@ -276,6 +276,7 @@ Execute (New commits on remote, PlugUpdate, then PlugDiff):
       call system(printf('cd /tmp/junegunn/%s && git commit --allow-empty -m "update"', repo))
     endfor
   endfor
+  unlet repo
   PlugUpdate
 
   " Now we have updates
@@ -309,6 +310,7 @@ Execute (New commits on remote, PlugUpdate, then PlugDiff):
   " [[ motion
   execute 'normal 0[['
   AssertEqual lnum, line('.')
+  unlet lnum
   AssertEqual 3, col('.')
 
   " X key to revert the update
@@ -348,6 +350,7 @@ Execute (Reuse Plug window in another tab):
   AssertEqual tabnr, tabpagenr()
   normal! gt
   q
+  unlet tabnr
 
 **********************************************************************
 ~ On-demand loading / Partial installation/update ~
@@ -392,8 +395,8 @@ Execute (Partial PlugInstall):
   PlugInstall vim-fnr vim-easy-align 1
   AssertExpect 'vim-fnr', 1
   AssertExpect 'vim-easy-align', 1
-  AssertEqual first_rtp, split(&rtp, ',')[0]
-  AssertEqual last_rtp, split(&rtp, ',')[-1]
+  AssertEqual g:first_rtp, split(&rtp, ',')[0]
+  AssertEqual g:last_rtp, split(&rtp, ',')[-1]
   q
 
 Given (Unaligned code):
@@ -428,7 +431,6 @@ Execute (On-demand loading based on filetypes):
   Assert user_autocmd.redis
   AssertEqual 2, len(user_autocmd)
 
-Then:
   autocmd! User
   unlet user_autocmd
 
@@ -438,6 +440,7 @@ Then:
 
 Execute (Add unmanaged plugin):
   let fzf = expand('$PLUG_FIXTURES/fzf')
+  call RmRf(fzf)
   Log fzf
 
   call plug#begin()
@@ -496,7 +499,8 @@ Execute (PlugStatus should point out that the plugin is missing):
 
 Execute (Deploy unmanaged plugin):
   Assert !exists(':FZF'), ':FZF command should not exist'
-  call rename(expand('$PLUG_FIXTURES/fzf-staged'), fzf)
+  call RmRf(fzf)
+  Log system(printf('cp -r "/tmp/fzf" "%s"', fzf))
 
 Execute (PlugUpdate still should not care):
   PlugUpdate
@@ -516,8 +520,8 @@ Execute (Check &rtp after SomeCommand):
   Assert &rtp !~ 'fzf'
   silent! SomeCommand
   Assert &rtp =~ 'fzf'
-  AssertEqual first_rtp, split(&rtp, ',')[0]
-  AssertEqual last_rtp, split(&rtp, ',')[-1]
+  AssertEqual g:first_rtp, split(&rtp, ',')[0]
+  AssertEqual g:last_rtp, split(&rtp, ',')[-1]
 
 Execute (Common parent):
   call plug#begin()
@@ -530,6 +534,8 @@ Execute (Common parent):
   Log getline(1, '$')
   AssertExpect! '[===]', 1
   q
+
+  unlet fzf
 
 **********************************************************************
 ~ Frozen plugins
@@ -724,7 +730,7 @@ Execute (Using Funcref):
 
   call system('cd /tmp/junegunn/vim-easy-align && git commit --allow-empty -m "update"')
   call system('cd '.g:plugs['vim-easy-align'].dir.' && git reset --hard HEAD^')
-  call system('rm -rf '.g:plugs['vim-pseudocl'].dir)
+  call RmRf(g:plugs['vim-pseudocl'].dir)
 
   PlugUpdate
   Log getline(1, '$')
@@ -734,7 +740,7 @@ Execute (Using Funcref):
   Assert filereadable(g:plugs['vim-pseudocl'].dir.'/vim-pseudoclinstalled03'),
     \ 'vim-pseudocl/vim-pseudoclinstalled03 should exist'
 
-  call system('rm -rf '.g:plugs['vim-pseudocl'].dir)
+  call RmRf(g:plugs['vim-pseudocl'].dir)
   PlugInstall!
   q
   Assert filereadable(g:plugs['vim-easy-align'].dir.'/vim-easy-alignunchanged13'),
@@ -757,11 +763,11 @@ Execute (Using Funcref):
 Execute (Using custom dir):
   Assert isdirectory(g:plugs['vim-easy-align'].dir)
 
-  call system('rm -rf '.$TMPDIR.'easy-align')
+  call RmRf('/tmp/easy-align')
   call plug#begin()
-  Plug 'junegunn/vim-easy-align', { 'dir': $TMPDIR.'easy-align' }
+  Plug 'junegunn/vim-easy-align', { 'dir': '/tmp/easy-align' }
   call plug#end()
-  AssertEqual $TMPDIR.'easy-align/', g:plugs['vim-easy-align'].dir
+  AssertEqual '/tmp/easy-align/', g:plugs['vim-easy-align'].dir
 
   PlugClean!
   Assert !isdirectory(g:plugs['vim-easy-align'].dir)
@@ -924,7 +930,7 @@ Execute (Open plug window in a new tab):
   normal S
   AssertEqual tabnr, tabpagenr()
   q
-  unlet g:plug_window
+  unlet g:plug_window tabnr
 
 **********************************************************************
 ~ g:plug_url_format
@@ -970,7 +976,7 @@ Execute (Update plugin with U key in normal mode):
   q
 
 Execute (Update plugins with U key in visual mode):
-  silent! call system('rm -rf '.g:plugs['vim-easy-align'].dir)
+  silent! call RmRf(g:plugs['vim-easy-align'].dir)
 
   PlugStatus
   normal VGU
@@ -997,7 +1003,7 @@ Execute (plug#begin should expand env vars):
 
 **********************************************************************
 Execute (Plug directory with comma):
-  call plug#begin(temp_plugged . '/p,l,u,g,g,e,d')
+  call plug#begin(g:temp_plugged . '/p,l,u,g,g,e,d')
   Plug 'junegunn/vim-emoji'
   call plug#end()
   Log &rtp
@@ -1007,6 +1013,7 @@ Execute (Plug directory with comma):
   let found = filter(split(globpath(&rtp, 'README.md'), '\n'), 'v:val =~ ","')
   Log found
   AssertEqual 1, len(found)
+  unlet found
 
 **********************************************************************
 Execute (Strict load order):
@@ -1079,6 +1086,7 @@ Execute (PlugClean should not try to remove unmanaged plugins inside g:plug_home
 
 **********************************************************************
 Execute (PlugSnapshot / #154 issues with paths containing spaces):
+  let $TMPDIR = '/tmp'
   call plug#begin('$TMPDIR/plug with spaces')
   Plug 'junegunn/vim-easy-align'
   Plug 'junegunn/seoul256.vim'
@@ -1103,7 +1111,7 @@ Execute (PlugSnapshot / #154 issues with paths containing spaces):
 
 **********************************************************************
 Execute (#221 Shallow-clone and tag option):
-  call plug#begin(temp_plugged)
+  call plug#begin(g:temp_plugged)
   Plug 'junegunn/goyo.vim'
   call plug#end()
   PlugInstall
@@ -1122,12 +1130,12 @@ Execute (#221 Shallow-clone and tag option):
   cd -
 
 Execute (#221 Shallow-clone disabled by g:plug_shallow = 0):
-  call plug#begin(temp_plugged)
+  call plug#begin(g:temp_plugged)
   call plug#end()
   PlugClean!
 
   let g:plug_shallow = 0
-  call plug#begin(temp_plugged)
+  call plug#begin(g:temp_plugged)
   Plug 'junegunn/goyo.vim'
   call plug#end()
   PlugInstall
@@ -1137,15 +1145,14 @@ Execute (#221 Shallow-clone disabled by g:plug_shallow = 0):
   Assert len(split(system('git log --oneline'), '\n')) > 1, 'not shallow'
   Assert !filereadable('.git/shallow'), 'not shallow'
   cd -
-Then:
   unlet g:plug_shallow
 
 Execute (#221 Shallow-clone disabled by tag):
-  call plug#begin(temp_plugged)
+  call plug#begin(g:temp_plugged)
   call plug#end()
   PlugClean!
 
-  call plug#begin(temp_plugged)
+  call plug#begin(g:temp_plugged)
   Plug 'junegunn/goyo.vim', { 'tag': '1.5.3' }
   call plug#end()
   Assert !isdirectory(g:plugs['goyo.vim'].dir)
