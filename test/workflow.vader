@@ -354,6 +354,7 @@ Execute (Reuse Plug window in another tab):
 **********************************************************************
 
 Execute (Trying to execute on-demand commands when plugin is not installed):
+  call ReloadPlug()
   call plug#begin()
   Plug 'junegunn/vim-easy-align', { 'on': ['EasyAlign', 'LiveEasyAlign'] }
   call plug#end()
@@ -366,6 +367,7 @@ Execute (Trying to execute on-demand commands when plugin is not installed):
   Assert !exists(':LiveEasyAlign')
 
 Execute (New set of plugins):
+  call ReloadPlug()
   call plug#begin()
   Plug 'junegunn/vim-fnr'
   Plug 'junegunn/vim-pseudocl'
@@ -778,6 +780,7 @@ Before (Clear global vars):
   set rtp-=$PLUG_FIXTURES/xxx/after
 
 Execute (Immediate loading):
+  call ReloadPlug()
   call plug#begin()
   Plug '$PLUG_FIXTURES/xxx'
   call plug#end()
@@ -792,6 +795,7 @@ Execute (Immediate loading):
   endif
 
 Execute (Command-based on-demand loading):
+  call ReloadPlug()
   call plug#begin()
   Plug '$PLUG_FIXTURES/xxx', { 'on': 'XXX' }
   call plug#end()
@@ -805,6 +809,7 @@ Execute (Command-based on-demand loading):
   AssertEqual ['xxx/ftdetect', 'xxx/after/ftdetect', 'xxx/plugin', 'xxx/after/plugin', 'xxx/ftplugin', 'xxx/after/ftplugin', 'xxx/indent', 'xxx/after/indent', 'xxx/syntax', 'xxx/after/syntax'], g:xxx
 
 Execute (Filetype-based on-demand loading):
+  call ReloadPlug()
   call plug#begin()
   Plug '$PLUG_FIXTURES/xxx', { 'for': 'xxx' }
   call plug#end()
@@ -1006,6 +1011,7 @@ Execute (Plug directory with comma):
 **********************************************************************
 Execute (Strict load order):
   let g:total_order = []
+  call ReloadPlug()
   call plug#begin()
   Plug '$PLUG_FIXTURES/xxx'
   Plug '$PLUG_FIXTURES/yyy', { 'for': ['xxx'] }
@@ -1019,6 +1025,7 @@ Execute (Strict load order):
   let len = len(split(&rtp, ','))
 
   let g:total_order = []
+  call ReloadPlug()
   call plug#begin()
   Plug '$PLUG_FIXTURES/xxx', { 'for': ['xxx'] }
   Plug '$PLUG_FIXTURES/yyy'
@@ -1036,6 +1043,9 @@ Execute (Strict load order):
   AssertEqual len + 2, len(split(&rtp, ','))
 
   let g:total_order = []
+  call ReloadPlug()
+  set rtp^=manually-prepended
+  set rtp+=manually-appended
   call plug#begin()
   Plug '$PLUG_FIXTURES/xxx', { 'for': ['xxx'] }
   Plug '$PLUG_FIXTURES/yyy', { 'for': ['xxx'] }
