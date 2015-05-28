@@ -244,3 +244,26 @@ Execute (#184: Duplicate entries in &rtp):
   Log &rtp
   AssertEqual 3, len(filter(split(&rtp, ','), 'stridx(v:val, "plugged") >= 0'))
 
+**********************************************************************
+Execute (#236: Plugin removed from &rtp when .vimrc is reloaded):
+  unlet! g:loaded_easy_align_plugin
+  silent! delc EasyAlign
+
+  call ReloadPlug()
+  call plug#begin('$TMPDIR/plugged')
+  Plug 'junegunn/vim-easy-align', { 'on': 'EasyAlign' }
+  call plug#end()
+  PlugInstall | q
+
+  Assert &rtp !~ '/vim-easy-align', 'Plugin should not be in &rtp'
+  %EasyAlign=
+  Assert &rtp =~ '/vim-easy-align', 'Plugin should be in &rtp'
+
+  call plug#begin('$TMPDIR/plugged')
+  Plug 'junegunn/vim-easy-align', { 'on': 'EasyAlign' }
+  call plug#end()
+
+  redir => out
+  silent command EasyAlign
+  redir END
+  Assert &rtp =~ '/vim-easy-align', 'Plugin should still be in &rtp'
