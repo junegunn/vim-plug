@@ -262,8 +262,4 @@ Execute (#236: Plugin removed from &rtp when .vimrc is reloaded):
   call plug#begin('$TMPDIR/plugged')
   Plug 'junegunn/vim-easy-align', { 'on': 'EasyAlign' }
   call plug#end()
-
-  redir => out
-  silent command EasyAlign
-  redir END
   Assert &rtp =~ '/vim-easy-align', 'Plugin should still be in &rtp'
