@@ -39,6 +39,19 @@ Execute (Initialize test environment):
     endif
   endfunction
 
+  " Reload vim-plug to reset s:-variables
+  function! ReloadPlug()
+    let tmp = tempname()
+    try
+      call writefile(readfile(globpath(&rtp, 'autoload/plug.vim')), tmp)
+      unlet g:loaded_plug
+      execute 'source' tmp
+      let &rtp = g:basertp
+    finally
+      call delete(tmp)
+    endtry
+  endfunction
+
 Execute (Print Interpreter Version):
   redir => out
   if has('ruby')
@@ -66,6 +79,7 @@ Execute (Cleanup):
   silent! delf AssertExpect
   silent! delf PlugUpdated
   silent! delf EnsureLoaded
+  silent! delf ReloadPlug
   silent! delc AssertExpect
   silent! unmap /
   silent! unmap ?

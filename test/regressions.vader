@@ -34,6 +34,7 @@ Execute (#130 Proper cleanup of on-demand loading triggers):
   augroup END
 
   " Cleared on command
+  call ReloadPlug()
   call plug#begin('$TMPDIR/plugged')
   Plug 'junegunn/vim-emoji', { 'on':  ['EmojiCommand', 'EmojiCommand2', '<Plug>(EmojiMapping)'] }
   call plug#end()
@@ -50,6 +51,7 @@ Execute (#130 Proper cleanup of on-demand loading triggers):
   Assert empty(mapcheck('<Plug>(EmojiMapping)')), '<Plug>(EmojiMapping) defined'
 
   " Cleared on FileType
+  call ReloadPlug()
   call plug#begin('$TMPDIR/plugged')
   Plug 'junegunn/vim-emoji', { 'on': ['EmojiCommandExtra', '<Plug>(EmojiMappingExtra)'], 'for': ['emoji'] }
   call plug#end()
@@ -189,6 +191,7 @@ Execute (#145: Merging on-demand loading triggers - cmd):
 Execute (#145: Merging on-demand loading triggers - map):
   unlet! g:xxx g:yyy
 
+  call ReloadPlug()
   call plug#begin()
   Plug '$PLUG_FIXTURES/xxx', { 'on': '<Plug>(xxx)' }
   Plug '$PLUG_FIXTURES/yyy', { 'on': ['<Plug>(xxx)' ,'<Plug>(yyy)' ] }
