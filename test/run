@@ -3,7 +3,7 @@
 cd $(dirname "${BASH_SOURCE[0]}")
 
 export BASE="$PWD"
-export PLUG_SRC="$PWD/../plug.vim"
+export PLUG_SRC="$PWD/../autoload/plug.vim"
 export PLUG_FIXTURES="$PWD/fixtures"
 mkdir -p "$PLUG_FIXTURES"
 
