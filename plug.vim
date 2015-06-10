@@ -1064,27 +1064,6 @@ class InvalidURI(BaseExc):
 class Action(object):
   INSTALL, UPDATE, ERROR, DONE = ['+', '*', 'x', '-']
 
-class GLog(object):
-  ON = None
-  LOGDIR = None
-  @classmethod
-  def write(cls, msg):
-    if cls.ON is None:
-      cls.ON = int(vim.eval('get(g:, "plug_log_on", 0)'))
-      cls.LOGDIR = os.path.expanduser(vim.eval('get(g:, "plug_logs", "~/plug_logs")'))
-    if cls.ON:
-      if not os.path.exists(cls.LOGDIR):
-        os.makedirs(cls.LOGDIR)
-      cls._write(msg)
-  @classmethod
-  def _write(cls, msg):
-    name = thr.current_thread().name
-    fname = cls.LOGDIR + os.path.sep + name
-    with open(fname, 'ab') as flog:
-      ltime = datetime.datetime.now().strftime("%H:%M:%S.%f")
-      msg = '[{0},{1}] {2}{3}'.format(name, ltime, msg, '\n')
-      flog.write(msg.encode())
-
 class Buffer(object):
   def __init__(self, lock, num_plugs, is_pull, is_win):
     self.bar = ''
@@ -1145,7 +1124,7 @@ class Buffer(object):
 
       self.header()
     except vim.error:
-      GLog.write('Buffer Update FAILED.')
+      pass
 
 class Command(object):
   def __init__(self, cmd, cmd_dir=None, timeout=60, ntries=3, cb=None, clean=None):
@@ -1298,10 +1277,8 @@ class Plugin(object):
               'git merge --ff-only {0}'.format(self.merge),
               'git submodule update --init --recursive']
       cmd = ' 2>&1 && '.join(cmds)
-      GLog.write(cmd)
       com = Command(cmd, self.args['dir'], G_TIMEOUT, G_RETRIES, callback)
       result = com.attempt_cmd()
-      GLog.write(result)
       self.write(Action.DONE, self.name, result[-1:])
     else:
       self.write(Action.DONE, self.name, ['Already installed'])
@@ -1313,7 +1290,6 @@ class Plugin(object):
     return result[-1]
 
   def write(self, action, name, msg):
-    GLog.write('{0} {1}: {2}'.format(action, name, '\n'.join(msg)))
     self.buf_q.put((action, name, msg))
 
 class PlugThread(thr.Thread):
@@ -1329,12 +1305,11 @@ class PlugThread(thr.Thread):
     try:
       while not G_STOP.is_set():
         name, args = work_q.get_nowait()
-        GLog.write('{0}: Dir {1}'.format(name, args['dir']))
         plug = Plugin(name, args, buf_q, lock)
         plug.manage()
         work_q.task_done()
     except queue.Empty:
-      GLog.write('Queue now empty.')
+      pass
     finally:
       global G_THREADS
       with lock:
@@ -1381,17 +1356,10 @@ def nonblock_read(fname):
 
 def main():
   thr.current_thread().name = 'main'
-  GLog.write('')
-  if GLog.ON and os.path.exists(GLog.LOGDIR):
-    shutil.rmtree(GLog.LOGDIR)
-
   nthreads = int(vim.eval('s:update.threads'))
   plugs = vim.eval('s:update.todo')
   mac_gui = vim.eval('s:mac_gui') == '1'
   is_win = vim.eval('s:is_win') == '1'
-  GLog.write('Plugs: {0}'.format(plugs))
-  GLog.write('PULL: {0}, WIN: {1}, MAC: {2}'.format(G_PULL, is_win, mac_gui))
-  GLog.write('Num Threads: {0}'.format(nthreads))
 
   lock = thr.Lock()
   buf = Buffer(lock, len(plugs), G_PULL, is_win)
@@ -1399,7 +1367,6 @@ def main():
   for work in plugs.items():
     work_q.put(work)
 
-  GLog.write('Starting Threads')
   global G_THREADS
   for num in range(nthreads):
     tname = 'PlugT-{0:02}'.format(num)
@@ -1410,7 +1377,6 @@ def main():
     rthread = RefreshThread(lock)
     rthread.start()
 
-  GLog.write('Buffer Writing Loop')
   while not buf_q.empty() or len(G_THREADS) != 0:
     try:
       action, name, msg = buf_q.get(True, 0.25)
@@ -1424,7 +1390,6 @@ def main():
   if mac_gui:
     rthread.stop()
     rthread.join()
-  GLog.write('Cleanly Exited Main')
 
 main()
 EOF
