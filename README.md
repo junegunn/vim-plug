@@ -106,7 +106,7 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 - `S` - `PlugStatus`
 - `R` - Retry failed update or installation tasks
 - `U` - Update plugins in the selected range
-- `q` - Close the window
+- `Q` - Close the window
 - `:PlugStatus`
     - `L` - Load plugin
 - `:PlugDiff`
