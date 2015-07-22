@@ -22,7 +22,7 @@ A minimalist Vim plugin manager.
 [nv]: http://neovim.org/
 [startup-time]: http://junegunn.kr/images/vim-startup-time.png
 
-### Usage
+### Installation
 
 [Download plug.vim](https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim)
 and put it in ~/.vim/autoload
@@ -32,7 +32,15 @@ curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 ```
 
-Edit your .vimrc
+### Usage
+
+Add a vim-plug section to your .vimrc:
+
+1. Begin the section with `plug#begin()`
+1. List the plugins with `Plug` commands
+1. `plug#end()` to add the plugins to `&runtimepath`
+
+#### Example
 
 ```vim
 call plug#begin('~/.vim/plugged')
@@ -60,6 +68,7 @@ Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install' }
 " Unmanaged plugin (manually installed and updated)
 Plug '~/my-prototype-plugin'
 
+" Add plugins to &runtimepath
 call plug#end()
 ```
 
