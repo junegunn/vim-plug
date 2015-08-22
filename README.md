@@ -59,6 +59,9 @@ Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 " Using git URL
 Plug 'https://github.com/junegunn/vim-github-dashboard.git'
 
+" Local plugin
+Plug '/my/local/vim/plugin'
+
 " Plugin options
 Plug 'nsf/gocode', { 'tag': 'v.20150303', 'rtp': 'vim' }
 
