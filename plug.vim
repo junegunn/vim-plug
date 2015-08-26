@@ -399,7 +399,7 @@ function! s:lod(names, types)
 endfunction
 
 function! s:lod_ft(pat, names)
-  call s:lod(a:names, ['plugin', 'after/plugin'])
+  call s:lod(a:names, ['plugin', 'after/plugin', 'syntax', 'after/syntax'])
   execute 'autocmd! PlugLOD FileType' a:pat
   if exists('#filetypeplugin#FileType')
     doautocmd filetypeplugin FileType

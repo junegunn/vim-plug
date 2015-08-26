@@ -823,7 +823,7 @@ Execute (Filetype-based on-demand loading):
   AssertEqual ['xxx/ftdetect', 'xxx/after/ftdetect'], g:xxx
 
   setf xxx
-  AssertEqual ['xxx/ftdetect', 'xxx/after/ftdetect', 'xxx/plugin', 'xxx/after/plugin', 'xxx/ftplugin', 'xxx/after/ftplugin', 'xxx/indent', 'xxx/after/indent', 'xxx/syntax', 'xxx/after/syntax'], g:xxx
+  AssertEqual ['xxx/ftdetect', 'xxx/after/ftdetect', 'xxx/plugin', 'xxx/after/plugin', 'xxx/syntax', 'xxx/after/syntax', 'xxx/ftplugin', 'xxx/after/ftplugin', 'xxx/indent', 'xxx/after/indent', 'xxx/syntax', 'xxx/after/syntax'], g:xxx
 
 Before:
 
