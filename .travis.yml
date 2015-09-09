@@ -16,12 +16,12 @@ before_script: |
     cd vim
     if [ $(ruby -e 'puts RUBY_VERSION') = 1.9.3 ]; then
       sudo apt-get install -y python2.7-dev
-      ./configure --with-features=huge --enable-pythoninterp
+      ./configure --disable-gui --with-features=huge --enable-pythoninterp
     elif [ $(ruby -e 'puts RUBY_VERSION') = 2.1.0 ]; then
       sudo apt-get install -y python3-dev
-      ./configure --with-features=huge --enable-python3interp
+      ./configure --disable-gui --with-features=huge --enable-python3interp
     else
-      ./configure --with-features=huge --enable-rubyinterp
+      ./configure --disable-gui --with-features=huge --enable-rubyinterp
     fi
     make
     sudo make install
