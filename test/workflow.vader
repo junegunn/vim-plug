@@ -756,6 +756,28 @@ Execute (Using Funcref):
   Assert filereadable(g:plugs['vim-pseudocl'].dir.'/vim-pseudoclunchanged13'),
     \ 'vim-pseudocl/vim-pseudoclunchanged13 should exist'
 
+Execute (Should not run when failed to update):
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align', { 'do': 'touch failed'     }
+  Plug 'junegunn/vim-pseudocl',   { 'do': 'touch not-failed' }
+  call plug#end()
+
+  " Invalid remote URL
+  call system(printf('cd %s && git remote set-url origin xxx', g:plugs['vim-easy-align'].dir))
+
+  " New commits on remote
+  call system('cd /tmp/junegunn/vim-easy-align && git commit --allow-empty -m "update"')
+  call system('cd /tmp/junegunn/vim-pseudocl && git commit --allow-empty -m "update"')
+
+  silent PlugUpdate
+  Log getline(1, '$')
+  q
+
+  Assert !filereadable(g:plugs['vim-easy-align'].dir.'/failed'),
+    \ 'vim-easy-align/failed should not exist'
+  Assert filereadable(g:plugs['vim-pseudocl'].dir.'/not-failed'),
+    \ 'vim-pseudocl/not-failed should exist'
+
 **********************************************************************
 ~ Overriding `dir`
 **********************************************************************
