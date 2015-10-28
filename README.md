@@ -62,6 +62,9 @@ Plug 'https://github.com/junegunn/vim-github-dashboard.git'
 " Plugin options
 Plug 'nsf/gocode', { 'tag': 'v.20150303', 'rtp': 'vim' }
 
+" Or a different git branch
+Plug 'rdnetto/YCM-Generator', { 'branch': 'stable'}
+
 " Plugin outside ~/.vim/plugged with post-update hook
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install' }
 
