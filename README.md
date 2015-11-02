@@ -23,18 +23,14 @@ A minimalist Vim plugin manager.
 [startup-time]: http://junegunn.kr/images/vim-startup-time.png
 
 ### Installation
-[Download plug.vim](https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim)
+[Download plug.vim](https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim) and put it in ~/.vim/autoload (UNIX) or ~/vimfiles/autoload (Windows).
 ###### Unix
-and put it in ~/.vim/autoload
-
 ```sh
 curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 ```
 ###### Windows
-and put it in ~/vimfiles/autoload
-
-```sh
+```powershell
 md ~\vimfiles\autoload
 
 Invoke-WebRequest -OutFile ~\vimfiles\autoload\plug.vim
