@@ -297,7 +297,7 @@ endif
 
 function! s:err(msg)
   echohl ErrorMsg
-  echom a:msg
+  echom '[vim-plug] '.a:msg
   echohl None
   return 0
 endfunction
