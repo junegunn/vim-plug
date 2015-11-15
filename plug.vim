@@ -175,11 +175,14 @@ function! plug#end()
             call s:assoc(lod.map, cmd, name)
           endif
           call add(s:triggers[name].map, cmd)
-        elseif cmd =~ '^[A-Z]'
+        elseif cmd =~# '^[A-Z]'
           if exists(':'.cmd) != 2
             call s:assoc(lod.cmd, cmd, name)
           endif
           call add(s:triggers[name].cmd, cmd)
+        else
+          call s:err('Invalid `on` option: '.cmd.
+          \ '. Should start with an uppercase letter or `<Plug>`.')
         endif
       endfor
     endif
