@@ -756,6 +756,28 @@ Execute (Using Funcref):
   Assert filereadable(g:plugs['vim-pseudocl'].dir.'/vim-pseudoclunchanged13'),
     \ 'vim-pseudocl/vim-pseudoclunchanged13 should exist'
 
+Execute (Post-update hook output; success and failure):
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align', { 'do': 'xxx-non-existent-command-xxx' }
+  Plug 'junegunn/vim-pseudocl',   { 'do': 'true' }
+  call plug#end()
+
+  silent PlugInstall! 1
+  AssertEqual '- Post-update hook for vim-pseudocl ... OK', getline(5)
+  AssertEqual 'x Post-update hook for vim-easy-align ... Exit status: 127', getline(6)
+  q
+
+Execute (Post-update hook output; invalid type or funcref):
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align', { 'do': 1 }
+  Plug 'junegunn/vim-pseudocl',   { 'do': function('call') }
+  call plug#end()
+
+  silent PlugInstall! 1
+  AssertEqual 'x Post-update hook for vim-pseudocl ... Vim(call):E119: Not enough arguments for function: call', getline(5)
+  AssertEqual 'x Post-update hook for vim-easy-align ... Invalid hook type', getline(6)
+  q
+
 Execute (Should not run when failed to update):
   call plug#begin()
   Plug 'junegunn/vim-easy-align', { 'do': 'touch failed'     }

@@ -656,6 +656,7 @@ function! s:do(pull, force, todo)
     if a:force || installed || updated
       execute 'cd' s:esc(spec.dir)
       call append(3, '- Post-update hook for '. name .' ... ')
+      let error = ''
       let type = type(spec.do)
       if type == s:TYPE.string
         try
@@ -664,21 +665,23 @@ function! s:do(pull, force, todo)
           let g:_plug_do = '!'.escape(spec.do, '#!%')
           execute "normal! :execute g:_plug_do\<cr>\<cr>"
         finally
-          let result = v:shell_error ? ('Exit status: '.v:shell_error) : 'Done!'
+          if v:shell_error
+            let error = 'Exit status: ' . v:shell_error
+          endif
           unlet g:_plug_do
         endtry
       elseif type == s:TYPE.funcref
         try
           let status = installed ? 'installed' : (updated ? 'updated' : 'unchanged')
           call spec.do({ 'name': name, 'status': status, 'force': a:force })
-          let result = 'Done!'
         catch
-          let result = 'Error: ' . v:exception
+          let error = v:exception
         endtry
       else
-        let result = 'Error: Invalid type!'
+        let error = 'Invalid hook type'
       endif
-      call setline(4, getline(4) . result)
+      call setline(4, empty(error) ? (getline(4) . 'OK')
+                                 \ : ('x' . getline(4)[1:] . error))
       cd -
     endif
   endfor
