@@ -687,6 +687,38 @@ function! s:do(pull, force, todo)
   endfor
 endfunction
 
+function! s:hash_match(a, b)
+  return stridx(a:a, a:b) == 0 || stridx(a:b, a:a) == 0
+endfunction
+
+function! s:checkout(plugs)
+  for [name, spec] in items(a:plugs)
+    let sha = spec.commit
+    call append(3, '- Checking out '.sha[:6].' of '.name.' ... ')
+    redraw
+
+    let error = []
+    let output = s:lines(s:system('git rev-parse HEAD', spec.dir))
+    if v:shell_error
+      let error = output
+    elseif !s:hash_match(sha, output[0])
+      let output = s:lines(s:system(
+            \ 'git fetch --depth 999999 && git checkout '.sha, spec.dir))
+      if v:shell_error
+        let error = output
+      endif
+    endif
+    if empty(error)
+      call setline(4, getline(4) . 'OK')
+    else
+      call setline(4, 'x'.getline(4)[1:] . 'Error')
+      for line in reverse(error)
+        call append(4, '    '.line)
+      endfor
+    endif
+  endfor
+endfunction
+
 function! s:finish(pull)
   let new_frozen = len(filter(keys(s:update.new), 'g:plugs[v:val].frozen'))
   if new_frozen
@@ -841,6 +873,7 @@ function! s:update_finish()
     let $GIT_TERMINAL_PROMPT = s:git_terminal_prompt
   endif
   if s:switch_in()
+    call s:checkout(filter(copy(s:update.all), 'has_key(v:val, "commit")'))
     call s:do(s:update.pull, s:update.force, filter(copy(s:update.all), 'has_key(v:val, "do")'))
     call s:finish(s:update.pull)
     call setline(1, 'Updated. Elapsed time: ' . split(reltimestr(reltime(s:update.start)))[0] . ' sec.')
@@ -995,8 +1028,8 @@ while 1 " Without TCO, Vim stack is bound to explode
   let merge = s:shellesc(has_tag ? spec.tag : 'origin/'.spec.branch)
 
   if !new
-    let [valid, msg] = s:git_valid(spec, 0)
-    if valid
+    let error = s:git_validate(spec, 0)
+    if empty(error)
       if pull
         let fetch_opt = (has_tag && !empty(globpath(spec.dir, '.git/shallow'))) ? '--depth 99999999' : ''
         call s:spawn(name,
@@ -1006,7 +1039,7 @@ while 1 " Without TCO, Vim stack is bound to explode
         let s:jobs[name] = { 'running': 0, 'result': 'Already installed', 'error': 0 }
       endif
     else
-      let s:jobs[name] = { 'running': 0, 'result': msg, 'error': 1 }
+      let s:jobs[name] = { 'running': 0, 'result': error, 'error': 1 }
     endif
   else
     call s:spawn(name,
@@ -1686,42 +1719,46 @@ function! s:system_chomp(...)
   return v:shell_error ? '' : substitute(ret, '\n$', '', '')
 endfunction
 
-function! s:git_valid(spec, check_branch)
-  let ret = 1
-  let msg = 'OK'
+function! s:git_validate(spec, check_branch)
+  let err = ''
   if isdirectory(a:spec.dir)
     let result = s:lines(s:system('git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url', a:spec.dir))
     let remote = result[-1]
     if v:shell_error
-      let msg = join([remote, 'PlugClean required.'], "\n")
-      let ret = 0
+      let err = join([remote, 'PlugClean required.'], "\n")
     elseif !s:compare_git_uri(remote, a:spec.uri)
-      let msg = join(['Invalid URI: '.remote,
+      let err = join(['Invalid URI: '.remote,
                     \ 'Expected:    '.a:spec.uri,
                     \ 'PlugClean required.'], "\n")
-      let ret = 0
+    elseif a:check_branch && has_key(a:spec, 'commit')
+      let result = s:lines(s:system('git rev-parse HEAD 2>&1', a:spec.dir))
+      let sha = result[-1]
+      if v:shell_error
+        let err = join(add(result, 'PlugClean required.'), "\n")
+      elseif !s:hash_match(sha, a:spec.commit)
+        let err = join([printf('Invalid HEAD (expected: %s, actual: %s)',
+                              \ a:spec.commit[:6], sha[:6]),
+                      \ 'PlugUpdate required.'], "\n")
+      endif
     elseif a:check_branch
       let branch = result[0]
       " Check tag
       if has_key(a:spec, 'tag')
         let tag = s:system_chomp('git describe --exact-match --tags HEAD 2>&1', a:spec.dir)
         if a:spec.tag !=# tag
-          let msg = printf('Invalid tag: %s (expected: %s). Try PlugUpdate.',
+          let err = printf('Invalid tag: %s (expected: %s). Try PlugUpdate.',
                 \ (empty(tag) ? 'N/A' : tag), a:spec.tag)
-          let ret = 0
         endif
       " Check branch
       elseif a:spec.branch !=# branch
-        let msg = printf('Invalid branch: %s (expected: %s). Try PlugUpdate.',
+        let err = printf('Invalid branch: %s (expected: %s). Try PlugUpdate.',
               \ branch, a:spec.branch)
-        let ret = 0
       endif
     endif
   else
-    let msg = 'Not found'
-    let ret = 0
+    let err = 'Not found'
   endif
-  return [ret, msg]
+  return err
 endfunction
 
 function! s:rm_rf(dir)
@@ -1739,7 +1776,7 @@ function! s:clean(force)
   let dirs = []
   let [cnt, total] = [0, len(g:plugs)]
   for [name, spec] in items(g:plugs)
-    if !s:is_managed(name) || s:git_valid(spec, 0)[0]
+    if !s:is_managed(name) || empty(s:git_validate(spec, 0))
       call add(dirs, spec.dir)
     endif
     let cnt += 1
@@ -1832,7 +1869,8 @@ function! s:status()
   for [name, spec] in items(g:plugs)
     if has_key(spec, 'uri')
       if isdirectory(spec.dir)
-        let [valid, msg] = s:git_valid(spec, 1)
+        let err = s:git_validate(spec, 1)
+        let [valid, msg] = [empty(err), empty(err) ? 'OK' : err]
       else
         let [valid, msg] = [0, 'Not found. Try PlugInstall.']
       endif
@@ -1948,7 +1986,7 @@ function! s:diff()
   redraw
 
   let cnt = 0
-  for [k, v] in items(g:plugs)
+  for [k, v] in filter(items(g:plugs), '!has_key(v:val[1], "commit")')
     if !isdirectory(v.dir) || !s:is_managed(k)
       continue
     endif
@@ -2007,7 +2045,7 @@ function! s:snapshot(...) abort
   redraw
 
   let dirs = sort(map(values(filter(copy(g:plugs),
-        \'has_key(v:val, "uri") && isdirectory(v:val.dir)')), 'v:val.dir'))
+        \'has_key(v:val, "uri") && !has_key(v:val, "commit") && isdirectory(v:val.dir)')), 'v:val.dir'))
   let anchor = line('$') - 1
   for dir in reverse(dirs)
     let sha = s:system_chomp('git rev-parse --short HEAD', dir)

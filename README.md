@@ -14,7 +14,7 @@ A minimalist Vim plugin manager.
 - Creates shallow clones to minimize disk space usage and download time
 - On-demand loading for [faster startup time][startup-time]
 - Can review and rollback updates
-- Branch/tag support
+- Branch/tag/commit support
 - Post-update hooks
 - Support for externally managed plugins
 
@@ -91,15 +91,15 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 
 ### `Plug` options
 
-| Option         | Description                                      |
-| -------------- | ------------------------------------------------ |
-| `branch`/`tag` | Branch or tag of the repository to use           |
-| `rtp`          | Subdirectory that contains Vim plugin            |
-| `dir`          | Custom directory for the plugin                  |
-| `do`           | Post-update hook (string or funcref)             |
-| `on`           | On-demand loading: Commands or `<Plug>`-mappings |
-| `for`          | On-demand loading: File types                    |
-| `frozen`       | Do not update unless explicitly specified        |
+| Option                  | Description                                      |
+| ----------------------- | ------------------------------------------------ |
+| `branch`/`tag`/`commit` | Branch/tag/commit of the repository to use       |
+| `rtp`                   | Subdirectory that contains Vim plugin            |
+| `dir`                   | Custom directory for the plugin                  |
+| `do`                    | Post-update hook (string or funcref)             |
+| `on`                    | On-demand loading: Commands or `<Plug>`-mappings |
+| `for`                   | On-demand loading: File types                    |
+| `frozen`                | Do not update unless explicitly specified        |
 
 ### Global options
 

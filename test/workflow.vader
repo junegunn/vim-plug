@@ -1210,3 +1210,51 @@ Execute (#221 Shallow-clone disabled by tag):
   Assert !filereadable('.git/shallow')
   cd -
 
+Execute (Commit hash support):
+  call plug#begin(g:temp_plugged)
+  Plug 'junegunn/goyo.vim',  { 'commit': 'ffffffff' }
+  Plug 'junegunn/vim-emoji', { 'commit': '9db7fcfee0d90dafdbcb7a32090c0a9085eb054a' }
+  call plug#end()
+  PlugUpdate
+  Log getline(1, '$')
+  AssertEqual ['x Checking out fffffff of goyo.vim ... Error',
+              \'    error: pathspec ''ffffffff'' did not match any file(s) known to git.',
+              \'- Checking out 9db7fcf of vim-emoji ... OK'], getline(5, 7)
+
+  let hash = system(printf('cd %s && git rev-parse HEAD', g:plugs['vim-emoji'].dir))[:-2]
+  AssertEqual '9db7fcfee0d90dafdbcb7a32090c0a9085eb054a', hash
+
+  " Validate error formatting
+  PlugStatus
+  Log getline(1, '$')
+  AssertEqual ['Finished. 1 error(s).',
+              \'[==]',
+              \'',
+              \'x goyo.vim:'], getline(1, 4)
+  Assert getline(5) =~ '    Invalid HEAD (expected: fffffff, actual: [0-9a-f]\{7})'
+  AssertEqual ['    PlugUpdate required.',
+              \'- vim-emoji: OK'], getline(6, '$')
+
+  " Plugins with commit option should not appear in PlugDiff output
+  PlugDiff
+  AssertEqual 'No updates.', getline(1)
+
+  " Nor in PlugSnapshot output
+  PlugSnapshot
+  AssertEqual 9, line('$')
+  q
+
+Execute (Commit hash support - cleared):
+  call plug#begin(g:temp_plugged)
+  Plug 'junegunn/goyo.vim'
+  Plug 'junegunn/vim-emoji'
+  call plug#end()
+
+  PlugInstall
+  let hash = system(printf('cd %s && git rev-parse HEAD', g:plugs['vim-emoji'].dir))[:-2]
+  AssertEqual '9db7fcfee0d90dafdbcb7a32090c0a9085eb054a', hash
+
+  PlugUpdate
+  let hash = system(printf('cd %s && git rev-parse HEAD', g:plugs['vim-emoji'].dir))[:-2]
+  AssertNotEqual '9db7fcfee0d90dafdbcb7a32090c0a9085eb054a', hash
+  q
