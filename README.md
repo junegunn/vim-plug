@@ -25,11 +25,22 @@ A minimalist Vim plugin manager.
 ### Installation
 
 [Download plug.vim](https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim)
-and put it in ~/.vim/autoload
+and put it in ~/.vim/autoload (UNIX) or ~/vimfiles/autoload (Windows).
+
+###### Unix
 
 ```sh
 curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+```
+
+###### Windows
+
+```powershell
+md ~\vimfiles\autoload
+
+$uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+(New-Object Net.WebClient).DownloadFile($uri, 'vimfiles\autoload\plug.vim')
 ```
 
 ### Usage
