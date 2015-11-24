@@ -1061,7 +1061,7 @@ endwhile
 endfunction
 
 function! s:update_python()
-let py_exe = has('python3') ? 'python3' : 'python'
+let py_exe = has('python') ? 'python' : 'python3'
 execute py_exe "<< EOF"
 """ Due to use of signals this function is POSIX only. """
 import datetime
@@ -1090,14 +1090,9 @@ G_CLONE_OPT = vim.eval('s:clone_opt')
 G_PROGRESS = vim.eval('s:progress_opt(1)')
 G_LOG_PROB = 1.0 / int(vim.eval('s:update.threads'))
 G_STOP = thr.Event()
-G_THREADS = {}
 
 class PlugError(Exception):
-  def __init__(self, msg):
-    self._msg = msg
-  @property
-  def msg(self):
-    return self._msg
+  pass
 class CmdTimedOut(PlugError):
   pass
 class CmdFailed(PlugError):
@@ -1288,7 +1283,7 @@ class Plugin(object):
         with self.lock:
           thread_vim_command("let s:update.new['{0}'] = 1".format(self.name))
     except PlugError as exc:
-      self.write(Action.ERROR, self.name, exc.msg)
+      self.write(Action.ERROR, self.name, str(exc))
     except KeyboardInterrupt:
       G_STOP.set()
       self.write(Action.ERROR, self.name, ['Interrupted!'])
@@ -1371,10 +1366,6 @@ class PlugThread(thr.Thread):
         work_q.task_done()
     except queue.Empty:
       pass
-    finally:
-      global G_THREADS
-      with lock:
-        del G_THREADS[thr.current_thread().name]
 
 class RefreshThread(thr.Thread):
   def __init__(self, lock):
@@ -1428,17 +1419,16 @@ def main():
   for work in plugs.items():
     work_q.put(work)
 
-  global G_THREADS
+  start_cnt = thr.active_count()
   for num in range(nthreads):
     tname = 'PlugT-{0:02}'.format(num)
     thread = PlugThread(tname, (buf_q, work_q, lock))
     thread.start()
-    G_THREADS[tname] = thread
   if mac_gui:
     rthread = RefreshThread(lock)
     rthread.start()
 
-  while not buf_q.empty() or len(G_THREADS) != 0:
+  while not buf_q.empty() or thr.active_count() != start_cnt:
     try:
       action, name, msg = buf_q.get(True, 0.25)
       buf.write(action, name, msg)
