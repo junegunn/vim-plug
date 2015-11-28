@@ -25,7 +25,7 @@ A minimalist Vim plugin manager.
 ### Installation
 
 [Download plug.vim](https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim)
-and put it in ~/.vim/autoload (UNIX) or ~/vimfiles/autoload (Windows).
+and put it in the "autoload" directory.
 
 ###### Unix
 
