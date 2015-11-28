@@ -1283,7 +1283,7 @@ class Plugin(object):
         with self.lock:
           thread_vim_command("let s:update.new['{0}'] = 1".format(self.name))
     except PlugError as exc:
-      self.write(Action.ERROR, self.name, str(exc))
+      self.write(Action.ERROR, self.name, [str(exc)])
     except KeyboardInterrupt:
       G_STOP.set()
       self.write(Action.ERROR, self.name, ['Interrupted!'])

@@ -85,13 +85,26 @@ DOC
   cd "$BASE"
 }
 
+select_vim() {
+  local vim=/usr/bin/vim
+  if [ -n "$DEPS" ] && [ -e "${DEPS}/bin/vim" ]; then
+    vim="${DEPS}/bin/vim"
+  elif [ -e "/usr/local/bin/vim" ]; then
+    vim=/usr/local/bin/vim
+  fi
+  echo $vim
+}
+
 clone_repos
 prepare
+
+VIM=$(select_vim)
+echo "Selected Vim: $VIM"
 if [ "$1" = '!' ]; then
-  /usr/local/bin/vim -Nu /tmp/mini-vimrc -c 'Vader! test.vader' > /dev/null &&
+  $VIM -Nu /tmp/mini-vimrc -c 'Vader! test.vader' > /dev/null &&
   prepare &&
-  /usr/local/bin/vim -Nu /tmp/mini-vimrc -c 'let g:plug_threads = 1 | Vader! test.vader' > /dev/null
+  $VIM -Nu /tmp/mini-vimrc -c 'let g:plug_threads = 1 | Vader! test.vader' > /dev/null
 else
-  /usr/local/bin/vim -Nu /tmp/mini-vimrc -c 'Vader test.vader'
+  $VIM -Nu /tmp/mini-vimrc -c 'Vader test.vader'
 fi
 
