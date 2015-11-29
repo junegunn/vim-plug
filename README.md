@@ -47,7 +47,7 @@ curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs \
 md ~\vimfiles\autoload
 
 $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
-(New-Object Net.WebClient).DownloadFile($uri, 'vimfiles\autoload\plug.vim')
+(New-Object Net.WebClient).DownloadFile($uri, (Resolve-Path ~\vimfiles\autoload\plug.vim))
 ```
 
 ### Usage
