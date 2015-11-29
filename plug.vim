@@ -611,7 +611,7 @@ function! s:prepare()
     silent %d _
   else
     call s:new_window()
-    nnoremap <silent> <buffer> q  :if b:plug_preview==1<bar>pc<bar>endif<bar>echo<bar>q<cr>
+    nnoremap <silent> <buffer> q  :if b:plug_preview==1<bar>pc<bar>endif<bar>bd<cr>
     nnoremap <silent> <buffer> R  :silent! call <SID>retry()<cr>
     nnoremap <silent> <buffer> D  :PlugDiff<cr>
     nnoremap <silent> <buffer> S  :PlugStatus<cr>
