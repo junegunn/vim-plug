@@ -761,7 +761,7 @@ endfunction
 function! s:update_impl(pull, force, args) abort
   let args = copy(a:args)
   let threads = (len(args) > 0 && args[-1] =~ '^[1-9][0-9]*$') ?
-                  \ remove(args, -1) : get(g:, 'plug_threads', s:is_win ? 1 : 16)
+                  \ remove(args, -1) : get(g:, 'plug_threads', 16)
 
   let managed = filter(copy(g:plugs), 's:is_managed(v:key)')
   let todo = empty(args) ? filter(managed, '!v:val.frozen || !isdirectory(v:val.dir)') :
@@ -798,9 +798,8 @@ function! s:update_impl(pull, force, args) abort
     echohl None
   endif
 
-  let python = (has('python') || has('python3')) && !s:is_win && !has('win32unix')
-      \ && (!s:nvim || has('vim_starting'))
-  let ruby = has('ruby') && !s:nvim && (v:version >= 703 || v:version == 702 && has('patch374'))
+  let python = (has('python') || has('python3')) && (!s:nvim || has('vim_starting'))
+  let ruby = has('ruby') && !s:nvim && (v:version >= 703 || v:version == 702 && has('patch374')) && !(s:is_win && has('gui_running'))
 
   let s:update = {
     \ 'start':   reltime(),
@@ -1069,7 +1068,6 @@ endfunction
 function! s:update_python()
 let py_exe = has('python') ? 'python' : 'python3'
 execute py_exe "<< EOF"
-""" Due to use of signals this function is POSIX only. """
 import datetime
 import functools
 import os
@@ -1096,6 +1094,7 @@ G_CLONE_OPT = vim.eval('s:clone_opt')
 G_PROGRESS = vim.eval('s:progress_opt(1)')
 G_LOG_PROB = 1.0 / int(vim.eval('s:update.threads'))
 G_STOP = thr.Event()
+G_IS_WIN = vim.eval('s:is_win') == '1'
 
 class PlugError(Exception):
   def __init__(self, msg):
@@ -1110,10 +1109,9 @@ class Action(object):
   INSTALL, UPDATE, ERROR, DONE = ['+', '*', 'x', '-']
 
 class Buffer(object):
-  def __init__(self, lock, num_plugs, is_pull, is_win):
+  def __init__(self, lock, num_plugs, is_pull):
     self.bar = ''
     self.event = 'Updating' if is_pull else 'Installing'
-    self.is_win = is_win
     self.lock = lock
     self.maxy = int(vim.eval('winheight(".")'))
     self.num_plugs = num_plugs
@@ -1141,8 +1139,7 @@ class Buffer(object):
 
     with self.lock:
       vim.command('normal! 2G')
-      if not self.is_win:
-        vim.command('redraw')
+      vim.command('redraw')
 
   def write(self, action, name, lines):
     first, rest = lines[0], lines[1:]
@@ -1224,9 +1221,11 @@ class Command(object):
 
     try:
       tfile = tempfile.NamedTemporaryFile(mode='w+b')
+      preexec_fn = not G_IS_WIN and os.setsid or None
       self.proc = subprocess.Popen(self.cmd, stdout=tfile,
-                                   stderr=subprocess.STDOUT, shell=True,
-                                   preexec_fn=os.setsid)
+                                   stderr=subprocess.STDOUT,
+                                   stdin=subprocess.PIPE, shell=True,
+                                   preexec_fn=preexec_fn)
       thrd = thr.Thread(target=(lambda proc: proc.wait()), args=(self.proc,))
       thrd.start()
 
@@ -1244,7 +1243,7 @@ class Command(object):
 
         if first_line or random.random() < G_LOG_PROB:
           first_line = False
-          line = nonblock_read(tfile.name)
+          line = '' if G_IS_WIN else nonblock_read(tfile.name)
           if line:
             self.callback([line])
 
@@ -1268,7 +1267,10 @@ class Command(object):
   def terminate(self):
     """ Terminate process and cleanup. """
     if self.alive:
-      os.killpg(self.proc.pid, signal.SIGTERM)
+      if G_IS_WIN:
+        os.kill(self.proc.pid, signal.SIGINT)
+      else:
+        os.killpg(self.proc.pid, signal.SIGTERM)
     self.clean()
 
 class Plugin(object):
@@ -1419,10 +1421,9 @@ def main():
   nthreads = int(vim.eval('s:update.threads'))
   plugs = vim.eval('s:update.todo')
   mac_gui = vim.eval('s:mac_gui') == '1'
-  is_win = vim.eval('s:is_win') == '1'
 
   lock = thr.Lock()
-  buf = Buffer(lock, len(plugs), G_PULL, is_win)
+  buf = Buffer(lock, len(plugs), G_PULL)
   buf_q, work_q = queue.Queue(), queue.Queue()
   for work in plugs.items():
     work_q.put(work)
@@ -1479,16 +1480,20 @@ function! s:update_ruby()
 
   def killall pid
     pids = [pid]
-    unless `which pgrep 2> /dev/null`.empty?
-      children = pids
-      until children.empty?
-        children = children.map { |pid|
-          `pgrep -P #{pid}`.lines.map { |l| l.chomp }
-        }.flatten
-        pids += children
+    if /mswin|mingw|bccwin/ =~ RUBY_PLATFORM
+      pids.each { |pid| Process.kill 'INT', pid.to_i rescue nil }
+    else
+      unless `which pgrep 2> /dev/null`.empty?
+        children = pids
+        until children.empty?
+          children = children.map { |pid|
+            `pgrep -P #{pid}`.lines.map { |l| l.chomp }
+          }.flatten
+          pids += children
+        end
       end
+      pids.each { |pid| Process.kill 'TERM', pid.to_i rescue nil }
     end
-    pids.each { |pid| Process.kill 'TERM', pid.to_i rescue nil }
   end
 
   require 'thread'
@@ -1514,7 +1519,7 @@ function! s:update_ruby()
     $curbuf[1] = "#{pull ? 'Updating' : 'Installing'} plugins (#{cnt}/#{tot})"
     $curbuf[2] = '[' + bar.ljust(tot) + ']'
     VIM::command('normal! 2G')
-    VIM::command('redraw') unless iswin
+    VIM::command('redraw')
   }
   where = proc { |name| (1..($curbuf.length)).find { |l| $curbuf[l] =~ /^[-+x*] #{name}:/ } }
   log   = proc { |name, result, type|
