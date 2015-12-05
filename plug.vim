@@ -903,7 +903,13 @@ function! s:job_handler(job_id, data, event) abort
   endif
 
   if a:event == 'stdout'
-    let self.result .= substitute(s:to_s(a:data), '[\r\n]', '', 'g') . "\n"
+    let complete = empty(a:data[-1])
+    let lines = map(filter(a:data, 'len(v:val) > 0'), 'split(v:val, "[\r\n]")[-1]')
+    call extend(self.lines, lines)
+    let self.result = join(self.lines, "\n")
+    if !complete
+      call remove(self.lines, -1)
+    endif
     " To reduce the number of buffer updates
     let self.tick = get(self, 'tick', -1) + 1
     if self.tick % len(s:jobs) == 0
@@ -920,7 +926,7 @@ function! s:job_handler(job_id, data, event) abort
 endfunction
 
 function! s:spawn(name, cmd, opts)
-  let job = { 'name': a:name, 'running': 1, 'error': 0, 'result': '',
+  let job = { 'name': a:name, 'running': 1, 'error': 0, 'lines': [], 'result': '',
             \ 'new': get(a:opts, 'new', 0),
             \ 'on_stdout': function('s:job_handler'),
             \ 'on_exit' : function('s:job_handler'),
