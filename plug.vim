@@ -1222,7 +1222,7 @@ class Command(object):
     try:
       tfile = tempfile.NamedTemporaryFile(mode='w+b')
       preexec_fn = not G_IS_WIN and os.setsid or None
-      self.proc = subprocess.Popen(self.cmd, cwd=self.cmd_dir, stdout=tfile,
+      self.proc = subprocess.Popen(self.cmd, stdout=tfile,
                                    stderr=subprocess.STDOUT,
                                    stdin=subprocess.PIPE, shell=True,
                                    preexec_fn=preexec_fn)
