@@ -1631,8 +1631,8 @@ function! s:update_ruby()
           exists = File.directory? dir
           ok, result =
             if exists
-              dir = iswin ? dir : esc(dir)
-              ret, data = bt.call "#{cd} #{dir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url", nil, nil, nil
+              chdir = "#{cd} #{iswin ? dir : esc(dir)}"
+              ret, data = bt.call "#{chdir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url", nil, nil, nil
               current_uri = data.lines.to_a.last
               if !ret
                 if data =~ /^Interrupted|^Timeout/
@@ -1648,7 +1648,7 @@ function! s:update_ruby()
                 if pull
                   log.call name, 'Updating ...', :update
                   fetch_opt = (tag && File.exist?(File.join(dir, '.git/shallow'))) ? '--depth 99999999' : ''
-                  bt.call "#{cd} #{dir} && git fetch #{fetch_opt} #{progress} 2>&1 && git checkout -q #{checkout} 2>&1 && git merge --ff-only #{merge} 2>&1 && #{subm}", name, :update, nil
+                  bt.call "#{chdir} && git fetch #{fetch_opt} #{progress} 2>&1 && git checkout -q #{checkout} 2>&1 && git merge --ff-only #{merge} 2>&1 && #{subm}", name, :update, nil
                 else
                   [true, skip]
                 end

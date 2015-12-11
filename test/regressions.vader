@@ -263,3 +263,26 @@ Execute (#236: Plugin removed from &rtp when .vimrc is reloaded):
   Plug 'junegunn/vim-easy-align', { 'on': 'EasyAlign' }
   call plug#end()
   Assert &rtp =~ '/vim-easy-align', 'Plugin should still be in &rtp'
+
+**********************************************************************
+Execute (#350: Ruby installer failed to unshallow tagged plugin on update):
+  call plug#begin('/tmp/plugged')
+  call plug#end()
+  PlugClean!
+
+  " Shallow clone. We should have at least 2 plugins to enable parallel installer.
+  call plug#begin('/tmp/plugged')
+  Plug 'junegunn/vim-easy-align'
+  Plug 'junegunn/seoul256.vim'
+  call plug#end()
+  PlugUpdate
+  Assert filereadable(g:plugs['vim-easy-align'].dir.'/.git/shallow')
+
+  " Now unshallowed
+  call plug#begin('/tmp/plugged')
+  Plug 'junegunn/vim-easy-align', { 'tag': '2.9.0' }
+  Plug 'junegunn/seoul256.vim'
+  call plug#end()
+  PlugUpdate
+  Assert !filereadable(g:plugs['vim-easy-align'].dir.'/.git/shallow')
+  q
