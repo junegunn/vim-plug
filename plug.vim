@@ -1305,6 +1305,8 @@ class Plugin(object):
 
   def install(self):
     target = self.args['dir']
+    if target[-1] == '\\':
+      target = target[0:-1]
 
     def clean(target):
       def _clean():
