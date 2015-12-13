@@ -1168,10 +1168,12 @@ class Buffer(object):
       pass
 
 class Command(object):
+  CD = 'cd /d' if G_IS_WIN else 'cd'
+
   def __init__(self, cmd, cmd_dir=None, timeout=60, cb=None, clean=None):
     self.cmd = cmd
     if cmd_dir:
-      self.cmd = 'cd {0} && {1}'.format(cmd_dir, self.cmd)
+      self.cmd = '{0} {1} && {2}'.format(Command.CD, cmd_dir, self.cmd)
     self.timeout = timeout
     self.callback = cb if cb else (lambda msg: None)
     self.clean = clean if clean else (lambda: None)
