@@ -352,6 +352,24 @@ Execute (Reuse Plug window in another tab):
   q
   unlet tabnr
 
+Execute (contd. PlugDiff should not show inverted history):
+  " Additional PlugUpdate to clear diff
+  PlugUpdate
+  PlugDiff
+  Log getline(1, '$')
+
+  " Checking out older revisions
+  for repo in values(g:plugs)
+    call system(printf('cd %s && git reset HEAD^ --hard', shellescape(repo.dir)))
+  endfor
+  unlet repo
+
+  " PlugDiff should not report the changes i.e. git log --left-only
+  PlugDiff
+  Log getline(1, '$')
+  AssertEqual 'No updates.', getline(1)
+  q
+
 **********************************************************************
 ~ On-demand loading / Partial installation/update ~
 **********************************************************************

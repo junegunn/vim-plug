@@ -1998,7 +1998,7 @@ function! s:diff()
       continue
     endif
 
-    let diff = s:system_chomp('git log --pretty=format:"%h %s (%cr)" "HEAD...HEAD@{1}"', v.dir)
+    let diff = s:system_chomp('git log --left-only --pretty=format:"%h %s (%cr)" "HEAD...HEAD@{1}"', v.dir)
     if !empty(diff)
       call append(1, '')
       call append(2, '- '.k.':')
