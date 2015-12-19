@@ -50,7 +50,7 @@ $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 (New-Object Net.WebClient).DownloadFile($uri, (Resolve-Path ~\vimfiles\autoload\plug.vim))
 ```
 
-##### Git
+###### Git
 ```
 git clone 'https://github.com/frtmelody/vim-plug.git' ~/.vim/plugged/vim-plug'
 ```
