@@ -50,6 +50,11 @@ $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 (New-Object Net.WebClient).DownloadFile($uri, (Resolve-Path ~\vimfiles\autoload\plug.vim))
 ```
 
+##### Git
+```
+git clone 'https://github.com/frtmelody/vim-plug.git' ~/.vim/plugged/vim-plug'
+```
+
 ### Usage
 
 Add a vim-plug section to your .vimrc:
@@ -61,6 +66,7 @@ Add a vim-plug section to your .vimrc:
 #### Example
 
 ```vim
+set rtp+= ~/.vim/plugged/vim-plug
 call plug#begin('~/.vim/plugged')
 
 " Make sure you use single quotes
