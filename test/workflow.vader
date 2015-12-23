@@ -262,12 +262,16 @@ Execute (PlugUpdate only to find out plugins are up-to-date, D key to check):
   PlugUpdate
   AssertExpect 'Already up-to-date', 2
   normal D
-  AssertEqual 'No updates.', getline(1)
+  AssertEqual '0 plugin(s) updated.', getline(1)
   q
 
 Execute (PlugDiff - 'No updates.'):
   PlugDiff
-  AssertEqual 'No updates.', getline(1)
+  Log getline(1, '$')
+  AssertEqual '0 plugin(s) updated.', getline(1)
+  Assert empty(mapcheck('o'))
+  Assert empty(mapcheck('X'))
+  Assert empty(mapcheck("\<cr>"))
   q
 
 Execute (New commits on remote, PlugUpdate, then PlugDiff):
@@ -281,7 +285,7 @@ Execute (New commits on remote, PlugUpdate, then PlugDiff):
 
   " Now we have updates
   normal D
-  AssertEqual 'Last update:', getline(1)
+  AssertEqual '2 plugin(s) updated.', getline(1)
 
   " Preview commit
   silent! wincmd P
@@ -367,7 +371,58 @@ Execute (contd. PlugDiff should not show inverted history):
   " PlugDiff should not report the changes i.e. git log --left-only
   PlugDiff
   Log getline(1, '$')
-  AssertEqual 'No updates.', getline(1)
+  AssertEqual '0 plugin(s) updated.', getline(1)
+  q
+
+**********************************************************************
+~ PlugDiff to see the pending changes
+**********************************************************************
+
+Execute (PlugDiff):
+  call plug#begin()
+  call plug#end()
+  PlugClean!
+
+  call plug#begin()
+  Plug 'file://'.expand('$PLUG_FIXTURES').'/xxx'
+  Plug 'file://'.expand('$PLUG_FIXTURES').'/yyy'
+  call plug#end()
+  PlugInstall
+  Log getline(1, '$')
+
+  call system('cd "$PLUG_FIXTURES/xxx" && git commit --allow-empty -m update-xxx && git tag -f xxx')
+  call system('cd "$PLUG_FIXTURES/yyy" && git tag -f yyy && git commit --allow-empty -m update-yyy && git tag -f zzz')
+
+  let g:plugs.yyy.tag = 'yyy'
+  PlugUpdate
+  Log getline(1, '$')
+
+  PlugDiff
+  " 1 plugin(s) updated. 1 plugin(s) have pending updates.
+  " [==]
+  "
+  " Last update:
+  " ------------
+  "
+  " - xxx:
+  "   166cfff (tag: xxx) update-xxx (1 second ago)
+  "
+  " Pending updates:
+  " ----------------
+  "
+  " - yyy: (tag: yyy)
+  "   c0a064b (tag: zzz) update-yyy (1 second ago)
+  "
+  Log getline(1, '$')
+  AssertEqual 15, line('$')
+  AssertEqual '1 plugin(s) updated. 1 plugin(s) have pending updates.', getline(1)
+  AssertEqual '[==]', getline(2)
+  AssertEqual '- yyy: (tag: yyy)', getline(13)
+  Assert getline(8) =~ '(tag: xxx)'
+  Assert getline(14) =~ '(tag: zzz)'
+  Assert !empty(mapcheck('o'))
+  Assert !empty(mapcheck('X'))
+  Assert !empty(mapcheck("\<cr>"))
   q
 
 **********************************************************************
@@ -1258,9 +1313,13 @@ Execute (Commit hash support):
   AssertEqual ['    PlugUpdate required.',
               \'- vim-emoji: OK'], getline(6, '$')
 
-  " Plugins with commit option should not appear in PlugDiff output
+  " PlugDiff should show pending updates for vim-emoji
   PlugDiff
-  AssertEqual 'No updates.', getline(1)
+  Log getline(1, '$')
+  AssertEqual '0 plugin(s) updated. 1 plugin(s) have pending updates.', getline(1)
+  Assert !empty(mapcheck('o'))
+  Assert empty(mapcheck('X'))
+  Assert !empty(mapcheck("\<cr>"))
 
   " Nor in PlugSnapshot output
   PlugSnapshot

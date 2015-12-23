@@ -104,7 +104,7 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 | `PlugClean[!]`                      | Remove unused directories (bang version will clean without prompt) |
 | `PlugUpgrade`                       | Upgrade vim-plug itself                                            |
 | `PlugStatus`                        | Check the status of plugins                                        |
-| `PlugDiff`                          | See the updated changes from the previous PlugUpdate               |
+| `PlugDiff`                          | Examine changes from the previous update and the pending changes   |
 | `PlugSnapshot[!] [output path]`     | Generate script for restoring the current snapshot of the plugins  |
 
 ### `Plug` options

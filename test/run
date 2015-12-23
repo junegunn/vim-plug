@@ -18,7 +18,7 @@ clone() {
   fi
 }
 
-clone_repos() {
+clone_repos() (
   cd /tmp
   mkdir -p junegunn vim-scripts jg
   for repo in vader.vim goyo.vim rust.vim seoul256.vim vim-easy-align vim-fnr \
@@ -31,11 +31,9 @@ clone_repos() {
 
   clone junegunn/vim-emoji jg/vim-emoji
   cd junegunn/seoul256.vim && git checkout no-t_co && git checkout master
+)
 
-  cd "$BASE"
-}
-
-make_dirs() {
+make_dirs() (
   rm -rf "$PLUG_FIXTURES/$1"
   mkdir -p "$PLUG_FIXTURES/$1"
   cd "$PLUG_FIXTURES/$1"
@@ -51,9 +49,13 @@ make_dirs() {
     call add(g:total_order, s:name)
 EOF
   done
+)
 
-  cd "$BASE"
-}
+gitinit() (
+  cd "$PLUG_FIXTURES/$1"
+  git init
+  git commit -m 'commit' --allow-empty
+)
 
 prepare() {
   make_dirs xxx/ xxx
@@ -62,9 +64,11 @@ prepare() {
   cat > "$PLUG_FIXTURES/xxx/doc/xxx.txt" << DOC
 hello *xxx*
 DOC
+  gitinit xxx
 
   make_dirs yyy/ yyy
   make_dirs yyy/after yyy
+  gitinit yyy
 
   make_dirs z1/ z1
   make_dirs z2/ z2
