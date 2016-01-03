@@ -170,7 +170,7 @@ Plug 'junegunn/vader.vim',  { 'on': 'Vader', 'for': 'vader' }
 
 " Code to execute when the plugin is loaded on demand
 Plug 'Valloric/YouCompleteMe', { 'for': 'cpp' }
-autocmd! User YouCompleteMe call youcompleteme#Enable()
+autocmd! User YouCompleteMe if !has('vim_starting') | call youcompleteme#Enable() | endif
 ```
 
 `for` option is generally not needed as most plugins for specific file types
