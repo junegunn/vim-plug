@@ -52,7 +52,7 @@ $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 
 ### Usage
 
-Add a vim-plug section to your .vimrc:
+Add a vim-plug section to your `~/.vimrc` (or `~/.config/nvim/init.vim` for Neovim):
 
 1. Begin the section with `plug#begin()`
 1. List the plugins with `Plug` commands
