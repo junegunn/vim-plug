@@ -56,7 +56,7 @@ Add a vim-plug section to your `~/.vimrc` (or `~/.config/nvim/init.vim` for Neov
 
 1. Begin the section with `plug#begin()`
 1. List the plugins with `Plug` commands
-1. `plug#end()` to add the plugins to `&runtimepath`
+1. `plug#end()` to update `&runtimepath` and initialize plugin system
 
 #### Example
 
