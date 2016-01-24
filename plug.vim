@@ -645,7 +645,9 @@ function! s:prepare()
   silent! unmap <buffer> X
   setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap cursorline modifiable
   setf vim-plug
-  call s:syntax()
+  if exists('g:syntax_on')
+    call s:syntax()
+  endif
 endfunction
 
 function! s:assign_name()
