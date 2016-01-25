@@ -113,6 +113,7 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 | `branch`/`tag`/`commit` | Branch/tag/commit of the repository to use       |
 | `rtp`                   | Subdirectory that contains Vim plugin            |
 | `dir`                   | Custom directory for the plugin                  |
+| `as`                    | Use different name for the plugin                |
 | `do`                    | Post-update hook (string or funcref)             |
 | `on`                    | On-demand loading: Commands or `<Plug>`-mappings |
 | `for`                   | On-demand loading: File types                    |

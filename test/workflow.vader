@@ -1341,3 +1341,19 @@ Execute (Commit hash support - cleared):
   let hash = system(printf('cd %s && git rev-parse HEAD', g:plugs['vim-emoji'].dir))[:-2]
   AssertNotEqual '9db7fcfee0d90dafdbcb7a32090c0a9085eb054a', hash
   q
+
+Execute (#371 - 'as' option):
+  call plug#begin()
+  Plug 'jg/goyo.vim'
+  Plug 'junegunn/goyo.vim', {'as': 'yogo'}
+  call plug#end()
+  AssertEqual ['goyo.vim', 'yogo'], sort(keys(g:plugs))
+  Log g:plugs
+  Assert g:plugs.yogo.dir =~# '/yogo/$'
+
+  call plug#begin()
+  Plug 'junegunn/goyo.vim', {'as': 'yogo', 'dir': '/tmp/gogo'}
+  call plug#end()
+  AssertEqual ['yogo'], sort(keys(g:plugs))
+  AssertEqual '/tmp/gogo/', g:plugs.yogo.dir
+

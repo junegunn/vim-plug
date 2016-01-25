@@ -450,9 +450,9 @@ function! s:add(repo, ...)
 
   try
     let repo = s:trim(a:repo)
-    let name = fnamemodify(repo, ':t:s?\.git$??')
-    let spec = extend(s:infer_properties(name, repo),
-                    \ a:0 == 1 ? s:parse_options(a:1) : s:base_spec)
+    let opts = a:0 == 1 ? s:parse_options(a:1) : s:base_spec
+    let name = get(opts, 'as', fnamemodify(repo, ':t:s?\.git$??'))
+    let spec = extend(s:infer_properties(name, repo), opts)
     if !has_key(g:plugs, name)
       call add(g:plugs_order, name)
     endif
