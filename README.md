@@ -49,6 +49,13 @@ $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 (New-Object Net.WebClient).DownloadFile($uri, $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("~\vimfiles\autoload\plug.vim"))
 ```
 
+#### Install the documentation (optionally)
+
+```sh
+vim -u NONE -N -S plug_extract_doc.vim
+```
+Read the help at `:h plug.txt`
+
 ### Usage
 
 Add a vim-plug section to your `~/.vimrc` (or `~/.config/nvim/init.vim` for Neovim):
