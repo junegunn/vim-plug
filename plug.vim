@@ -115,7 +115,7 @@ endfunction
 function! s:define_commands()
   command! -nargs=+ -bar Plug call s:add(<args>)
   if !executable('git')
-    return s:err('`git` executable not found. vim-plug requires git.')
+    return s:err('`git` executable not found. Most commands will not be available. To suppress this message, prepend `silent!` to `call plug#begin(...)`.')
   endif
   command! -nargs=* -bar -bang -complete=customlist,s:names PlugInstall call s:install(<bang>0, [<f-args>])
   command! -nargs=* -bar -bang -complete=customlist,s:names PlugUpdate  call s:update(<bang>0, [<f-args>])
