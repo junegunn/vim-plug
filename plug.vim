@@ -620,25 +620,32 @@ function! s:switch_out(...)
   endif
 endfunction
 
-function! s:prepare()
+function! s:finish_bindings()
+  nnoremap <silent> <buffer> R  :silent! call <SID>retry()<cr>
+  nnoremap <silent> <buffer> D  :PlugDiff<cr>
+  nnoremap <silent> <buffer> S  :PlugStatus<cr>
+  nnoremap <silent> <buffer> U  :call <SID>status_update()<cr>
+  xnoremap <silent> <buffer> U  :call <SID>status_update()<cr>
+  nnoremap <silent> <buffer> ]] :silent! call <SID>section('')<cr>
+  nnoremap <silent> <buffer> [[ :silent! call <SID>section('b')<cr>
+endfunction
+
+function! s:prepare(...)
   call s:job_abort()
   if s:switch_in()
-    silent %d _
-  else
-    call s:new_window()
-    nnoremap <silent> <buffer> q  :if b:plug_preview==1<bar>pc<bar>endif<bar>bd<cr>
-    nnoremap <silent> <buffer> R  :silent! call <SID>retry()<cr>
-    nnoremap <silent> <buffer> D  :PlugDiff<cr>
-    nnoremap <silent> <buffer> S  :PlugStatus<cr>
-    nnoremap <silent> <buffer> U  :call <SID>status_update()<cr>
-    xnoremap <silent> <buffer> U  :call <SID>status_update()<cr>
-    nnoremap <silent> <buffer> ]] :silent! call <SID>section('')<cr>
-    nnoremap <silent> <buffer> [[ :silent! call <SID>section('b')<cr>
-    let b:plug_preview = -1
-    let s:plug_tab = tabpagenr()
-    let s:plug_buf = winbufnr(0)
-    call s:assign_name()
+    normal q
   endif
+
+  call s:new_window()
+  nnoremap <silent> <buffer> q  :if b:plug_preview==1<bar>pc<bar>endif<bar>bd<cr>
+  if a:0 == 0
+    call s:finish_bindings()
+  endif
+  let b:plug_preview = -1
+  let s:plug_tab = tabpagenr()
+  let s:plug_buf = winbufnr(0)
+  call s:assign_name()
+
   silent! unmap <buffer> <cr>
   silent! unmap <buffer> L
   silent! unmap <buffer> o
@@ -757,6 +764,7 @@ function! s:finish(pull)
     call add(msgs, "Press 'D' to see the updated changes.")
   endif
   echo join(msgs, ' ')
+  call s:finish_bindings()
 endfunction
 
 function! s:retry()
@@ -831,7 +839,7 @@ function! s:update_impl(pull, force, args) abort
     \ 'fin':     0
   \ }
 
-  call s:prepare()
+  call s:prepare(1)
   call append(0, ['', ''])
   normal! 2G
   silent! redraw
@@ -842,7 +850,7 @@ function! s:update_impl(pull, force, args) abort
   " Python version requirement (>= 2.7)
   if python && !has('python3') && !ruby && !s:nvim && s:update.threads > 1
     redir => pyv
-    silent python import platform; print(platform.python_version())
+    silent python import platform; print platform.python_version()
     redir END
     let python = s:version_requirement(
           \ map(split(split(pyv)[0], '\.'), 'str2nr(v:val)'), [2, 6])
@@ -2019,8 +2027,12 @@ function! s:diff()
   let total = filter(copy(g:plugs), 's:is_managed(v:key) && isdirectory(v:val.dir)')
   call s:progress_bar(2, bar, len(total))
   for origin in [1, 0]
+    let plugs = reverse(sort(items(filter(copy(total), (origin ? '' : '!').'(has_key(v:val, "commit") || has_key(v:val, "tag"))'))))
+    if empty(plugs)
+      continue
+    endif
     call s:append_ul(2, origin ? 'Pending updates:' : 'Last update:')
-    for [k, v] in reverse(sort(items(filter(copy(total), (origin ? '' : '!').'(has_key(v:val, "commit") || has_key(v:val, "tag"))'))))
+    for [k, v] in plugs
       let range = origin ? '..origin/'.v.branch : 'HEAD@{1}..'
       let diff = s:system_chomp('git log --pretty=format:"%h%x01%d%x01%s%x01%cr" '.s:shellesc(range), v.dir)
       if !empty(diff)
