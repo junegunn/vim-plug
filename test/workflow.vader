@@ -935,12 +935,17 @@ Execute (Filetype-based on-demand loading):
   call ReloadPlug()
   call plug#begin()
   Plug '$PLUG_FIXTURES/xxx', { 'for': 'xxx' }
+  Plug '$PLUG_FIXTURES/yyy', { 'for': 'yyy' }
   call plug#end()
 
   AssertEqual ['xxx/ftdetect', 'xxx/after/ftdetect'], g:xxx
 
   setf xxx
   AssertEqual ['xxx/ftdetect', 'xxx/after/ftdetect', 'xxx/plugin', 'xxx/after/plugin', 'xxx/syntax', 'xxx/after/syntax', 'xxx/ftplugin', 'xxx/after/ftplugin', 'xxx/indent', 'xxx/after/indent', 'xxx/syntax', 'xxx/after/syntax'], g:xxx
+
+  " syntax/xxx.vim and after/syntax/xxx.vim should not be loaded (#410)
+  setf yyy
+  AssertEqual ['yyy/ftdetect', 'yyy/after/ftdetect', 'yyy/plugin', 'yyy/after/plugin'], g:yyy
 
 Before:
 
@@ -992,6 +997,8 @@ Execute (PlugStatus should not contain (not loaded)):
   q
 
 Execute (Load plugin from PlugStatus screen with L key in normal mode):
+  call ResetPlug()
+  unlet! g:yyy
   call plug#begin()
   Plug '$PLUG_FIXTURES/yyy', { 'on': [] }
   call plug#end()

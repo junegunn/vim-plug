@@ -411,7 +411,7 @@ function! s:remove_triggers(name)
   call remove(s:triggers, a:name)
 endfunction
 
-function! s:lod(names, types)
+function! s:lod(names, types, ...)
   for name in a:names
     call s:remove_triggers(name)
     let s:loaded[name] = 1
@@ -423,6 +423,9 @@ function! s:lod(names, types)
     for dir in a:types
       call s:source(rtp, dir.'/**/*.vim')
     endfor
+    for file in a:000
+      call s:source(rtp, file)
+    endfor
     if exists('#User#'.name)
       execute 'doautocmd User' name
     endif
@@ -430,7 +433,8 @@ function! s:lod(names, types)
 endfunction
 
 function! s:lod_ft(pat, names)
-  call s:lod(a:names, ['plugin', 'after/plugin', 'syntax', 'after/syntax'])
+  let syn = 'syntax/'.a:pat.'.vim'
+  call s:lod(a:names, ['plugin', 'after/plugin'], syn, 'after/'.syn)
   execute 'autocmd! PlugLOD FileType' a:pat
   if exists('#filetypeplugin#FileType')
     doautocmd filetypeplugin FileType
