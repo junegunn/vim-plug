@@ -49,6 +49,16 @@ $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 (New-Object Net.WebClient).DownloadFile($uri, $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("~\vimfiles\autoload\plug.vim"))
 ```
 
+### Keep up-to-date
+
+Add something like this to your plugin section:
+
+```sh
+Plug 'junegunn/vim-plug', {'do': 'cp ./plug.vim ../../autoload/'}
+```
+
+Now `vim-plug` keeps it self up-to-date.
+
 ### Usage
 
 Add a vim-plug section to your `~/.vimrc` (or `~/.config/nvim/init.vim` for Neovim):
