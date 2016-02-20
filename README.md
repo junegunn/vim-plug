@@ -49,6 +49,15 @@ $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 (New-Object Net.WebClient).DownloadFile($uri, $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("~\vimfiles\autoload\plug.vim"))
 ```
 
+### Getting Help
+
+- See the [requirements] page for debugging information & tested configurations.
+- See the [FAQ] for common problems and questions.
+- Create an [issue](https://github.com/junegunn/vim-plug/issues/new).
+
+[FAQ]: https://github.com/junegunn/vim-plug/wiki/faq
+[requirements]: https://github.com/junegunn/vim-plug/wiki/requirements
+
 ### Usage
 
 Add a vim-plug section to your `~/.vimrc` (or `~/.config/nvim/init.vim` for Neovim):
@@ -225,10 +234,6 @@ variable (or any Vimscript expression) as follows:
 let g:fzf_install = 'yes | ./install'
 Plug 'junegunn/fzf', { 'do': g:fzf_install }
 ```
-
-### FAQ/Troubleshooting
-
-See [FAQ/Troubleshooting](https://github.com/junegunn/vim-plug/wiki/faq).
 
 ### Articles
 
