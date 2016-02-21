@@ -248,7 +248,9 @@ function! plug#end()
   call s:reorg_rtp()
   filetype plugin indent on
   if has('vim_starting')
-    syntax enable
+    if has('syntax') && !exists('g:syntax_on')
+      syntax enable
+    end
   else
     call s:reload()
   endif
