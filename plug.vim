@@ -556,8 +556,10 @@ function! s:syntax()
   syn match plugTag /(tag: [^)]\+)/
   syn match plugInstall /\(^+ \)\@<=[^:]*/
   syn match plugUpdate /\(^* \)\@<=[^:]*/
-  syn match plugCommit /^  [0-9a-z]\{7} .*/ contains=plugRelDate,plugSha,plugTag
-  syn match plugSha /\(^  \)\@<=[0-9a-z]\{7}/ contained
+  syn match plugCommit /^  \X*[0-9a-z]\{7} .*/ contains=plugRelDate,plugEdge,plugTag
+  syn match plugEdge /^  \X\+$/
+  syn match plugEdge /^  \X*/ contained nextgroup=plugSha
+  syn match plugSha /[0-9a-z]\{7}/ contained
   syn match plugRelDate /([^)]*)$/ contained
   syn match plugNotLoaded /(not loaded)$/
   syn match plugError /^x.*/
@@ -581,6 +583,7 @@ function! s:syntax()
 
   hi def link plugError   Error
   hi def link plugRelDate Comment
+  hi def link plugEdge    PreProc
   hi def link plugSha     Identifier
   hi def link plugTag     Constant
 
@@ -2005,7 +2008,7 @@ function! s:preview_commit()
     let b:plug_preview = !s:is_preview_window_open()
   endif
 
-  let sha = matchstr(getline('.'), '\(^  \)\@<=[0-9a-z]\{7}')
+  let sha = matchstr(getline('.'), '^  \X*\zs[0-9a-z]\{7}')
   if empty(sha)
     return
   endif
@@ -2030,10 +2033,15 @@ function! s:section(flags)
 endfunction
 
 function! s:format_git_log(line)
-  let [sha, refs, subject, date] = split(a:line, nr2char(1))
+  let indent = '  '
+  let tokens = split(a:line, nr2char(1))
+  if len(tokens) != 5
+    return indent.a:line
+  endif
+  let [graph, sha, refs, subject, date] = tokens
   let tag = matchstr(refs, 'tag: [^,)]\+')
   let tag = empty(tag) ? ' ' : ' ('.tag.') '
-  return printf('  %s%s%s (%s)', sha, tag, subject, date)
+  return printf('%s%s%s%s%s (%s)', indent, graph, sha, tag, subject, date)
 endfunction
 
 function! s:append_ul(lnum, text)
@@ -2055,7 +2063,7 @@ function! s:diff()
     call s:append_ul(2, origin ? 'Pending updates:' : 'Last update:')
     for [k, v] in plugs
       let range = origin ? '..origin/'.v.branch : 'HEAD@{1}..'
-      let diff = s:system_chomp('git log --pretty=format:"%h%x01%d%x01%s%x01%cr" '.s:shellesc(range), v.dir)
+      let diff = s:system_chomp('git log --graph --color=never --pretty=format:"%x01%h%x01%d%x01%s%x01%cr" '.s:shellesc(range), v.dir)
       if !empty(diff)
         let ref = has_key(v, 'tag') ? (' (tag: '.v.tag.')') : has_key(v, 'commit') ? (' '.v.commit) : ''
         call append(5, extend(['', '- '.k.':'.ref], map(s:lines(diff), 's:format_git_log(v:val)')))
