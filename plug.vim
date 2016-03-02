@@ -2036,7 +2036,7 @@ function! s:format_git_log(line)
   let indent = '  '
   let tokens = split(a:line, nr2char(1))
   if len(tokens) != 5
-    return indent.a:line
+    return indent.substitute(a:line, '\s*$', '', '')
   endif
   let [graph, sha, refs, subject, date] = tokens
   let tag = matchstr(refs, 'tag: [^,)]\+')
