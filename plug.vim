@@ -149,10 +149,14 @@ function! s:to_s(v)
   return type(a:v) == s:TYPE.string ? a:v : join(a:v, "\n") . "\n"
 endfunction
 
+function! s:glob(from, pattern)
+  return s:lines(globpath(a:from, a:pattern))
+endfunction
+
 function! s:source(from, ...)
   let found = 0
   for pattern in a:000
-    for vim in s:lines(globpath(a:from, pattern))
+    for vim in s:glob(a:from, pattern)
       execute 'source' s:esc(vim)
       let found = 1
     endfor
@@ -428,11 +432,12 @@ function! s:lod(names, types, ...)
     for dir in a:types
       call s:source(rtp, dir.'/**/*.vim')
     endfor
-    for pat in a:000
-      if !s:source(rtp, pat)
-        execute 'runtime' pat
+    if a:0
+      if !s:source(rtp, a:1) && !empty(s:glob(rtp, a:2))
+        execute 'runtime' a:1
       endif
-    endfor
+      call s:source(rtp, a:2)
+    endif
     if exists('#User#'.name)
       execute 'doautocmd User' name
     endif
@@ -1736,7 +1741,7 @@ function! s:shellesc(arg)
 endfunction
 
 function! s:glob_dir(path)
-  return map(filter(s:lines(globpath(a:path, '**')), 'isdirectory(v:val)'), 's:dirpath(v:val)')
+  return map(filter(s:glob(a:path, '**'), 'isdirectory(v:val)'), 's:dirpath(v:val)')
 endfunction
 
 function! s:progress_bar(line, bar, total)
