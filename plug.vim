@@ -150,11 +150,14 @@ function! s:to_s(v)
 endfunction
 
 function! s:source(from, ...)
+  let found = 0
   for pattern in a:000
     for vim in s:lines(globpath(a:from, pattern))
       execute 'source' s:esc(vim)
+      let found = 1
     endfor
   endfor
+  return found
 endfunction
 
 function! s:assoc(dict, key, val)
@@ -426,7 +429,9 @@ function! s:lod(names, types, ...)
       call s:source(rtp, dir.'/**/*.vim')
     endfor
     for pat in a:000
-      execute 'runtime' pat
+      if !s:source(rtp, pat)
+        execute 'runtime' pat
+      endif
     endfor
     if exists('#User#'.name)
       execute 'doautocmd User' name
