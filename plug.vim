@@ -665,6 +665,10 @@ function! s:finish_bindings()
 endfunction
 
 function! s:prepare(...)
+  if empty(getcwd())
+    throw 'Invalid current working directory. Cannot proceed.'
+  endif
+
   call s:job_abort()
   if s:switch_in()
     normal q
