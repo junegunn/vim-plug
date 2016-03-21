@@ -723,10 +723,15 @@ function! s:do(pull, force, todo)
       let type = type(spec.do)
       if type == s:TYPE.string
         try
-          " FIXME: Escaping is incomplete. We could use shellescape with eval,
-          "        but it won't work on Windows.
-          let g:_plug_do = '!'.escape(spec.do, '#!%')
-          execute "normal! :execute g:_plug_do\<cr>\<cr>"
+          if spec.do =~? '^:'
+            let g:_plug_do = spec.do[1:]
+            execute g:_plug_do
+          else
+            " FIXME: Escaping is incomplete. We could use shellescape with eval,
+            "        but it won't work on Windows.
+            let g:_plug_do = '!'.escape(spec.do, '#!%')
+            execute "normal! :execute g:_plug_do\<cr>\<cr>"
+          endif
         finally
           if v:shell_error
             let error = 'Exit status: ' . v:shell_error
