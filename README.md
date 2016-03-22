@@ -198,6 +198,13 @@ Plug 'Shougo/vimproc.vim', { 'do': 'make' }
 Plug 'Valloric/YouCompleteMe', { 'do': './install.py' }
 ```
 
+If you need to execute Vim's command, you can pass the command name with a
+leading `:`.
+
+```
+Plug 'Shougo/deoplete.nvim', {'do':':UpdateRemotePlugins'}
+```
+
 If you need more control, you can pass a reference to a Vim function that
 takes a single argument.
 
