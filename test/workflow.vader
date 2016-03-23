@@ -1296,15 +1296,20 @@ Execute (#221 Shallow-clone disabled by tag):
   cd -
 
 Execute (Commit hash support):
+  " Get goyo back to master
+  call plug#begin(g:temp_plugged)
+  Plug 'junegunn/goyo.vim'
+  call plug#end()
+  PlugUpdate
+
   call plug#begin(g:temp_plugged)
   Plug 'junegunn/goyo.vim',  { 'commit': 'ffffffff' }
   Plug 'junegunn/vim-emoji', { 'commit': '9db7fcfee0d90dafdbcb7a32090c0a9085eb054a' }
   call plug#end()
   PlugUpdate
   Log getline(1, '$')
-  AssertEqual ['x Checking out fffffff of goyo.vim ... Error',
-              \'    error: pathspec ''ffffffff'' did not match any file(s) known to git.',
-              \'- Checking out 9db7fcf of vim-emoji ... OK'], getline(5, 7)
+  AssertEqual 'x goyo.vim: error: pathspec ''ffffffff'' did not match any file(s) known to git.', getline(5)
+  AssertEqual 0, stridx(getline(6), '- vim-emoji: HEAD is now at 9db7fcf...')
 
   let hash = system(printf('cd %s && git rev-parse HEAD', g:plugs['vim-emoji'].dir))[:-2]
   AssertEqual '9db7fcfee0d90dafdbcb7a32090c0a9085eb054a', hash
