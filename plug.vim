@@ -726,8 +726,8 @@ function! s:regress_bar()
   call s:progress_bar(2, bar, len(bar))
 endfunction
 
-function! s:is_updated(file, dir)
-  return !empty(s:system_chomp('git log --pretty=format:"%h" "HEAD...HEAD@{1}" '.a:file, a:dir))
+function! s:is_updated(dir)
+  return !empty(s:system_chomp('git log --pretty=format:"%h" "HEAD...HEAD@{1}"', a:dir))
 endfunction
 
 function! s:do(pull, force, todo)
@@ -737,7 +737,7 @@ function! s:do(pull, force, todo)
     endif
     let installed = has_key(s:update.new, name)
     let updated = installed ? 0 :
-      \ (a:pull && index(s:update.errors, name) < 0 && s:is_updated('', spec.dir))
+      \ (a:pull && index(s:update.errors, name) < 0 && s:is_updated(spec.dir))
     if a:force || installed || updated
       execute 'cd' s:esc(spec.dir)
       call append(3, '- Post-update hook for '. name .' ... ')
@@ -958,7 +958,7 @@ function! s:update_finish()
               \. (has_key(s:update.new, name) ? '' : ('&& git merge --ff-only origin/'.branch.' 2>&1')), spec.dir)
       endif
       if !v:shell_error && filereadable(spec.dir.'/.gitmodules') &&
-            \ (has_key(s:update.new, name) || s:is_updated('.gitmodules', spec.dir))
+            \ (has_key(s:update.new, name) || s:is_updated(spec.dir))
         call s:log4(name, 'Updating submodules. This may take a while.')
         let out .= s:bang('git submodule update --init --recursive 2>&1', spec.dir)
       endif
