@@ -1424,7 +1424,7 @@ class Plugin(object):
     self.write(Action.DONE, self.name, result[-1:])
 
   def repo_uri(self):
-    cmd = 'git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url'
+    cmd = 'git rev-parse --abbrev-ref HEAD 2>&1 && git config -f .git/config remote.origin.url'
     command = Command(cmd, self.args['dir'], G_TIMEOUT,)
     result = command.execute(G_RETRIES)
     return result[-1]
@@ -1725,7 +1725,7 @@ function! s:update_ruby()
           ok, result =
             if exists
               chdir = "#{cd} #{iswin ? dir : esc(dir)}"
-              ret, data = bt.call "#{chdir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url", nil, nil, nil
+              ret, data = bt.call "#{chdir} && git rev-parse --abbrev-ref HEAD 2>&1 && git config -f .git/config remote.origin.url", nil, nil, nil
               current_uri = data.lines.to_a.last
               if !ret
                 if data =~ /^Interrupted|^Timeout/
@@ -1818,7 +1818,7 @@ endfunction
 function! s:git_validate(spec, check_branch)
   let err = ''
   if isdirectory(a:spec.dir)
-    let result = s:lines(s:system('git rev-parse --abbrev-ref HEAD 2>&1 && git config remote.origin.url', a:spec.dir))
+    let result = s:lines(s:system('git rev-parse --abbrev-ref HEAD 2>&1 && git config -f .git/config remote.origin.url', a:spec.dir))
     let remote = result[-1]
     if v:shell_error
       let err = join([remote, 'PlugClean required.'], "\n")
