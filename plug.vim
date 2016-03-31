@@ -337,7 +337,12 @@ function! s:err(msg)
   echohl ErrorMsg
   echom '[vim-plug] '.a:msg
   echohl None
-  return 0
+endfunction
+
+function! s:warn(cmd, msg)
+  echohl WarningMsg
+  execute a:cmd 'a:msg'
+  echohl None
 endfunction
 
 function! s:esc(path)
@@ -825,6 +830,16 @@ function! s:names(...)
   return sort(filter(keys(g:plugs), 'stridx(v:val, a:1) == 0 && s:is_managed(v:val)'))
 endfunction
 
+function! s:check_ruby()
+  silent! ruby require 'thread'; VIM::command('let g:plug_ruby = 1')
+  if get(g:, 'plug_ruby', 0)
+    unlet g:plug_ruby
+    return 1
+  endif
+  redraw!
+  return s:warn('echom', 'Warning: Ruby interface is broken')
+endfunction
+
 function! s:update_impl(pull, force, args) abort
   let args = copy(a:args)
   let threads = (len(args) > 0 && args[-1] =~ '^[1-9][0-9]*$') ?
@@ -835,10 +850,7 @@ function! s:update_impl(pull, force, args) abort
                          \ filter(managed, 'index(args, v:key) >= 0')
 
   if empty(todo)
-    echohl WarningMsg
-    echo 'No plugin to '. (a:pull ? 'update' : 'install') . '.'
-    echohl None
-    return
+    return s:warn('echo', 'No plugin to '. (a:pull ? 'update' : 'install'))
   endif
 
   if !s:is_win && s:git_version_requirement(2, 3)
@@ -860,13 +872,11 @@ function! s:update_impl(pull, force, args) abort
   endif
 
   if has('nvim') && !exists('*jobwait') && threads > 1
-    echohl WarningMsg
-    echomsg 'vim-plug: update Neovim for parallel installer'
-    echohl None
+    call s:warn('echom', '[vim-plug] Update Neovim for parallel installer')
   endif
 
   let python = (has('python') || has('python3')) && (!s:nvim || has('vim_starting'))
-  let ruby = has('ruby') && !s:nvim && (v:version >= 703 || v:version == 702 && has('patch374')) && !(s:is_win && has('gui_running'))
+  let ruby = has('ruby') && !s:nvim && (v:version >= 703 || v:version == 702 && has('patch374')) && !(s:is_win && has('gui_running')) && s:check_ruby()
 
   let s:update = {
     \ 'start':   reltime(),
@@ -1089,7 +1099,6 @@ function! s:logpos(name)
       return i
     endif
   endfor
-  return 0
 endfunction
 
 function! s:log(bullet, name, lines)
@@ -2027,7 +2036,6 @@ function! s:is_preview_window_open()
     wincmd p
     return 1
   endif
-  return 0
 endfunction
 
 function! s:find_name(lnum)
