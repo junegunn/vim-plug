@@ -721,6 +721,9 @@ Execute (On install):
   call plug#begin()
   Plug 'junegunn/vim-easy-align', { 'do': 'touch installed' }
   Plug 'junegunn/vim-pseudocl'
+  Plug 'junegunn/seoul256.vim'
+  Plug 'junegunn/goyo.vim'
+  Plug 'yous/subsubmodule'
   call plug#end()
 
   silent PlugInstall
@@ -730,11 +733,16 @@ Execute (On install):
     \ 'vim-easy-align/installed should exist'
   Assert !filereadable(g:plugs['vim-pseudocl'].dir.'/installed'),
     \ 'vim-pseudocl/installed should not exist'
+  AssertEqual ' ', system('cd '.g:plugs['subsubmodule'].dir.' && git submodule status')[0],
+    \ 'subsubmodule/subsubmodule should be initialized'
 
 Execute (On update):
   call plug#begin()
   Plug 'junegunn/vim-easy-align', { 'do': 'touch updated' }
   Plug 'junegunn/vim-pseudocl', { 'do': 'touch updated' }
+  Plug 'junegunn/seoul256.vim'
+  Plug 'junegunn/goyo.vim'
+  Plug 'yous/subsubmodule'
   call plug#end()
 
   " New commits on remote
@@ -752,44 +760,68 @@ Execute (On update):
 Execute (When already installed):
   call plug#begin()
   Plug 'junegunn/vim-easy-align', { 'do': 'touch installed2' }
-  Plug 'junegunn/vim-pseudocl', { 'do': 'touch installed2' }
+  Plug 'junegunn/vim-pseudocl', { 'commit': '7f8cd78' }
+  Plug 'junegunn/seoul256.vim', { 'branch': 'no-t_co' }
+  Plug 'junegunn/goyo.vim', { 'tag': '1.5.3' }
+  Plug 'yous/subsubmodule'
   call plug#end()
 
   PlugInstall
   q
   Assert !filereadable(g:plugs['vim-easy-align'].dir.'/installed2'),
     \ 'vim-easy-align/installed2 should not exist'
-  Assert !filereadable(g:plugs['vim-pseudocl'].dir.'/installed2'),
-    \ 'vim-pseudocl/installed2 should not exist'
+  AssertNotEqual '7f8cd78cb1fe52185b98b16a3749811f0cc508af', GitCommit('vim-pseudocl')
+  AssertNotEqual 'no-t_co', GitBranch('seoul256.vim')
+  AssertNotEqual '1.5.3', GitTag('goyo.vim')
 
 Execute (PlugInstall!):
   silent PlugInstall!
   q
   Assert filereadable(g:plugs['vim-easy-align'].dir.'/installed2'),
     \ 'vim-easy-align/installed2 should exist'
-  Assert filereadable(g:plugs['vim-pseudocl'].dir.'/installed2'),
-    \ 'vim-pseudocl/installed2 should exist'
+  AssertEqual '7f8cd78cb1fe52185b98b16a3749811f0cc508af', GitCommit('vim-pseudocl')
+  AssertEqual 'no-t_co', GitBranch('seoul256.vim')
+  AssertEqual '1.5.3', GitTag('goyo.vim')
+
+Execute (When submodules are not initialized):
+  call system(printf('cd %s && git submodule deinit subsubmodule', g:plugs['subsubmodule'].dir))
+
+  silent PlugInstall!
+  q
+
+  AssertEqual ' ', system(printf('cd %s && git submodule status', g:plugs['subsubmodule'].dir))[0],
+    \ 'subsubmodule/subsubmodule should be initialized'
 
 Execute (When already updated):
   call plug#begin()
   Plug 'junegunn/vim-easy-align', { 'do': 'touch updated2' }
-  Plug 'junegunn/vim-pseudocl', { 'do': 'touch updated2' }
+  Plug 'junegunn/vim-pseudocl', { 'commit': 'dd507ca' }
+  Plug 'junegunn/seoul256.vim', { 'branch': 'master' }
+  Plug 'junegunn/goyo.vim', { 'tag': '1.6.0' }
+  Plug 'yous/subsubmodule'
   call plug#end()
 
   PlugUpdate
   q
   Assert !filereadable(g:plugs['vim-easy-align'].dir.'/updated2'),
     \ 'vim-easy-align/updated2 should not exist'
-  Assert !filereadable(g:plugs['vim-pseudocl'].dir.'/updated2'),
-    \ 'vim-pseudocl/updated2 should not exist'
+  AssertEqual 'dd507ca0d5f3fdf0d522558cc5ecffdabf824469', GitCommit('vim-pseudocl')
+  AssertEqual 'master', GitBranch('seoul256.vim')
+  AssertEqual '1.6.0', GitTag('goyo.vim')
 
 Execute (PlugUpdate!):
   silent PlugUpdate!
   q
   Assert filereadable(g:plugs['vim-easy-align'].dir.'/updated2'),
     \ 'vim-easy-align/updated2 should exist'
-  Assert filereadable(g:plugs['vim-pseudocl'].dir.'/updated2'),
-    \ 'vim-pseudocl/updated2 should exist'
+
+Execute (When submodules are not initialized):
+  call system(printf('cd %s && git submodule deinit subsubmodule', g:plugs['subsubmodule'].dir))
+
+  silent PlugUpdate!
+  q
+  AssertEqual ' ', system(printf('cd %s && git submodule status', g:plugs['subsubmodule'].dir))[0],
+    \ 'subsubmodule/subsubmodule should be initialized'
 
 Execute (Using Funcref):
   function! PlugUpdated(info)

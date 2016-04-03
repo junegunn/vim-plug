@@ -955,7 +955,7 @@ function! s:update_finish()
   endif
   if s:switch_in()
     call append(3, '- Updating ...') | 4
-    for [name, spec] in items(filter(copy(s:update.all), 'index(s:update.errors, v:key) < 0 && (s:update.pull || has_key(s:update.new, v:key))'))
+    for [name, spec] in items(filter(copy(s:update.all), 'index(s:update.errors, v:key) < 0 && (s:update.force || s:update.pull || has_key(s:update.new, v:key))'))
       let pos = s:logpos(name)
       if !pos
         continue
@@ -973,7 +973,7 @@ function! s:update_finish()
               \. (has_key(s:update.new, name) ? '' : ('&& git merge --ff-only origin/'.branch.' 2>&1')), spec.dir)
       endif
       if !v:shell_error && filereadable(spec.dir.'/.gitmodules') &&
-            \ (has_key(s:update.new, name) || s:is_updated(spec.dir))
+            \ (s:update.force || has_key(s:update.new, name) || s:is_updated(spec.dir))
         call s:log4(name, 'Updating submodules. This may take a while.')
         let out .= s:bang('git submodule update --init --recursive 2>&1', spec.dir)
       endif
