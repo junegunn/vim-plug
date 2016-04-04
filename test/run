@@ -27,6 +27,8 @@ clone_repos() (
   done
   clone https://github.com/vim-scripts/beauty256.git vim-scripts/beauty256 &
   clone https://github.com/junegunn/fzf.git fzf &
+  clone https://github.com/yous/subsubmodule.git yous/subsubmodule && \
+    (cd yous/subsubmodule && git submodule update --init --recursive &) &
   wait
 
   clone junegunn/vim-emoji jg/vim-emoji

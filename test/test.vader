@@ -51,6 +51,18 @@ Execute (Initialize test environment):
     let &rtp = g:base_rtp
   endfunction
 
+  function! GitBranch(repo)
+    return system(printf('cd %s && git rev-parse --abbrev-ref HEAD', g:plugs[a:repo].dir))[:-2]
+  endfunction
+
+  function! GitTag(repo)
+    return system(printf('cd %s && git describe --tags', g:plugs[a:repo].dir))[:-2]
+  endfunction
+
+  function! GitCommit(repo)
+    return system(printf('cd %s && git rev-parse HEAD', g:plugs[a:repo].dir))[:-2]
+  endfunction
+
   source $PLUG_SRC
 
 Execute (Print Interpreter Version):
