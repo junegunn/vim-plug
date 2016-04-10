@@ -10,11 +10,12 @@ Execute (Initialize test environment):
   if !exists('$PLUG_SRC')
     let $PLUG_SRC = globpath(&rtp, 'autoload/plug.vim')
   endif
+  let $PLUG_TMP = fnamemodify(tempname(), ':h').'/plug.vim'
 
   " Temporarily patch plug.vim
-  call system('cp $PLUG_SRC $PLUG_SRC.org')
-  call writefile(extend(readfile($PLUG_SRC),
-  \ ['function! ResetPlug()', 'let s:loaded = {}', 'endfunction']), $PLUG_SRC)
+  call system('cp "$PLUG_SRC" "$PLUG_TMP"')
+  call writefile(extend(readfile($PLUG_TMP),
+  \ ['function! ResetPlug()', 'let s:loaded = {}', 'endfunction']), $PLUG_TMP)
 
   set t_Co=256
   colo default
@@ -47,7 +48,7 @@ Execute (Initialize test environment):
 
   function! ReloadPlug()
     call ResetPlug()
-    source $PLUG_SRC
+    source $PLUG_TMP
     let &rtp = g:base_rtp
   endfunction
 
@@ -63,7 +64,7 @@ Execute (Initialize test environment):
     return system(printf('cd %s && git rev-parse HEAD', g:plugs[a:repo].dir))[:-2]
   endfunction
 
-  source $PLUG_SRC
+  source $PLUG_TMP
 
 Execute (Print Interpreter Version):
   redir => out
@@ -92,7 +93,7 @@ Execute (Cleanup):
   silent! delc AssertExpect
   silent! unmap /
   silent! unmap ?
-  call system('mv $PLUG_SRC.org $PLUG_SRC')
+  call delete($PLUG_TMP)
 
   Restore
 
