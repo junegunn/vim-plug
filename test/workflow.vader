@@ -83,6 +83,10 @@ Execute (PlugClean before installation):
   q
 
 Execute (plug#end() updates &rtp):
+  " Plug 'junegunn/goyo.vim', { 'tag': '1.5.3' }
+  " Plug 'file:///tmp/jg/vim-emoji'
+  " Plug 'beauty256'
+  " Plug 'junegunn/seoul256.vim', { 'branch': 'no-t_co', 'rtp': '././' }
   call plug#end()
   Assert len(&rtp) > len(g:base_rtp)
   AssertEqual g:first_rtp, split(&rtp, ',')[0]
