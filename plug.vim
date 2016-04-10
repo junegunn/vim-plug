@@ -977,7 +977,7 @@ function! s:update_finish()
         call s:log4(name, 'Updating submodules. This may take a while.')
         let out .= s:bang('git submodule update --init --recursive 2>&1', spec.dir)
       endif
-      let msg = printf('%s %s: %s', v:shell_error ? 'x': '-', name, get(s:lines(out), -1, ''))
+      let msg = printf('%s %s: %s', v:shell_error ? 'x': '-', name, s:lastline(out))
       if v:shell_error
         call add(s:update.errors, name)
         call s:regress_bar()
