@@ -236,6 +236,18 @@ let g:fzf_install = 'yes | ./install'
 Plug 'junegunn/fzf', { 'do': g:fzf_install }
 ```
 
+### `PlugInstall!` and `PlugUpdate!`
+
+The installer takes the following steps when installing/updating a plugin:
+
+1. `git clone` or `git fetch` from its origin
+2. Check out branch, tag, or commit and optionally `git merge` remote branch
+3. If the plugin was updated (or installed for the first time)
+    1. Update submodules
+    2. Execute post-update hooks
+
+The commands with `!` suffix ensure that all steps are run unconditionally.
+
 ### Articles
 
 - [Writing my own Vim plugin manager](http://junegunn.kr/2013/09/writing-my-own-vim-plugin-manager)
