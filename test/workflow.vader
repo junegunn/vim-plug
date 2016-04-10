@@ -212,6 +212,24 @@ Expect:
   [==]
   x seoul256.vim:
 
+Execute (Corrected the URI but diverged from master):
+  call plug#begin()
+  Plug 'junegunn/seoul256.vim'
+  Plug 'file:///tmp/jg/vim-emoji'
+  call plug#end()
+  for _ in range(3)
+    call system(printf('cd "%s" && git commit --allow-empty -m "dummy"', g:plugs['seoul256.vim'].dir))
+  endfor
+  call PlugStatusSorted()
+
+Expect:
+      Diverged from origin/master by 3 commit(s).
+      Reinstall after PlugClean.
+  - vim-emoji: OK
+  Finished. 1 error(s).
+  [==]
+  x seoul256.vim:
+
 # TODO: does not work due to inputsave()
 # Do (PlugClean):
 #   :PlugClean\<Enter>y\<Enter>
@@ -222,8 +240,9 @@ Expect:
 Execute (PlugClean! to remove seoul256.vim):
   PlugClean!
   " Three removed, emoji left
+  AssertEqual 'Removed.', getline(4)
   AssertExpect '^- ', 3
-  AssertExpect 'Removed', 1
+  AssertExpect 'Diverged', 1
   Assert empty(globpath(&rtp, 'colors/seoul256.vim'))
   Assert !empty(globpath(&rtp, 'autoload/emoji.vim'))
   q
@@ -250,7 +269,7 @@ Expect:
 Execute (PlugClean! to remove vim-emoji):
   PlugClean!
   AssertExpect '^- ', 1
-  AssertExpect 'Removed', 1
+  AssertEqual 'Removed.', getline(4)
   Assert empty(globpath(&rtp, 'colors/seoul256.vim'))
   Assert empty(globpath(&rtp, 'autoload/emoji.vim'))
   q

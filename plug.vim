@@ -1145,7 +1145,7 @@ while 1 " Without TCO, Vim stack is bound to explode
 
   let has_tag = has_key(spec, 'tag')
   if !new
-    let error = s:git_validate(spec, 0)
+    let [error, _] = s:git_validate(spec, 0)
     if empty(error)
       if pull
         let fetch_opt = (has_tag && !empty(globpath(spec.dir, '.git/shallow'))) ? '--depth 99999999' : ''
@@ -1860,11 +1860,18 @@ function! s:git_validate(spec, check_branch)
         let err = printf('Invalid branch: %s (expected: %s). Try PlugUpdate.',
               \ branch, a:spec.branch)
       endif
+      if empty(err)
+        let commits = len(s:lines(s:system(printf('git rev-list origin/%s..HEAD', a:spec.branch), a:spec.dir)))
+        if !v:shell_error && commits
+          let err = join([printf('Diverged from origin/%s by %d commit(s).', a:spec.branch, commits),
+                        \ 'Reinstall after PlugClean.'], "\n")
+        endif
+      endif
     endif
   else
     let err = 'Not found'
   endif
-  return err
+  return [err, err =~# 'PlugClean']
 endfunction
 
 function! s:rm_rf(dir)
@@ -1875,15 +1882,23 @@ endfunction
 
 function! s:clean(force)
   call s:prepare()
-  call append(0, 'Searching for unused plugins in '.g:plug_home)
+  call append(0, 'Searching for invalid plugins in '.g:plug_home)
   call append(1, '')
 
   " List of valid directories
   let dirs = []
+  let errs = {}
   let [cnt, total] = [0, len(g:plugs)]
   for [name, spec] in items(g:plugs)
-    if !s:is_managed(name) || empty(s:git_validate(spec, 0))
+    if !s:is_managed(name)
       call add(dirs, spec.dir)
+    else
+      let [err, clean] = s:git_validate(spec, 1)
+      if clean
+        let errs[spec.dir] = s:lines(err)[0]
+      else
+        call add(dirs, spec.dir)
+      endif
     endif
     let cnt += 1
     call s:progress_bar(2, repeat('=', cnt), total)
@@ -1907,11 +1922,14 @@ function! s:clean(force)
     if !has_key(allowed, f) && isdirectory(f)
       call add(todo, f)
       call append(line('$'), '- ' . f)
+      if has_key(errs, f)
+        call append(line('$'), '    ' . errs[f])
+      endif
       let found = filter(found, 'stridx(v:val, f) != 0')
     end
   endwhile
 
-  normal! G
+  4
   redraw
   if empty(todo)
     call append(line('$'), 'Already clean.')
@@ -1920,12 +1938,12 @@ function! s:clean(force)
       for dir in todo
         call s:rm_rf(dir)
       endfor
-      call append(line('$'), 'Removed.')
+      call append(3, ['Removed.', ''])
     else
-      call append(line('$'), 'Cancelled.')
+      call append(3, ['Cancelled.', ''])
     endif
   endif
-  normal! G
+  4
 endfunction
 
 function! s:upgrade()
@@ -1972,7 +1990,7 @@ function! s:status()
   for [name, spec] in items(g:plugs)
     if has_key(spec, 'uri')
       if isdirectory(spec.dir)
-        let err = s:git_validate(spec, 1)
+        let [err, _] = s:git_validate(spec, 1)
         let [valid, msg] = [empty(err), empty(err) ? 'OK' : err]
       else
         let [valid, msg] = [0, 'Not found. Try PlugInstall.']
