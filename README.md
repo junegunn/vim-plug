@@ -195,7 +195,7 @@ In that case, use `do` option to describe the task to be performed.
 
 ```vim
 Plug 'Shougo/vimproc.vim', { 'do': 'make' }
-Plug 'Valloric/YouCompleteMe', { 'do': './install.py' }
+Plug 'Valloric/YouCompleteMe', { 'do': 'python2 install.py' }
 ```
 
 If you need more control, you can pass a reference to a Vim function that
@@ -208,7 +208,7 @@ function! BuildYCM(info)
   " - status: 'installed', 'updated', or 'unchanged'
   " - force:  set on PlugInstall! or PlugUpdate!
   if a:info.status == 'installed' || a:info.force
-    !./install.py
+    !python2 install.py
   endif
 endfunction
 
