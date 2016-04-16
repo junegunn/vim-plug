@@ -292,7 +292,7 @@ Execute (#474: Load ftdetect files in filetypedetect augroup):
   call plug#begin('/tmp/plugged')
   Plug 'junegunn/rust.vim', { 'for': 'rust', 'commit': '115d321d383eb96d438466c56cc871fcc1bd0faa' }
   call plug#end()
-  PlugInstall
+  PlugInstall!
   q
 
   tabnew /tmp/any.rs
