@@ -286,3 +286,19 @@ Execute (#350: Ruby installer failed to unshallow tagged plugin on update):
   PlugUpdate
   Assert !filereadable(g:plugs['vim-easy-align'].dir.'/.git/shallow')
   q
+
+**********************************************************************
+Execute (#474: Load ftdetect files in filetypedetect augroup):
+  call plug#begin('/tmp/plugged')
+  Plug 'junegunn/rust.vim', { 'for': 'rust', 'commit': '115d321d383eb96d438466c56cc871fcc1bd0faa' }
+  call plug#end()
+  PlugInstall
+  q
+
+  tabnew /tmp/any.rs
+  AssertEqual 'rust', &filetype
+  Log &filetype
+  filetype detect
+  AssertEqual 'rust', &filetype
+  Log &filetype
+  bd

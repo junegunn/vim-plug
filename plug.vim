@@ -222,7 +222,9 @@ function! plug#end()
     if has_key(plug, 'for')
       let types = s:to_a(plug.for)
       if !empty(types)
+        augroup filetypedetect
         call s:source(s:rtp(plug), 'ftdetect/**/*.vim', 'after/ftdetect/**/*.vim')
+        augroup END
       endif
       for type in types
         call s:assoc(lod.ft, type, name)
