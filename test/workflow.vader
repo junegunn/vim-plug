@@ -1424,3 +1424,16 @@ Execute (#371 - 'as' option):
   AssertEqual ['yogo'], sort(keys(g:plugs))
   AssertEqual '/tmp/gogo/', g:plugs.yogo.dir
 
+Execute (#427 - Tag option with wildcard (requires git 1.9.2 or above)):
+  if str2nr(split(split(system('git --version'))[-1], '\.')[0]) < 2
+    Log 'tag with wildcard requires git 1.9.2 or above'
+  else
+    call plug#begin()
+    Plug 'junegunn/vim-easy-align', { 'tag': '2.9.*' }
+    call plug#end()
+    PlugInstall!
+    Log getline(1, '$')
+    AssertExpect! '- Latest tag for 2.9.* -> 2.9.7 (vim-easy-align)', 1
+    q
+    AssertEqual '2.9.7', GitTag('vim-easy-align')
+  endif

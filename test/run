@@ -104,6 +104,7 @@ select_vim() {
 clone_repos
 prepare
 
+git --version
 VIM=$(select_vim)
 echo "Selected Vim: $VIM"
 if [ "$1" = '!' ]; then
