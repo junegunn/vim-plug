@@ -131,7 +131,7 @@ function! plug#begin(...)
 endfunction
 
 function! s:define_commands()
-  command! -nargs=+ -bar Plug call s:Plug(<args>)
+  command! -nargs=+ -bar Plug call plug#(<args>)
   if !executable('git')
     return s:err('`git` executable not found. Most commands will not be available. To suppress this message, prepend `silent!` to `call plug#begin(...)`.')
   endif
@@ -489,7 +489,7 @@ function! s:lod_map(map, names, prefix)
   call feedkeys(a:prefix . substitute(a:map, '^<Plug>', "\<Plug>", '') . extra)
 endfunction
 
-function! s:Plug(repo, ...)
+function! plug#(repo, ...)
   if a:0 > 1
     return s:err('Invalid number of arguments (1..2)')
   endif
