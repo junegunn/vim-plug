@@ -841,7 +841,12 @@ Execute (PlugUpdate!):
 Execute (When submodules are not initialized):
   call system(printf('cd %s && git submodule deinit subsubmodule', g:plugs['subsubmodule'].dir))
 
+^ #481 submodule update should use standard shell
+  let sh = &shell
+  set sh=/bin/echo
   silent PlugUpdate!
+  let &shell = sh
+  unlet sh
   q
   AssertEqual ' ', system(printf('cd %s && git submodule status', g:plugs['subsubmodule'].dir))[0],
     \ 'subsubmodule/subsubmodule should be initialized'
