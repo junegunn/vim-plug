@@ -846,13 +846,14 @@ function! s:names(...)
 endfunction
 
 function! s:check_ruby()
-  silent! ruby require 'thread'; VIM::command('let g:plug_ruby = 1')
-  if get(g:, 'plug_ruby', 0)
-    unlet g:plug_ruby
-    return 1
+  silent! ruby require 'thread'; VIM::command("let g:plug_ruby = '#{RUBY_VERSION}'")
+  if !exists('g:plug_ruby')
+    redraw!
+    return s:warn('echom', 'Warning: Ruby interface is broken')
   endif
-  redraw!
-  return s:warn('echom', 'Warning: Ruby interface is broken')
+  let ruby_version = split(g:plug_ruby, '\.')
+  unlet g:plug_ruby
+  return s:version_requirement(ruby_version, [1, 8, 7])
 endfunction
 
 function! s:update_impl(pull, force, args) abort
