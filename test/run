@@ -2,6 +2,7 @@
 
 cd $(dirname "${BASH_SOURCE[0]}")
 
+export HOME=/tmp
 export BASE="$PWD"
 export PLUG_SRC="$PWD/../plug.vim"
 export PLUG_FIXTURES="$PWD/fixtures"
@@ -77,7 +78,8 @@ DOC
 
   rm -rf "$PLUG_FIXTURES/ftplugin-msg"
   mkdir -p "$PLUG_FIXTURES/ftplugin-msg/ftplugin"
-  echo "echomsg 'ftplugin'" > "$PLUG_FIXTURES/ftplugin-msg/ftplugin/c.vim"
+  echo "echomsg 'ftplugin-c'" > "$PLUG_FIXTURES/ftplugin-msg/ftplugin/c.vim"
+  echo "echomsg 'ftplugin-java'" > "$PLUG_FIXTURES/ftplugin-msg/ftplugin/java.vim"
 
   rm -rf /tmp/new-branch
   cd /tmp

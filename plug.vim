@@ -397,7 +397,9 @@ function! s:reorg_rtp()
 endfunction
 
 function! s:doautocmd(...)
-  execute 'doautocmd' ((v:version > 703 || has('patch442')) ? '<nomodeline>' : '') join(a:000)
+  if exists('#'.join(a:000, '#'))
+    execute 'doautocmd' ((v:version > 703 || has('patch442')) ? '<nomodeline>' : '') join(a:000)
+  endif
 endfunction
 
 function! plug#load(...)
@@ -415,9 +417,7 @@ function! plug#load(...)
   for name in a:000
     call s:lod([name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
   endfor
-  if exists('#BufRead')
-    doautocmd BufRead
-  endif
+  call s:doautocmd('BufRead')
   return 1
 endfunction
 
@@ -453,9 +453,7 @@ function! s:lod(names, types, ...)
       endif
       call s:source(rtp, a:2)
     endif
-    if exists('#User#'.name)
-      call s:doautocmd('User', name)
-    endif
+    call s:doautocmd('User', name)
   endfor
 endfunction
 
@@ -463,21 +461,19 @@ function! s:lod_ft(pat, names)
   let syn = 'syntax/'.a:pat.'.vim'
   call s:lod(a:names, ['plugin', 'after/plugin'], syn, 'after/'.syn)
   execute 'autocmd! PlugLOD FileType' a:pat
-  if exists('#filetypeplugin#FileType')
-    doautocmd filetypeplugin FileType
-  endif
-  if exists('#filetypeindent#FileType')
-    doautocmd filetypeindent FileType
-  endif
+  call s:doautocmd('filetypeplugin', 'FileType')
+  call s:doautocmd('filetypeindent', 'FileType')
 endfunction
 
 function! s:lod_cmd(cmd, bang, l1, l2, args, names)
   call s:lod(a:names, ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
+  call s:doautocmd('BufRead')
   execute printf('%s%s%s %s', (a:l1 == a:l2 ? '' : (a:l1.','.a:l2)), a:cmd, a:bang, a:args)
 endfunction
 
 function! s:lod_map(map, names, prefix)
   call s:lod(a:names, ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
+  call s:doautocmd('BufRead')
   let extra = ''
   while 1
     let c = getchar(0)

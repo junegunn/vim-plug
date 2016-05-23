@@ -7,13 +7,13 @@ Execute (#112 On-demand loading should not suppress messages from ftplugin):
   redir => out
   tabnew a.c
   redir END
-  Assert stridx(out, 'ftplugin') >= 0
+  Assert stridx(out, 'ftplugin-c') >= 0
 
 * The same applies to plug#load())
   redir => out
   call plug#load('ftplugin-msg')
   redir END
-  Assert stridx(out, 'ftplugin') >= 0
+  Assert stridx(out, 'ftplugin-c') >= 0
   q
 
 
@@ -302,3 +302,16 @@ Execute (#474: Load ftdetect files in filetypedetect augroup):
   AssertEqual 'rust', &filetype
   Log &filetype
   bd
+
+**********************************************************************
+Execute (#489 On-demand loading with 'on' option should trigger BufRead autocmd):
+  call plug#begin('$PLUG_FIXTURES')
+  Plug 'ftplugin-msg', { 'on': 'XXX' }
+  call plug#end()
+
+  tabnew a.java
+  redir => out
+  silent! XXX
+  redir END
+  Assert stridx(out, 'ftplugin-java') >= 0
+  q
