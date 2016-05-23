@@ -2,7 +2,6 @@
 
 cd $(dirname "${BASH_SOURCE[0]}")
 
-export HOME=/tmp
 export BASE="$PWD"
 export PLUG_SRC="$PWD/../plug.vim"
 export PLUG_FIXTURES="$PWD/fixtures"
