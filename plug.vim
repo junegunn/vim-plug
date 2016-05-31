@@ -496,8 +496,8 @@ function! s:lod_map(map, names, prefix)
   if v:count
     call feedkeys(v:count, 'n')
   endif
+  call feedkeys('"'.v:register, 'n')
   if mode(1) == 'no'
-    call feedkeys('"'.v:register, 'n')
     call feedkeys(v:operator)
   endif
   call feedkeys(a:prefix . substitute(a:map, '^<Plug>', "\<Plug>", '') . extra)
