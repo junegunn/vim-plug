@@ -34,7 +34,7 @@ Execute (Subsequent plug#begin() calls will reuse g:plug_home):
 Execute (Test Plug command):
 ^ Git repo with branch (DEPRECATED. USE BRANCH OPTION)
   Plug 'junegunn/seoul256.vim', { 'branch': 'yes-t_co' }
-  AssertEqual 'file:///tmp/junegunn/seoul256.vim', g:plugs['seoul256.vim'].uri
+  AssertEqual 'file:///tmp/vim-plug-test/junegunn/seoul256.vim', g:plugs['seoul256.vim'].uri
   AssertEqual join([g:temp_plugged, 'seoul256.vim/'], '/'), g:plugs['seoul256.vim'].dir
   AssertEqual 'yes-t_co', g:plugs['seoul256.vim'].branch
 
@@ -43,7 +43,7 @@ Execute (Test Plug command):
 
 ^ Git repo with tag (DEPRECATED. USE TAG OPTION)
   Plug 'junegunn/goyo.vim', '1.5.2'
-  AssertEqual 'file:///tmp/junegunn/goyo.vim', g:plugs['goyo.vim'].uri
+  AssertEqual 'file:///tmp/vim-plug-test/junegunn/goyo.vim', g:plugs['goyo.vim'].uri
   AssertEqual join([g:temp_plugged, 'goyo.vim/'], '/'), g:plugs['goyo.vim'].dir
   AssertEqual '1.5.2', g:plugs['goyo.vim'].tag
 
@@ -51,14 +51,14 @@ Execute (Test Plug command):
   AssertEqual '1.5.3', g:plugs['goyo.vim'].tag
 
   " Git URI
-  Plug 'file:///tmp/jg/vim-emoji'
-  AssertEqual 'file:///tmp/jg/vim-emoji', g:plugs['vim-emoji'].uri
+  Plug 'file:///tmp/vim-plug-test/jg/vim-emoji'
+  AssertEqual 'file:///tmp/vim-plug-test/jg/vim-emoji', g:plugs['vim-emoji'].uri
   AssertEqual 'master', g:plugs['vim-emoji'].branch
   AssertEqual join([g:temp_plugged, 'vim-emoji/'], '/'), g:plugs['vim-emoji'].dir
 
   " vim-scripts/
   Plug 'beauty256'
-  AssertEqual 'file:///tmp/vim-scripts/beauty256', g:plugs.beauty256.uri
+  AssertEqual 'file:///tmp/vim-plug-test/vim-scripts/beauty256', g:plugs.beauty256.uri
   AssertEqual 'master', g:plugs.beauty256.branch
 
   AssertEqual 4, len(g:plugs)
@@ -84,7 +84,7 @@ Execute (PlugClean before installation):
 
 Execute (plug#end() updates &rtp):
   " Plug 'junegunn/goyo.vim', { 'tag': '1.5.3' }
-  " Plug 'file:///tmp/jg/vim-emoji'
+  " Plug 'file:///tmp/vim-plug-test/jg/vim-emoji'
   " Plug 'beauty256'
   " Plug 'junegunn/seoul256.vim', { 'branch': 'no-t_co', 'rtp': '././' }
   call plug#end()
@@ -159,7 +159,7 @@ Expect:
 Execute (Change branch of seoul256.vim):
   call plug#begin()
   Plug 'junegunn/seoul256.vim'
-  Plug 'file:///tmp/jg/vim-emoji'
+  Plug 'file:///tmp/vim-plug-test/jg/vim-emoji'
   call plug#end()
 
 Execute (PlugStatus):
@@ -197,15 +197,15 @@ Expect:
 Execute (Change URI of seoul256.vim):
   call plug#begin()
   Plug 'junegunn.choi/seoul256.vim'
-  Plug 'file:///tmp/jg/vim-emoji'
+  Plug 'file:///tmp/vim-plug-test/jg/vim-emoji'
   call plug#end()
 
 Execute (PlugStatus):
   call PlugStatusSorted()
 
 Expect:
-      Expected:    file:///tmp/junegunn.choi/seoul256.vim
-      Invalid URI: file:///tmp/junegunn/seoul256.vim
+      Expected:    file:///tmp/vim-plug-test/junegunn.choi/seoul256.vim
+      Invalid URI: file:///tmp/vim-plug-test/junegunn/seoul256.vim
       PlugClean required.
   - vim-emoji: OK
   Finished. 1 error(s).
@@ -215,7 +215,7 @@ Expect:
 Execute (Corrected the URI but diverged from master):
   call plug#begin()
   Plug 'junegunn/seoul256.vim'
-  Plug 'file:///tmp/jg/vim-emoji'
+  Plug 'file:///tmp/vim-plug-test/jg/vim-emoji'
   call plug#end()
   for _ in range(3)
     call system(printf('cd "%s" && git commit --allow-empty -m "dummy"', g:plugs['seoul256.vim'].dir))
@@ -257,8 +257,8 @@ Execute (PlugStatus):
   call PlugStatusSorted()
 
 Expect:
-      Expected:    file:///tmp/junegunn/vim-emoji
-      Invalid URI: file:///tmp/jg/vim-emoji
+      Expected:    file:///tmp/vim-plug-test/junegunn/vim-emoji
+      Invalid URI: file:///tmp/vim-plug-test/jg/vim-emoji
       Not found. Try PlugInstall.
       PlugClean required.
   Finished. 2 error(s).
@@ -300,7 +300,7 @@ Execute (PlugDiff - 'No updates.'):
 Execute (New commits on remote, PlugUpdate, then PlugDiff):
   for repo in ['seoul256.vim', 'vim-emoji']
     for _ in range(2)
-      call system(printf('cd /tmp/junegunn/%s && git commit --allow-empty -m "update"', repo))
+      call system(printf('cd /tmp/vim-plug-test/junegunn/%s && git commit --allow-empty -m "update"', repo))
     endfor
   endfor
   unlet repo
@@ -596,7 +596,7 @@ Execute (PlugStatus should point out that the plugin is missing):
 Execute (Deploy unmanaged plugin):
   Assert !exists(':FZF'), ':FZF command should not exist'
   call RmRf(fzf)
-  Log system(printf('cp -r "/tmp/fzf" "%s"', fzf))
+  Log system(printf('cp -r "/tmp/vim-plug-test/fzf" "%s"', fzf))
 
 Execute (PlugUpdate still should not care):
   PlugUpdate
@@ -769,7 +769,7 @@ Execute (On update):
   call plug#end()
 
   " New commits on remote
-  call system('cd /tmp/junegunn/vim-pseudocl && git commit --allow-empty -m "update"')
+  call system('cd /tmp/vim-plug-test/junegunn/vim-pseudocl && git commit --allow-empty -m "update"')
 
   silent PlugUpdate
   Log getline(1, '$')
@@ -861,7 +861,7 @@ Execute (Using Funcref):
   Plug 'junegunn/vim-pseudocl',   { 'do': function('PlugUpdated') }
   call plug#end()
 
-  call system('cd /tmp/junegunn/vim-easy-align && git commit --allow-empty -m "update"')
+  call system('cd /tmp/vim-plug-test/junegunn/vim-easy-align && git commit --allow-empty -m "update"')
   call system('cd '.g:plugs['vim-easy-align'].dir.' && git reset --hard HEAD^')
   call RmRf(g:plugs['vim-pseudocl'].dir)
 
@@ -921,8 +921,8 @@ Execute (Should not run when failed to update):
   call system(printf('cd %s && git remote set-url origin xxx', g:plugs['vim-easy-align'].dir))
 
   " New commits on remote
-  call system('cd /tmp/junegunn/vim-easy-align && git commit --allow-empty -m "update"')
-  call system('cd /tmp/junegunn/vim-pseudocl && git commit --allow-empty -m "update"')
+  call system('cd /tmp/vim-plug-test/junegunn/vim-easy-align && git commit --allow-empty -m "update"')
+  call system('cd /tmp/vim-plug-test/junegunn/vim-pseudocl && git commit --allow-empty -m "update"')
 
   silent PlugUpdate
   Log getline(1, '$')
@@ -940,11 +940,11 @@ Execute (Should not run when failed to update):
 Execute (Using custom dir):
   Assert isdirectory(g:plugs['vim-easy-align'].dir)
 
-  call RmRf('/tmp/easy-align')
+  call RmRf('/tmp/vim-plug-test/easy-align')
   call plug#begin()
-  Plug 'junegunn/vim-easy-align', { 'dir': '/tmp/easy-align' }
+  Plug 'junegunn/vim-easy-align', { 'dir': '/tmp/vim-plug-test/easy-align' }
   call plug#end()
-  AssertEqual '/tmp/easy-align/', g:plugs['vim-easy-align'].dir
+  AssertEqual '/tmp/vim-plug-test/easy-align/', g:plugs['vim-easy-align'].dir
 
   PlugClean!
   Assert !isdirectory(g:plugs['vim-easy-align'].dir)
@@ -1424,10 +1424,10 @@ Execute (#371 - 'as' option):
   Assert g:plugs.yogo.dir =~# '/yogo/$'
 
   call plug#begin()
-  Plug 'junegunn/goyo.vim', {'as': 'yogo', 'dir': '/tmp/gogo'}
+  Plug 'junegunn/goyo.vim', {'as': 'yogo', 'dir': '/tmp/vim-plug-test/gogo'}
   call plug#end()
   AssertEqual ['yogo'], sort(keys(g:plugs))
-  AssertEqual '/tmp/gogo/', g:plugs.yogo.dir
+  AssertEqual '/tmp/vim-plug-test/gogo/', g:plugs.yogo.dir
 
 Execute (#427 - Tag option with wildcard (requires git 1.9.2 or above)):
   if str2nr(split(split(system('git --version'))[-1], '\.')[0]) < 2

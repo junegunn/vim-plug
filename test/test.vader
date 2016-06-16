@@ -2,7 +2,7 @@ Execute (Initialize test environment):
   Save &rtp, g:plugs, g:plug_home, g:plug_window
   unlet! g:plugs g:plug_home g:plug_window
 
-  let g:plug_url_format = 'file:///tmp/%s'
+  let g:plug_url_format = 'file:///tmp/vim-plug-test/%s'
   let g:base_rtp        = &rtp
   let g:first_rtp       = split(&rtp, ',')[0]
   let g:last_rtp        = split(&rtp, ',')[-1]

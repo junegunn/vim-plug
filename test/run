@@ -6,9 +6,12 @@ export BASE="$PWD"
 export PLUG_SRC="$PWD/../plug.vim"
 export PLUG_FIXTURES="$PWD/fixtures"
 mkdir -p "$PLUG_FIXTURES"
+export TEMP=/tmp/vim-plug-test
+rm -rf "$TEMP"
+mkdir -p "$TEMP"
 
-cat > /tmp/mini-vimrc << VIMRC
-set rtp+=/tmp/junegunn/vader.vim
+cat > $TEMP/mini-vimrc << VIMRC
+set rtp+=$TEMP/junegunn/vader.vim
 set shell=/bin/bash
 VIMRC
 
@@ -19,7 +22,7 @@ clone() {
 }
 
 clone_repos() (
-  cd /tmp
+  cd $TEMP
   mkdir -p junegunn vim-scripts jg
   for repo in vader.vim goyo.vim rust.vim seoul256.vim vim-easy-align vim-fnr \
               vim-oblique vim-pseudocl vim-redis vim-emoji; do
@@ -80,8 +83,8 @@ DOC
   echo "echomsg 'ftplugin-c'" > "$PLUG_FIXTURES/ftplugin-msg/ftplugin/c.vim"
   echo "echomsg 'ftplugin-java'" > "$PLUG_FIXTURES/ftplugin-msg/ftplugin/java.vim"
 
-  rm -rf /tmp/new-branch
-  cd /tmp
+  rm -rf $TEMP/new-branch
+  cd $TEMP
   git init new-branch
   cd new-branch
   mkdir plugin
@@ -109,10 +112,10 @@ git --version
 VIM=$(select_vim)
 echo "Selected Vim: $VIM"
 if [ "$1" = '!' ]; then
-  $VIM -Nu /tmp/mini-vimrc -c 'Vader! test.vader' > /dev/null &&
+  $VIM -Nu $TEMP/mini-vimrc -c 'Vader! test.vader' > /dev/null &&
   prepare &&
-  $VIM -Nu /tmp/mini-vimrc -c 'let g:plug_threads = 1 | Vader! test.vader' > /dev/null
+  $VIM -Nu $TEMP/mini-vimrc -c 'let g:plug_threads = 1 | Vader! test.vader' > /dev/null
 else
-  $VIM -Nu /tmp/mini-vimrc -c 'Vader test.vader'
+  $VIM -Nu $TEMP/mini-vimrc -c 'Vader test.vader'
 fi
 

@@ -19,7 +19,7 @@ Execute (#112 On-demand loading should not suppress messages from ftplugin):
 
 **********************************************************************
 Execute (#114 Should not contain empty path in &rtp):
-  call plug#begin('/tmp/plugged')
+  call plug#begin('/tmp/vim-plug-test/plugged')
   call plug#end()
 
   Log &rtp
@@ -35,7 +35,7 @@ Execute (#130 Proper cleanup of on-demand loading triggers):
 
   " Cleared on command
   call ReloadPlug()
-  call plug#begin('/tmp/plugged')
+  call plug#begin('/tmp/vim-plug-test/plugged')
   Plug 'junegunn/vim-emoji', { 'on':  ['EmojiCommand', 'EmojiCommand2', '<Plug>(EmojiMapping)'] }
   call plug#end()
   PlugInstall | q
@@ -52,7 +52,7 @@ Execute (#130 Proper cleanup of on-demand loading triggers):
 
   " Cleared on FileType
   call ReloadPlug()
-  call plug#begin('/tmp/plugged')
+  call plug#begin('/tmp/vim-plug-test/plugged')
   Plug 'junegunn/vim-emoji', { 'on': ['EmojiCommandExtra', '<Plug>(EmojiMappingExtra)'], 'for': ['emoji'] }
   call plug#end()
 
@@ -78,13 +78,13 @@ Execute (#131 Syntax error):
 **********************************************************************
 Execute (#139-1 Using new remote branch):
   " Make sure to remove the clone
-  call plug#begin('/tmp/plugged')
+  call plug#begin('/tmp/vim-plug-test/plugged')
   call plug#end()
   PlugClean!
 
   " Install master branch
-  call plug#begin('/tmp/plugged')
-  Plug expand('file:////tmp/new-branch')
+  call plug#begin('/tmp/vim-plug-test/plugged')
+  Plug expand('file:////tmp/vim-plug-test/new-branch')
   call plug#end()
   PlugUpdate
 
@@ -95,14 +95,14 @@ Execute (#139-1 Using new remote branch):
   Assert !exists('g:baz'), 'g:baz should not be found'
 
   " Create a new branch on origin
-  call system('cd /tmp/new-branch && git checkout -b new &&'
+  call system('cd /tmp/vim-plug-test/new-branch && git checkout -b new &&'
       \. 'echo "let g:bar = 1" > plugin/bar.vim && git add plugin/bar.vim &&'
       \. 'git commit -m second')
 
   " We're setting up two plugins so that parallel installer is used
-  call plug#begin('/tmp/plugged')
+  call plug#begin('/tmp/vim-plug-test/plugged')
   Plug 'junegunn/seoul256.vim'
-  Plug expand('file:////tmp/new-branch'), { 'branch': 'new' }
+  Plug expand('file:////tmp/vim-plug-test/new-branch'), { 'branch': 'new' }
   call plug#end()
   PlugUpdate
   silent %y
@@ -125,14 +125,14 @@ Expect:
 
 Execute (#139-2 Using yet another new remote branch):
   " Create another branch on origin
-  call system('cd /tmp/new-branch && git checkout master &&'
+  call system('cd /tmp/vim-plug-test/new-branch && git checkout master &&'
       \. 'git checkout -b brand-new &&'
       \. 'echo "let g:baz = 1" > plugin/baz.vim && git add plugin/baz.vim &&'
       \. 'git commit -m third')
 
   " Test Vim installer here
-  call plug#begin('/tmp/plugged')
-  Plug expand('file:////tmp/new-branch'), { 'branch': 'brand-new' }
+  call plug#begin('/tmp/vim-plug-test/plugged')
+  Plug expand('file:////tmp/vim-plug-test/new-branch'), { 'branch': 'brand-new' }
   call plug#end()
   PlugUpdate
   silent %y
@@ -154,19 +154,19 @@ Expect:
 
 Execute (#139-3 Should fail when not possible to fast-forward):
   " Commit on cloned repo
-  call system('cd /tmp/plugged/new-branch && git checkout master &&'
+  call system('cd /tmp/vim-plug-test/plugged/new-branch && git checkout master &&'
       \. 'touch foobar && git add foobar && git commit -m foobar')
 
   " Different commit on remote
-  call system('cd /tmp/new-branch && git checkout master &&'
+  call system('cd /tmp/vim-plug-test/new-branch && git checkout master &&'
       \. 'touch foobaz && git add foobaz && git commit -m foobaz')
 
   for multi in [0, 1]
-    call plug#begin('/tmp/plugged')
+    call plug#begin('/tmp/vim-plug-test/plugged')
     if multi
       Plug 'junegunn/seoul256.vim'
     endif
-    Plug expand('file:////tmp/new-branch')
+    Plug expand('file:////tmp/vim-plug-test/new-branch')
     call plug#end()
     PlugUpdate
     silent %y
@@ -210,7 +210,7 @@ Execute (#159: shell=/bin/tcsh):
   let org = &shell
   try
     set shell=/bin/tcsh
-    call plug#begin('/tmp/plugged')
+    call plug#begin('/tmp/vim-plug-test/plugged')
     Plug 'junegunn/seoul256.vim'
     call plug#end()
 
@@ -224,7 +224,7 @@ Execute (#159: shell=/bin/tcsh):
 
 **********************************************************************
 Execute (#154: Spaces in &rtp should not be escaped):
-  call plug#begin('/tmp/plug it')
+  call plug#begin('/tmp/vim-plug-test/plug it')
   Plug 'seoul256 vim'
   call plug#end()
   Log &rtp
@@ -232,7 +232,7 @@ Execute (#154: Spaces in &rtp should not be escaped):
 
 **********************************************************************
 Execute (#184: Duplicate entries in &rtp):
-  call plug#begin('/tmp/plugged')
+  call plug#begin('/tmp/vim-plug-test/plugged')
   Plug 'plugin1'
     \| Plug 'plugin0'
 
@@ -250,7 +250,7 @@ Execute (#236: Plugin removed from &rtp when .vimrc is reloaded):
   silent! delc EasyAlign
 
   call ReloadPlug()
-  call plug#begin('/tmp/plugged')
+  call plug#begin('/tmp/vim-plug-test/plugged')
   Plug 'junegunn/vim-easy-align', { 'on': 'EasyAlign' }
   call plug#end()
   PlugInstall | q
@@ -259,19 +259,19 @@ Execute (#236: Plugin removed from &rtp when .vimrc is reloaded):
   %EasyAlign=
   Assert &rtp =~ '/vim-easy-align', 'Plugin should be in &rtp'
 
-  call plug#begin('/tmp/plugged')
+  call plug#begin('/tmp/vim-plug-test/plugged')
   Plug 'junegunn/vim-easy-align', { 'on': 'EasyAlign' }
   call plug#end()
   Assert &rtp =~ '/vim-easy-align', 'Plugin should still be in &rtp'
 
 **********************************************************************
 Execute (#350: Ruby installer failed to unshallow tagged plugin on update):
-  call plug#begin('/tmp/plugged')
+  call plug#begin('/tmp/vim-plug-test/plugged')
   call plug#end()
   PlugClean!
 
   " Shallow clone. We should have at least 2 plugins to enable parallel installer.
-  call plug#begin('/tmp/plugged')
+  call plug#begin('/tmp/vim-plug-test/plugged')
   Plug 'junegunn/vim-easy-align'
   Plug 'junegunn/seoul256.vim'
   call plug#end()
@@ -279,7 +279,7 @@ Execute (#350: Ruby installer failed to unshallow tagged plugin on update):
   Assert filereadable(g:plugs['vim-easy-align'].dir.'/.git/shallow')
 
   " Now unshallowed
-  call plug#begin('/tmp/plugged')
+  call plug#begin('/tmp/vim-plug-test/plugged')
   Plug 'junegunn/vim-easy-align', { 'tag': '2.9.0' }
   Plug 'junegunn/seoul256.vim'
   call plug#end()
@@ -289,13 +289,13 @@ Execute (#350: Ruby installer failed to unshallow tagged plugin on update):
 
 **********************************************************************
 Execute (#474: Load ftdetect files in filetypedetect augroup):
-  call plug#begin('/tmp/plugged')
+  call plug#begin('/tmp/vim-plug-test/plugged')
   Plug 'junegunn/rust.vim', { 'for': 'rust', 'commit': '115d321d383eb96d438466c56cc871fcc1bd0faa' }
   call plug#end()
   PlugInstall!
   q
 
-  tabnew /tmp/any.rs
+  tabnew /tmp/vim-plug-test/any.rs
   AssertEqual 'rust', &filetype
   Log &filetype
   filetype detect
@@ -314,4 +314,19 @@ Execute (#489 On-demand loading with 'on' option should trigger BufRead autocmd)
   silent! XXX
   redir END
   Assert stridx(out, 'ftplugin-java') >= 0
+  q
+
+**********************************************************************
+Execute (Cursor moved to another window during post-update hook):
+  function! DoSplit(...)
+    new
+    call setline(1, 'empty')
+  endfunction
+  call plug#begin('/tmp/vim-plug-test/plugged')
+  Plug 'junegunn/rust.vim', { 'do': function('DoSplit') }
+  call plug#end()
+  PlugInstall!
+  AssertEqual 1, line('$')
+  AssertEqual 'empty', getline(1)
+  q!
   q
