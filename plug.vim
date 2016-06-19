@@ -196,6 +196,9 @@ function! plug#end()
 
   filetype off
   for name in g:plugs_order
+    if !has_key(g:plugs, name)
+      continue
+    endif
     let plug = g:plugs[name]
     if get(s:loaded, name, 0) || !has_key(plug, 'on') && !has_key(plug, 'for')
       let s:loaded[name] = 1
