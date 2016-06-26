@@ -931,7 +931,7 @@ function! s:update_impl(pull, force, args) abort
   silent! redraw
 
   let s:clone_opt = get(g:, 'plug_shallow', 1) ?
-        \ '--depth 1' . (s:git_version_requirement(1, 7, 10) ? ' --no-single-branch' : '') : ''
+        \ '--depth 1' . (s:git_version_requirement(1, 7, 10) ? ' --no-single-branch' : '') . (has('win32unix') ? ' -c core.autocrlf=false' : '') : ''
 
   " Python version requirement (>= 2.7)
   if python && !has('python3') && !ruby && !s:nvim && s:update.threads > 1
