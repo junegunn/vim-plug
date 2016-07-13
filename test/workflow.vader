@@ -933,11 +933,24 @@ Execute (Should not run when failed to update):
   Assert filereadable(g:plugs['vim-pseudocl'].dir.'/not-failed'),
     \ 'vim-pseudocl/not-failed should exist'
 
+Execute (Vim command with : prefix):
+  call plug#begin()
+  Plug 'junegunn/vim-pseudocl', { 'do': ':call setline(2, 12345)' }
+  call plug#end()
+
+  PlugInstall!
+  Log getline(1, '$')
+  AssertEqual '12345', getline(2)
+  q
+
 **********************************************************************
 ~ Overriding `dir`
 **********************************************************************
 
 Execute (Using custom dir):
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align'
+  call plug#end()
   Assert isdirectory(g:plugs['vim-easy-align'].dir)
 
   call RmRf('/tmp/vim-plug-test/easy-align')

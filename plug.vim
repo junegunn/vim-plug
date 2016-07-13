@@ -267,7 +267,7 @@ function! plug#end()
       syntax enable
     end
   else
-    call s:reload()
+    call s:reload_plugins()
   endif
 endfunction
 
@@ -275,9 +275,13 @@ function! s:loaded_names()
   return filter(copy(g:plugs_order), 'get(s:loaded, v:val, 0)')
 endfunction
 
-function! s:reload()
+function! s:load_plugin(spec)
+  call s:source(s:rtp(a:spec), 'plugin/**/*.vim', 'after/plugin/**/*.vim')
+endfunction
+
+function! s:reload_plugins()
   for name in s:loaded_names()
-    call s:source(s:rtp(g:plugs[name]), 'plugin/**/*.vim', 'after/plugin/**/*.vim')
+    call s:load_plugin(g:plugs[name])
   endfor
 endfunction
 
@@ -785,7 +789,12 @@ function! s:do(pull, force, todo)
       let error = ''
       let type = type(spec.do)
       if type == s:TYPE.string
-        let error = s:bang(spec.do)
+        if spec.do[0] == ':'
+          call s:load_plugin(spec)
+          execute spec.do[1:]
+        else
+          let error = s:bang(spec.do)
+        endif
       elseif type == s:TYPE.funcref
         try
           let status = installed ? 'installed' : (updated ? 'updated' : 'unchanged')

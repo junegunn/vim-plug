@@ -201,6 +201,12 @@ Plug 'Shougo/vimproc.vim', { 'do': 'make' }
 Plug 'Valloric/YouCompleteMe', { 'do': './install.py' }
 ```
 
+If the value starts with `:`, it will be recognized as a Vim command.
+
+```vim
+Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
+```
+
 If you need more control, you can pass a reference to a Vim function that
 takes a single argument.
 
