@@ -2181,11 +2181,15 @@ function! s:preview_commit()
     return
   endif
 
-  execute 'pedit' sha
-  wincmd P
-  setlocal filetype=git buftype=nofile nobuflisted modifiable
-  execute 'silent read !cd' s:shellesc(g:plugs[name].dir) '&& git show --no-color --pretty=medium' sha
-  normal! gg"_dd
+  if exists('g:plug_pwindow') && !s:is_preview_window_open()
+    execute g:plug_pwindow
+    execute 'e' sha
+  else
+    execute 'pedit' sha
+    wincmd P
+  endif
+  setlocal previewwindow filetype=git buftype=nofile nobuflisted modifiable
+  execute 'silent %!cd' s:shellesc(g:plugs[name].dir) '&& git show --no-color --pretty=medium' sha
   setlocal nomodifiable
   nnoremap <silent> <buffer> q :q<cr>
   wincmd p

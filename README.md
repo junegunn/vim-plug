@@ -141,6 +141,7 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 | `g:plug_retries`    | 2                                 | Number of retries in case of timeout (*Ruby & Python*) |
 | `g:plug_shallow`    | 1                                 | Use shallow clone                                      |
 | `g:plug_window`     | `vertical topleft new`            | Command to open plug window                            |
+| `g:plug_pwindow`    | `above 12new`                     | Command to open preview window in `PlugDiff`           |
 | `g:plug_url_format` | `https://git::@github.com/%s.git` | `printf` format to build repo URL (Only applies to the subsequent `Plug` commands) |
 
 

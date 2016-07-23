@@ -365,6 +365,22 @@ Execute (New commits on remote, PlugUpdate, then PlugDiff):
   AssertEqual 1, &previewwindow
   pclose
 
+Execute (Test g:plug_pwindow):
+  let g:plug_pwindow = 'below 5new'
+  PlugDiff
+  AssertExpect '^- ', 1
+  execute "normal ]]jo"
+
+  AssertEqual 0, &previewwindow
+  AssertEqual 1, winnr()
+  wincmd P
+  AssertEqual 1, &previewwindow
+  AssertEqual 2, winnr()
+  AssertEqual 5, winheight('.')
+  wincmd p
+  normal q
+  unlet g:plug_pwindow
+
 Execute (Reuse Plug window in another tab):
   let tabnr = tabpagenr()
   PlugDiff
