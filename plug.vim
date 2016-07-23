@@ -2271,7 +2271,7 @@ function! s:revert()
   setlocal modifiable
   normal! "_dap
   setlocal nomodifiable
-  echo 'Reverted.'
+  echo 'Reverted'
 endfunction
 
 function! s:snapshot(force, ...) abort
