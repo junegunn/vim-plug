@@ -240,8 +240,8 @@ Expect:
 Execute (PlugClean! to remove seoul256.vim):
   PlugClean!
   " Three removed, emoji left
-  AssertEqual 'Removed.', getline(4)
-  AssertExpect '^- ', 3
+  AssertEqual 'Removed 3 directories.', getline(4)
+  AssertExpect '^\~ ', 3
   AssertExpect 'Diverged', 1
   Assert empty(globpath(&rtp, 'colors/seoul256.vim'))
   Assert !empty(globpath(&rtp, 'autoload/emoji.vim'))
@@ -268,8 +268,8 @@ Expect:
 
 Execute (PlugClean! to remove vim-emoji):
   PlugClean!
-  AssertExpect '^- ', 1
-  AssertEqual 'Removed.', getline(4)
+  AssertExpect '^\~ ', 1
+  AssertEqual 'Removed 1 directories.', getline(4)
   Assert empty(globpath(&rtp, 'colors/seoul256.vim'))
   Assert empty(globpath(&rtp, 'autoload/emoji.vim'))
   q
@@ -1273,11 +1273,11 @@ Execute (PlugClean should not try to remove unmanaged plugins inside g:plug_home
 
   " Remove z1, z2
   PlugClean!
-  AssertExpect '^- ', 2
+  AssertExpect '^\~ ', 2
   AssertExpect 'Already clean', 0
 
   PlugClean!
-  AssertExpect '^- ', 0
+  AssertExpect '^\~ ', 0
   AssertExpect 'Already clean', 1
   q
 

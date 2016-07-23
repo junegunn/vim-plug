@@ -171,14 +171,22 @@ function! s:assoc(dict, key, val)
   let a:dict[a:key] = add(get(a:dict, a:key, []), a:val)
 endfunction
 
-function! s:ask(message)
+function! s:ask(message, ...)
   call inputsave()
   echohl WarningMsg
-  let proceed = input(a:message.' (y/N) ') =~? '^y'
+  let answer = input(a:message.(a:0 ? ' (y/N/a) ' : ' (y/N) '))
   echohl None
   call inputrestore()
   echo "\r"
-  return proceed
+  return (a:0 && answer =~? '^a') ? 2 : (answer =~? '^y') ? 1 : 0
+endfunction
+
+function! s:ask_no_interrupt(...)
+  try
+    return call('s:ask', a:000)
+  catch
+    return 0
+  endtry
 endfunction
 
 function! plug#end()
@@ -609,6 +617,7 @@ function! s:syntax()
   syn match plugRelDate /([^)]*)$/ contained
   syn match plugNotLoaded /(not loaded)$/
   syn match plugError /^x.*/
+  syn region plugDeleted start=/^\~ .*/ end=/^\ze\S/
   syn match plugH2 /^.*:\n-\+$/
   syn keyword Function PlugInstall PlugStatus PlugUpdate PlugClean
   hi def link plug1       Title
@@ -628,6 +637,7 @@ function! s:syntax()
   hi def link plugUpdate  Type
 
   hi def link plugError   Error
+  hi def link plugDeleted Ignore
   hi def link plugRelDate Comment
   hi def link plugEdge    PreProc
   hi def link plugSha     Identifier
@@ -726,10 +736,9 @@ function! s:prepare(...)
   let s:plug_buf = winbufnr(0)
   call s:assign_name()
 
-  silent! unmap <buffer> <cr>
-  silent! unmap <buffer> L
-  silent! unmap <buffer> o
-  silent! unmap <buffer> X
+  for k in ['<cr>', 'L', 'o', 'X', 'd', 'dd']
+    execute 'silent! unmap <buffer>' k
+  endfor
   setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap cursorline modifiable
   setf vim-plug
   if exists('g:syntax_on')
@@ -1989,16 +1998,48 @@ function! s:clean(force)
   if empty(todo)
     call append(line('$'), 'Already clean.')
   else
-    if a:force || s:ask('Proceed?')
-      for dir in todo
-        call s:rm_rf(dir)
-      endfor
-      call append(3, ['Removed.', ''])
+    let s:clean_count = 0
+    call append(3, ['Directories to delete:', ''])
+    redraw!
+    if a:force || s:ask_no_interrupt('Delete all directories?')
+      call s:delete([6, line('$')], 1)
     else
-      call append(3, ['Cancelled.', ''])
+      call setline(4, 'Cancelled.')
+      nnoremap <silent> <buffer> d :set opfunc=<sid>delete_op<cr>g@
+      nmap     <silent> <buffer> dd d_
+      xnoremap <silent> <buffer> d :<c-u>call <sid>delete_op(visualmode(), 1)<cr>
+      echo 'Delete the lines (d{motion}) to delete the corresponding directories'
     endif
   endif
   4
+  setlocal nomodifiable
+endfunction
+
+function! s:delete_op(type, ...)
+  call s:delete(a:0 ? [line("'<"), line("'>")] : [line("'["), line("']")], 0)
+endfunction
+
+function! s:delete(range, force)
+  let [l1, l2] = a:range
+  let force = a:force
+  while l1 <= l2
+    let line = getline(l1)
+    if line =~ '^- ' && isdirectory(line[2:])
+      execute l1
+      redraw!
+      let answer = force ? 1 : s:ask('Delete '.line[2:].'?', 1)
+      let force = force || answer > 1
+      if answer
+        call s:rm_rf(line[2:])
+        setlocal modifiable
+        call setline(l1, '~'.line[1:])
+        let s:clean_count += 1
+        call setline(4, printf('Removed %d directories.', s:clean_count))
+        setlocal nomodifiable
+      endif
+    endif
+    let l1 += 1
+  endwhile
 endfunction
 
 function! s:upgrade()
