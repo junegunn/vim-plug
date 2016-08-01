@@ -1048,14 +1048,14 @@ function! s:update_finish()
       if v:shell_error
         call add(s:update.errors, name)
         call s:regress_bar()
-        execute pos 'd _'
+        silent execute pos 'd _'
         call append(4, msg) | 4
       elseif !empty(out)
         call setline(pos, msg)
       endif
       redraw
     endfor
-    4 d _
+    silent 4 d _
     call s:do(s:update.pull, s:update.force, filter(copy(s:update.all), 'index(s:update.errors, v:key) < 0 && has_key(v:val, "do")'))
     call s:finish(s:update.pull)
     call setline(1, 'Updated. Elapsed time: ' . split(reltimestr(reltime(s:update.start)))[0] . ' sec.')
@@ -1172,7 +1172,7 @@ function! s:log(bullet, name, lines)
   if s:switch_in()
     let pos = s:logpos(a:name)
     if pos > 0
-      execute pos 'd _'
+      silent execute pos 'd _'
       if pos > winheight('.')
         let pos = 4
       endif
