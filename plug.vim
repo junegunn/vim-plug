@@ -508,14 +508,17 @@ function! s:lod_map(map, names, prefix)
     endif
     let extra .= nr2char(c)
   endwhile
-  if v:count
-    call feedkeys(v:count, 'n')
-  endif
-  call feedkeys('"'.v:register, 'n')
+
+  let prefix = v:count ? v:count : ''
+  let prefix .= '"'.v:register.a:prefix
   if mode(1) == 'no'
-    call feedkeys(v:operator)
+    if v:operator == 'c'
+      let prefix = "\<esc>" . prefix
+    endif
+    let prefix .= v:operator
   endif
-  call feedkeys(a:prefix . substitute(a:map, '^<Plug>', "\<Plug>", '') . extra)
+  call feedkeys(prefix, 'n')
+  call feedkeys(substitute(a:map, '^<Plug>', "\<Plug>", '') . extra)
 endfunction
 
 function! plug#(repo, ...)
