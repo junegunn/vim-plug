@@ -1089,7 +1089,7 @@ function! s:job_handler(job_id, data, event) abort
 
   if a:event == 'stdout'
     let complete = empty(a:data[-1])
-    let lines = map(filter(a:data, 'len(v:val) > 0'), 'split(v:val, "[\r\n]")[-1]')
+    let lines = map(filter(a:data, 'v:val =~ "[^\r\n]"'), 'split(v:val, "[\r\n]")[-1]')
     call extend(self.lines, lines)
     let self.result = join(self.lines, "\n")
     if !complete
