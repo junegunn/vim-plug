@@ -126,6 +126,8 @@ function! plug#begin(...)
   let g:plugs_order = []
   let s:triggers = {}
 
+  let $VIMPLUG_DIR = home
+
   call s:define_commands()
   return 1
 endfunction
