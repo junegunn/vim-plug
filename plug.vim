@@ -809,7 +809,11 @@ function! s:do(pull, force, todo)
       if type == s:TYPE.string
         if spec.do[0] == ':'
           call s:load_plugin(spec)
-          execute spec.do[1:]
+          try
+            execute spec.do[1:]
+          catch
+            let error = v:exception
+          endtry
           if !s:plug_window_exists()
             cd -
             throw 'Warning: vim-plug was terminated by the post-update hook of '.name

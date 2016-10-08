@@ -970,6 +970,16 @@ Execute (Vim command with : prefix closing the window):
   Assert out =~ 'vim-plug was terminated'
   Assert out =~ 'of vim-pseudocl'
 
+Execute (Invalid vim command in post-update hook):
+  call plug#begin()
+  Plug 'junegunn/vim-pseudocl', { 'do': ':nosuchcommand' }
+  call plug#end()
+
+  PlugInstall!
+  Log getline(1, '$')
+  AssertExpect! 'x Post-update hook for vim-pseudocl ... Vim:E492: Not an editor command: nosuchcommand', 1
+  q
+
 **********************************************************************
 ~ Overriding `dir`
 **********************************************************************
