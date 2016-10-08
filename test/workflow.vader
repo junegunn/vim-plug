@@ -1493,3 +1493,30 @@ Execute (#427 - Tag option with wildcard (requires git 1.9.2 or above)):
     q
     AssertEqual '2.9.7', GitTag('vim-easy-align')
   endif
+
+Execute (#530 - Comparison of compatible git URIs):
+  " .git suffix
+  Assert CompareURI('https://github.com/junegunn/vim-plug.git', 'https://github.com/junegunn/vim-plug')
+
+  " user@
+  Assert CompareURI('https://github.com/junegunn/vim-plug.git', 'https://user@github.com/junegunn/vim-plug.git')
+
+  " git::@
+  Assert CompareURI('https://github.com/junegunn/vim-plug.git', 'https://git::@github.com/junegunn/vim-plug.git')
+
+  " https and ssh
+  Assert CompareURI('https://github.com/junegunn/vim-plug.git', 'git@github.com:junegunn/vim-plug.git')
+
+  " file://
+  Assert CompareURI('file:///tmp/vim-plug', '/tmp/vim-plug')
+  Assert CompareURI('file:///tmp/vim-plug', '/tmp/vim-plug/')
+
+Execute (#530 - Comparison of incompatible git URIs):
+  " Different hostname
+  Assert !CompareURI('https://github.com/junegunn/vim-plug.git', 'https://bitbucket.com/junegunn/vim-plug.git')
+
+  " Different repository
+  Assert !CompareURI('https://github.com/junegunn/vim-plug.git', 'https://github.com/junegunn/emacs-plug.git')
+
+  " Different port
+  Assert !CompareURI('https://github.com/junegunn/vim-plug.git', 'https://github.com:12345/junegunn/vim-plug.git')
