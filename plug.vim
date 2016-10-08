@@ -726,10 +726,17 @@ function! s:prepare(...)
 
   call s:job_abort()
   if s:switch_in()
+    let new_window = winnr('$') > 1
     normal q
+  else
+    let new_window = 1
   endif
 
-  call s:new_window()
+  if new_window
+    call s:new_window()
+  else
+    enew
+  endif
   nnoremap <silent> <buffer> q  :if b:plug_preview==1<bar>pc<bar>endif<bar>bd<cr>
   if a:0 == 0
     call s:finish_bindings()
