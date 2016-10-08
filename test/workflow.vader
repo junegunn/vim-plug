@@ -1520,3 +1520,24 @@ Execute (#530 - Comparison of incompatible git URIs):
 
   " Different port
   Assert !CompareURI('https://github.com/junegunn/vim-plug.git', 'https://github.com:12345/junegunn/vim-plug.git')
+
+Execute (#532 - Reuse plug window):
+  PlugDiff
+  AssertEqual 1, winnr()
+  AssertEqual 2, winnr('$')
+
+  " Open preview window
+  execute "normal ]]jo"
+  AssertEqual 2, winnr()
+  AssertEqual 3, winnr('$')
+
+  " Move plug window to the right
+  wincmd L
+  AssertEqual 3, winnr()
+  AssertEqual 3, winnr('$')
+
+  " Reuse plug window. Preview window is closed.
+  PlugStatus
+  AssertEqual 2, winnr()
+  AssertEqual 2, winnr('$')
+  q

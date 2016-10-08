@@ -726,10 +726,14 @@ function! s:prepare(...)
 
   call s:job_abort()
   if s:switch_in()
-    normal q
+    if b:plug_preview == 1
+      pc
+    endif
+    enew
+  else
+    call s:new_window()
   endif
 
-  call s:new_window()
   nnoremap <silent> <buffer> q  :if b:plug_preview==1<bar>pc<bar>endif<bar>bd<cr>
   if a:0 == 0
     call s:finish_bindings()
