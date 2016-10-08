@@ -1522,6 +1522,12 @@ Execute (#530 - Comparison of incompatible git URIs):
   Assert !CompareURI('https://github.com/junegunn/vim-plug.git', 'https://github.com:12345/junegunn/vim-plug.git')
 
 Execute (#532 - Reuse plug window):
+  call plug#begin()
+  Plug 'junegunn/goyo.vim'
+  call plug#end()
+  PlugInstall
+  call system(printf('cd "%s" && git commit --allow-empty -m "dummy"', g:plugs['goyo.vim'].dir))
+
   PlugDiff
   AssertEqual 1, winnr()
   AssertEqual 2, winnr('$')
