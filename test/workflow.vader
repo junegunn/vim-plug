@@ -959,6 +959,17 @@ Execute (Vim command with : prefix):
   AssertEqual '12345', getline(2)
   q
 
+Execute (Vim command with : prefix closing the window):
+  call plug#begin()
+  Plug 'junegunn/vim-pseudocl', { 'do': ':close' }
+  call plug#end()
+
+  redir => out
+  PlugInstall!
+  redir END
+  Assert out =~ 'vim-plug was terminated'
+  Assert out =~ 'of vim-pseudocl'
+
 **********************************************************************
 ~ Overriding `dir`
 **********************************************************************

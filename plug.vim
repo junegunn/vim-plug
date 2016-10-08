@@ -810,6 +810,10 @@ function! s:do(pull, force, todo)
         if spec.do[0] == ':'
           call s:load_plugin(spec)
           execute spec.do[1:]
+          if !s:plug_window_exists()
+            cd -
+            throw 'Warning: vim-plug was terminated by the post-update hook of '.name
+          endif
         else
           let error = s:bang(spec.do)
         endif
@@ -1059,7 +1063,13 @@ function! s:update_finish()
       redraw
     endfor
     silent 4 d _
-    call s:do(s:update.pull, s:update.force, filter(copy(s:update.all), 'index(s:update.errors, v:key) < 0 && has_key(v:val, "do")'))
+    try
+      call s:do(s:update.pull, s:update.force, filter(copy(s:update.all), 'index(s:update.errors, v:key) < 0 && has_key(v:val, "do")'))
+    catch
+      call s:warn('echom', v:exception)
+      call s:warn('echo', '')
+      return
+    endtry
     call s:finish(s:update.pull)
     call setline(1, 'Updated. Elapsed time: ' . split(reltimestr(reltime(s:update.start)))[0] . ' sec.')
     call s:switch_out('normal! gg')
