@@ -20,6 +20,7 @@ matrix:
     - env: ENV=ruby20
       rvm: 2.0.0
     - env: ENV=neovim
+    - env: ENV=vim8
 install: |
   git config --global user.email "you@example.com"
   git config --global user.name "Your Name"
