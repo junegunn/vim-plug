@@ -1163,9 +1163,9 @@ function! s:nvim_job_handler(job_id, data, event) abort
   endif
 
   if a:event == 'stdout'
-    call s:job_out_cb(self, a:job_id, data)
+    call s:job_out_cb(self, a:job_id, a:data)
   elseif a:event == 'exit'
-    call s:job_exit_cb(self, a:job_id, data)
+    call s:job_exit_cb(self, a:job_id, a:data)
   endif
 endfunction
 
