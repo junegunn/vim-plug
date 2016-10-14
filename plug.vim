@@ -1528,10 +1528,10 @@ class Plugin(object):
     return result[-1]
 
   def update(self):
-    match = re.compile(r'git::?@')
-    actual_uri = re.sub(match, '', self.repo_uri())
-    expect_uri = re.sub(match, '', self.args['uri'])
-    if actual_uri != expect_uri:
+    actual_uri = self.repo_uri()
+    expect_uri = self.args['uri']
+    regex = re.compile(r'^(?:\w+://)?(?:[^@/]*@)?([^:/]*(?::[0-9]*)?)[:/](.*?)(?:\.git)?/?$')
+    if regex.match(actual_uri).groups() != regex.match(expect_uri).groups():
       msg = ['',
              'Invalid URI: {0}'.format(actual_uri),
              'Expected     {0}'.format(expect_uri),
@@ -1690,6 +1690,11 @@ function! s:update_ruby()
     end
   end
 
+  def compare_git_uri a, b
+    regex = %r{^(?:\w+://)?(?:[^@/]*@)?([^:/]*(?::[0-9]*)?)[:/](.*?)(?:\.git)?/?$}
+    regex.match(a).to_a.drop(1) == regex.match(b).to_a.drop(1)
+  end
+
   require 'thread'
   require 'fileutils'
   require 'timeout'
@@ -1831,7 +1836,7 @@ function! s:update_ruby()
                 else
                   [false, [data.chomp, "PlugClean required."].join($/)]
                 end
-              elsif current_uri.sub(/git::?@/, '') != uri.sub(/git::?@/, '')
+              elsif !compare_git_uri(current_uri, uri)
                 [false, ["Invalid URI: #{current_uri}",
                          "Expected:    #{uri}",
                          "PlugClean required."].join($/)]
