@@ -98,6 +98,7 @@ let s:plug_buf = get(s:, 'plug_buf', -1)
 let s:mac_gui = has('gui_macvim') && has('gui_running')
 let s:is_win = has('win32') || has('win64')
 let s:nvim = has('nvim') && exists('*jobwait') && !s:is_win
+let s:vim8 = has('patch-8.0.0001') && exists('*job_start')
 let s:me = resolve(expand('<sfile>:p'))
 let s:base_spec = { 'branch': 'master', 'frozen': 0 }
 let s:TYPE = {
@@ -948,8 +949,9 @@ function! s:update_impl(pull, force, args) abort
     call s:warn('echom', '[vim-plug] Update Neovim for parallel installer')
   endif
 
-  let python = (has('python') || has('python3')) && (!s:nvim || has('vim_starting'))
-  let ruby = has('ruby') && !s:nvim && (v:version >= 703 || v:version == 702 && has('patch374')) && !(s:is_win && has('gui_running')) && s:check_ruby()
+  let use_job = s:nvim || s:vim8
+  let python = (has('python') || has('python3')) && (!use_job || has('vim_starting'))
+  let ruby = has('ruby') && !use_job && (v:version >= 703 || v:version == 702 && has('patch374')) && !(s:is_win && has('gui_running')) && s:check_ruby()
 
   let s:update = {
     \ 'start':   reltime(),
@@ -959,7 +961,7 @@ function! s:update_impl(pull, force, args) abort
     \ 'pull':    a:pull,
     \ 'force':   a:force,
     \ 'new':     {},
-    \ 'threads': (python || ruby || s:nvim) ? min([len(todo), threads]) : 1,
+    \ 'threads': (python || ruby || use_job) ? min([len(todo), threads]) : 1,
     \ 'bar':     '',
     \ 'fin':     0
   \ }
@@ -973,7 +975,7 @@ function! s:update_impl(pull, force, args) abort
         \ '--depth 1' . (s:git_version_requirement(1, 7, 10) ? ' --no-single-branch' : '') : ''
 
   " Python version requirement (>= 2.7)
-  if python && !has('python3') && !ruby && !s:nvim && s:update.threads > 1
+  if python && !has('python3') && !ruby && !use_job && s:update.threads > 1
     redir => pyv
     silent python import platform; print platform.python_version()
     redir END
@@ -1085,12 +1087,16 @@ function! s:update_finish()
 endfunction
 
 function! s:job_abort()
-  if !s:nvim || !exists('s:jobs')
+  if (!s:nvim && !s:vim8) || !exists('s:jobs')
     return
   endif
 
   for [name, j] in items(s:jobs)
-    silent! call jobstop(j.jobid)
+    if s:nvim
+      silent! call jobstop(j.jobid)
+    elseif s:vim8
+      silent! call job_stop(j.jobid)
+    endif
     if j.new
       call s:system('rm -rf ' . s:shellesc(g:plugs[name].dir))
     endif
@@ -1098,49 +1104,108 @@ function! s:job_abort()
   let s:jobs = {}
 endfunction
 
+function! s:job_out_cb(self, ch, data) abort
+  let self = a:self
+  let complete = empty(a:data[-1])
+  let lines = map(filter(a:data, 'v:val =~ "[^\r\n]"'), 'split(v:val, "[\r\n]")[-1]')
+  call extend(self.lines, lines)
+  let self.result = join(self.lines, "\n")
+  if !complete
+    call remove(self.lines, -1)
+  endif
+  " To reduce the number of buffer updates
+  let self.tick = get(self, 'tick', -1) + 1
+  if self.tick % len(s:jobs) == 0
+    call s:log(self.new ? '+' : '*', self.name, self.result)
+  endif
+endfunction
+
+function! s:job_exit_cb(self, ch, data) abort
+  let self = a:self
+  call s:reap(self.name)
+  call s:tick()
+endfunction
+
+function! s:find_job(ch)
+  for j in keys(s:jobs)
+    if s:jobs[j].jobid == a:ch
+      return s:jobs[j]
+    endif
+  endfor
+  return {}
+endfunction
+
+function! s:vim8_out_cb(ch, data)
+  if !s:plug_window_exists() " plug window closed
+    return s:job_abort()
+  endif
+  let self = s:find_job(a:ch)
+  if !empty(self)
+    call s:job_out_cb(self, a:ch, a:data)
+  endif
+endfunction
+
+function! s:vim8_exit_cb(ch, data)
+  if !s:plug_window_exists() " plug window closed
+    return s:job_abort()
+  endif
+  let self = s:find_job(a:ch)
+  if !empty(self)
+    call s:job_exit_cb(self, a:ch, a:data)
+  endif
+endfunction
+
 " When a:event == 'stdout', data = list of strings
 " When a:event == 'exit', data = returncode
-function! s:job_handler(job_id, data, event) abort
+function! s:nvim_job_handler(job_id, data, event) abort
   if !s:plug_window_exists() " plug window closed
     return s:job_abort()
   endif
 
   if a:event == 'stdout'
-    let complete = empty(a:data[-1])
-    let lines = map(filter(a:data, 'v:val =~ "[^\r\n]"'), 'split(v:val, "[\r\n]")[-1]')
-    call extend(self.lines, lines)
-    let self.result = join(self.lines, "\n")
-    if !complete
-      call remove(self.lines, -1)
-    endif
-    " To reduce the number of buffer updates
-    let self.tick = get(self, 'tick', -1) + 1
-    if self.tick % len(s:jobs) == 0
-      call s:log(self.new ? '+' : '*', self.name, self.result)
-    endif
+    call s:job_out_cb(self, a:job_id, a:data)
   elseif a:event == 'exit'
-    let self.running = 0
-    if a:data != 0
-      let self.error = 1
-    endif
-    call s:reap(self.name)
-    call s:tick()
+    call s:job_exit_cb(self, a:job_id, a:data)
   endif
 endfunction
 
 function! s:spawn(name, cmd, opts)
-  let job = { 'name': a:name, 'running': 1, 'error': 0, 'lines': [], 'result': '',
-            \ 'new': get(a:opts, 'new', 0),
-            \ 'on_stdout': function('s:job_handler'),
-            \ 'on_exit' : function('s:job_handler'),
-            \ }
+  let job = {}
   let s:jobs[a:name] = job
 
   if s:nvim
+    call extend(job, { 'name': a:name, 'running': 1, 'error': 0, 'lines': [], 'result': '',
+              \ 'new': get(a:opts, 'new', 0),
+              \ 'on_stdout': function('s:nvim_job_handler'),
+              \ 'on_exit' : function('s:nvim_job_handler'),
+              \ })
     let argv = [ 'sh', '-c',
                \ (has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd) ]
     let jid = jobstart(argv, job)
     if jid > 0
+      let job.jobid = jid
+    else
+      let job.running = 0
+      let job.error   = 1
+      let job.result  = jid < 0 ? 'sh is not executable' :
+            \ 'Invalid arguments (or job table is full)'
+    endif
+  elseif s:vim8
+    call extend(job, { 'name': a:name, 'running': 1, 'error': 0, 'lines': [], 'result': '',
+              \ 'new': get(a:opts, 'new', 0),
+              \ })
+    if s:is_win
+      let argv = [ 'cmd', '/c',
+                 \ (has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd) ]
+    else
+      let argv = [ 'sh', '-c',
+                 \ (has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd) ]
+    endif
+    let jid = job_start(argv, {
+    \ 'out_cb': function('s:vim8_out_cb'),
+    \ 'exit_cb' : function('s:vim8_exit_cb')
+    \})
+    if job_status(jid) == 'run'
       let job.jobid = jid
     else
       let job.running = 0
@@ -1214,7 +1279,7 @@ endfunction
 
 function! s:tick()
   let pull = s:update.pull
-  let prog = s:progress_opt(s:nvim)
+  let prog = s:progress_opt(s:nvim || s:vim8)
 while 1 " Without TCO, Vim stack is bound to explode
   if empty(s:update.todo)
     if empty(s:jobs) && !s:update.fin
