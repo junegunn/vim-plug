@@ -1177,7 +1177,8 @@ function! s:spawn(name, cmd, opts)
   elseif s:vim8
     let jid = job_start(argv, {
     \ 'callback': function('s:vim8_cb', ['s:job_out_cb',  job]),
-    \ 'exit_cb':  function('s:vim8_cb', ['s:job_exit_cb', job])
+    \ 'exit_cb':  function('s:vim8_cb', ['s:job_exit_cb', job]),
+    \ 'out_mode': 'raw'
     \})
     if job_status(jid) == 'run'
       let job.jobid = jid
