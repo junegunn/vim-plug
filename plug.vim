@@ -1110,7 +1110,7 @@ function! s:job_abort()
   let s:jobs = {}
 endfunction
 
-function! s:job_out_cb(self, ch, data) abort
+function! s:job_out_cb(self, data) abort
   let self = a:self
   let complete = empty(a:data[-1])
   let lines = map(filter(a:data, 'v:val =~ "[^\r\n]"'), 'split(v:val, "[\r\n]")[-1]')
@@ -1126,39 +1126,17 @@ function! s:job_out_cb(self, ch, data) abort
   endif
 endfunction
 
-function! s:job_exit_cb(self, ch, data) abort
+function! s:job_exit_cb(self, data) abort
   let self = a:self
   call s:reap(self.name)
   call s:tick()
 endfunction
 
-function! s:find_job(ch)
-  for j in keys(s:jobs)
-    if s:jobs[j].jobid == a:ch
-      return s:jobs[j]
-    endif
-  endfor
-  return {}
-endfunction
-
-function! s:vim8_out_cb(ch, data)
+function! s:vim8_cb(fn, job, ch, data)
   if !s:plug_window_exists() " plug window closed
     return s:job_abort()
   endif
-  let self = s:find_job(a:ch)
-  if !empty(self)
-    call s:job_out_cb(self, a:ch, a:data)
-  endif
-endfunction
-
-function! s:vim8_exit_cb(ch, data)
-  if !s:plug_window_exists() " plug window closed
-    return s:job_abort()
-  endif
-  let self = s:find_job(a:ch)
-  if !empty(self)
-    call s:job_exit_cb(self, a:ch, a:data)
-  endif
+  call call(a:fn, [a:job, split(a:data, '[\r\n]', 1)])
 endfunction
 
 " When a:event == 'stdout', data = list of strings
@@ -1169,9 +1147,9 @@ function! s:nvim_job_handler(job_id, data, event) abort
   endif
 
   if a:event == 'stdout'
-    call s:job_out_cb(self, a:job_id, a:data)
+    call s:job_out_cb(self, a:data)
   elseif a:event == 'exit'
-    call s:job_exit_cb(self, a:job_id, a:data)
+    call s:job_exit_cb(self, a:data)
   endif
 endfunction
 
@@ -1198,8 +1176,8 @@ function! s:spawn(name, cmd, opts)
     endif
   elseif s:vim8
     let jid = job_start(argv, {
-    \ 'out_cb':  function('s:vim8_out_cb'),
-    \ 'exit_cb': function('s:vim8_exit_cb')
+    \ 'callback': function('s:vim8_cb', ['s:job_out_cb',  job]),
+    \ 'exit_cb':  function('s:vim8_cb', ['s:job_exit_cb', job])
     \})
     if job_status(jid) == 'run'
       let job.jobid = jid
