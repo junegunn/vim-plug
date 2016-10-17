@@ -1537,7 +1537,9 @@ class Plugin(object):
     actual_uri = self.repo_uri()
     expect_uri = self.args['uri']
     regex = re.compile(r'^(?:\w+://)?(?:[^@/]*@)?([^:/]*(?::[0-9]*)?)[:/](.*?)(?:\.git)?/?$')
-    if regex.match(actual_uri).groups() != regex.match(expect_uri).groups():
+    ma = regex.match(actual_uri)
+    mb = regex.match(expect_uri)
+    if ma is None or mb is None or ma.groups() != mb.groups():
       msg = ['',
              'Invalid URI: {0}'.format(actual_uri),
              'Expected     {0}'.format(expect_uri),

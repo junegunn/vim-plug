@@ -1,12 +1,12 @@
 language: ruby
-sudo: false
+sudo: required
 env:
   global:
     - DEPS=$HOME/deps
     - PATH=$DEPS/bin:$PATH
 matrix:
   include:
-    - env: ENV=nox
+    - env: ENV=vim72
       rvm: 1.8.7
       addons: { apt: { packages: [vim-nox] } }
     - env: ENV=python
@@ -15,17 +15,27 @@ matrix:
     - env: ENV=python3
       rvm: 1.8.7
       addons: { apt: { packages: [python3-dev] } }
-    - env: ENV=ruby
+    - env: ENV=ruby18
       rvm: 1.8.7
-    - env: ENV=ruby
+    - env: ENV=ruby20
       rvm: 2.0.0
+    - env: ENV=neovim
 install: |
   git config --global user.email "you@example.com"
   git config --global user.name "Your Name"
 
-  if [ "$ENV" == "nox" ]; then
+  if [ "$ENV" == "vim72" ]; then
     mkdir -p ${DEPS}/bin
     ln -s /usr/bin/vim.nox ${DEPS}/bin/vim
+    return
+  elif [ "$ENV" == "neovim" ]; then
+    # https://github.com/neovim/neovim/wiki/Installing-Neovim
+    sudo apt-get install -y software-properties-common
+    sudo add-apt-repository -y ppa:neovim-ppa/unstable
+    sudo apt-get update -y
+    sudo apt-get install -y neovim
+    mkdir -p ${DEPS}/bin
+    ln -s /usr/bin/nvim ${DEPS}/bin/vim
     return
   fi
 
@@ -37,7 +47,7 @@ install: |
     python3)
       C_OPTS+=--enable-python3interp
       ;;
-    ruby)
+    ruby*)
       C_OPTS+=--enable-rubyinterp
       ;;
   esac

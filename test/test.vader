@@ -70,14 +70,16 @@ Execute (Initialize test environment):
 Execute (Print Interpreter Version):
   redir => out
   if has('ruby')
-    silent ruby puts 'Ruby: ' + RUBY_VERSION
-  elseif has('python')
-    silent python import sys; svi = sys.version_info; print 'Python: {}.{}.{}'.format(svi[0], svi[1], svi[2])
-  elseif has('python3')
-    silent python3 import sys; svi = sys.version_info; print('Python: {}.{}.{}'.format(svi[0], svi[1], svi[2]))
+    silent! ruby puts 'Ruby: ' + RUBY_VERSION
+  endif
+  if has('python')
+    silent! python import sys; svi = sys.version_info; print 'Python: {}.{}.{}'.format(svi[0], svi[1], svi[2])
+  endif
+  if has('python3')
+    silent! python3 import sys; svi = sys.version_info; print('Python: {}.{}.{}'.format(svi[0], svi[1], svi[2]))
   endif
   redir END
-  Log substitute(out, '\n', '', 'g')
+  Log split(out, '\n')
 
 Include: workflow.vader
 Include: regressions.vader
