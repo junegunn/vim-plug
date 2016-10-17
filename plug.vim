@@ -1796,9 +1796,8 @@ function! s:update_ruby()
   main = Thread.current
   threads = []
   watcher = Thread.new {
-    while VIM::evaluate('getchar(1)')
-      sleep 0.1
-    end
+    require 'io/console' # >= Ruby 1.9
+    nil until IO.console.getch == 3.chr
     mtx.synchronize do
       running = false
       threads.each { |t| t.raise Interrupt }
