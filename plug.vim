@@ -948,7 +948,7 @@ function! s:update_impl(pull, force, args) abort
     call s:warn('echom', '[vim-plug] Update Neovim for parallel installer')
   endif
 
-  let python = (has('python') || has('python3')) && (!s:nvim || has('vim_starting'))
+  let python = (has('python') || has('python3')) && !s:nvim
   let ruby = has('ruby') && !s:nvim && (v:version >= 703 || v:version == 702 && has('patch374')) && !(s:is_win && has('gui_running')) && s:check_ruby()
 
   let s:update = {
@@ -1014,6 +1014,12 @@ function! s:update_impl(pull, force, args) abort
     endtry
   else
     call s:update_vim()
+    while s:nvim && has('vim_starting')
+      sleep 100m
+      if s:update.fin
+        break
+      endif
+    endwhile
   endif
 endfunction
 
@@ -1218,8 +1224,8 @@ function! s:tick()
 while 1 " Without TCO, Vim stack is bound to explode
   if empty(s:update.todo)
     if empty(s:jobs) && !s:update.fin
-      let s:update.fin = 1
       call s:update_finish()
+      let s:update.fin = 1
     endif
     return
   endif
