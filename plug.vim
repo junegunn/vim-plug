@@ -1121,36 +1121,28 @@ function! s:job_out_cb(self, data) abort
   endif
   " To reduce the number of buffer updates
   let self.tick = get(self, 'tick', -1) + 1
-  if self.tick % len(s:jobs) == 0
-    call s:log(self.new ? '+' : '*', self.name, self.result)
+  if !self.running || self.tick % len(s:jobs) == 0
+    let bullet = self.running ? (self.new ? '+' : '*') : (self.error ? 'x' : '-')
+    call s:log(bullet, self.name, self.result)
   endif
 endfunction
 
 function! s:job_exit_cb(self, data) abort
-  let self = a:self
-  call s:reap(self.name)
+  let a:self.running = 0
+  let a:self.error = a:data != 0
+  call s:reap(a:self.name)
   call s:tick()
 endfunction
 
-function! s:vim8_cb(fn, job, ch, data)
+function! s:job_cb(fn, job, ch, data)
   if !s:plug_window_exists() " plug window closed
     return s:job_abort()
   endif
-  call call(a:fn, [a:job, split(a:data, '[\r\n]', 1)])
+  call call(a:fn, [a:job, a:data])
 endfunction
 
-" When a:event == 'stdout', data = list of strings
-" When a:event == 'exit', data = returncode
-function! s:nvim_job_handler(job_id, data, event) abort
-  if !s:plug_window_exists() " plug window closed
-    return s:job_abort()
-  endif
-
-  if a:event == 'stdout'
-    call s:job_out_cb(self, a:data)
-  elseif a:event == 'exit'
-    call s:job_exit_cb(self, a:data)
-  endif
+function! s:nvim_cb(job_id, data, event) abort
+  call s:job_cb(a:event == 'stdout' ? 's:job_out_cb' : 's:job_exit_cb', self, 0, a:data)
 endfunction
 
 function! s:spawn(name, cmd, opts)
@@ -1162,8 +1154,8 @@ function! s:spawn(name, cmd, opts)
 
   if s:nvim
     call extend(job, {
-    \ 'on_stdout': function('s:nvim_job_handler'),
-    \ 'on_exit':   function('s:nvim_job_handler'),
+    \ 'on_stdout': function('s:nvim_cb'),
+    \ 'on_exit':   function('s:nvim_cb'),
     \ })
     let jid = jobstart(argv, job)
     if jid > 0
@@ -1176,8 +1168,8 @@ function! s:spawn(name, cmd, opts)
     endif
   elseif s:vim8
     let jid = job_start(argv, {
-    \ 'callback': function('s:vim8_cb', ['s:job_out_cb',  job]),
-    \ 'exit_cb':  function('s:vim8_cb', ['s:job_exit_cb', job]),
+    \ 'out_cb':   { c, d -> s:job_cb('s:job_out_cb',  job, c, split(d, '[\r\n]', 1)) },
+    \ 'exit_cb':  { c, d -> s:job_cb('s:job_exit_cb', job, c, d) },
     \ 'out_mode': 'raw'
     \})
     if job_status(jid) == 'run'
