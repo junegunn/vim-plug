@@ -1037,7 +1037,7 @@ function! s:update_finish()
   if s:switch_in()
     call append(3, '- Updating ...') | 4
     for [name, spec] in items(filter(copy(s:update.all), 'index(s:update.errors, v:key) < 0 && (s:update.force || s:update.pull || has_key(s:update.new, v:key))'))
-      let pos = s:logpos(name)
+      let [pos, _] = s:logpos(name)
       if !pos
         continue
       endif
@@ -1110,20 +1110,28 @@ function! s:job_abort()
   let s:jobs = {}
 endfunction
 
+function! s:last_non_empty_line(lines)
+  let len = len(a:lines)
+  for idx in range(len)
+    let line = a:lines[len-idx-1]
+    if !empty(line)
+      return line
+    endif
+  endfor
+  return ''
+endfunction
+
 function! s:job_out_cb(self, data) abort
   let self = a:self
-  let complete = empty(a:data[-1])
-  let lines = map(filter(a:data, 'v:val =~ "[^\r\n]"'), 'split(v:val, "[\r\n]")[-1]')
+  let data = remove(self.lines, -1) . a:data
+  let lines = map(split(data, "\n", 1), 'split(v:val, "\r", 1)[-1]')
   call extend(self.lines, lines)
-  let self.result = join(self.lines, "\n")
-  if !complete
-    call remove(self.lines, -1)
-  endif
   " To reduce the number of buffer updates
   let self.tick = get(self, 'tick', -1) + 1
   if !self.running || self.tick % len(s:jobs) == 0
     let bullet = self.running ? (self.new ? '+' : '*') : (self.error ? 'x' : '-')
-    call s:log(bullet, self.name, self.result)
+    let result = self.error ? join(self.lines, "\n") : s:last_non_empty_line(self.lines)
+    call s:log(bullet, self.name, result)
   endif
 endfunction
 
@@ -1142,11 +1150,13 @@ function! s:job_cb(fn, job, ch, data)
 endfunction
 
 function! s:nvim_cb(job_id, data, event) abort
-  call s:job_cb(a:event == 'stdout' ? 's:job_out_cb' : 's:job_exit_cb', self, 0, a:data)
+  return a:event == 'stdout' ?
+    \ s:job_cb('s:job_out_cb',  self, 0, join(a:data, "\n")) :
+    \ s:job_cb('s:job_exit_cb', self, 0, a:data)
 endfunction
 
 function! s:spawn(name, cmd, opts)
-  let job = { 'name': a:name, 'running': 1, 'error': 0, 'lines': [], 'result': '',
+  let job = { 'name': a:name, 'running': 1, 'error': 0, 'lines': [''],
             \ 'new': get(a:opts, 'new', 0) }
   let s:jobs[a:name] = job
   let argv = add(s:is_win ? ['cmd', '/c'] : ['sh', '-c'],
@@ -1163,13 +1173,13 @@ function! s:spawn(name, cmd, opts)
     else
       let job.running = 0
       let job.error   = 1
-      let job.result  = jid < 0 ? argv[0].' is not executable' :
-            \ 'Invalid arguments (or job table is full)'
+      let job.lines   = [jid < 0 ? argv[0].' is not executable' :
+            \ 'Invalid arguments (or job table is full)']
     endif
   elseif s:vim8
     let jid = job_start(argv, {
-    \ 'out_cb':   { c, d -> s:job_cb('s:job_out_cb',  job, c, split(d, '[\r\n]', 1)) },
-    \ 'exit_cb':  { c, d -> s:job_cb('s:job_exit_cb', job, c, d) },
+    \ 'out_cb':   function('s:job_cb', ['s:job_out_cb',  job]),
+    \ 'exit_cb':  function('s:job_cb', ['s:job_exit_cb', job]),
     \ 'out_mode': 'raw'
     \})
     if job_status(jid) == 'run'
@@ -1177,11 +1187,11 @@ function! s:spawn(name, cmd, opts)
     else
       let job.running = 0
       let job.error   = 1
-      let job.result  = 'Failed to start job'
+      let job.lines   = ['Failed to start job']
     endif
   else
     let params = has_key(a:opts, 'dir') ? [a:cmd, a:opts.dir] : [a:cmd]
-    let job.result = call('s:system', params)
+    let job.lines = s:lines(call('s:system', params))
     let job.error = v:shell_error != 0
     let job.running = 0
   endif
@@ -1196,7 +1206,9 @@ function! s:reap(name)
   endif
   let s:update.bar .= job.error ? 'x' : '='
 
-  call s:log(job.error ? 'x' : '-', a:name, empty(job.result) ? 'OK' : job.result)
+  let bullet = job.error ? 'x' : '-'
+  let result = job.error ? join(job.lines, "\n") : s:last_non_empty_line(job.lines)
+  call s:log(bullet, a:name, empty(result) ? 'OK' : result)
   call s:bar()
 
   call remove(s:jobs, a:name)
@@ -1215,23 +1227,31 @@ endfunction
 function! s:logpos(name)
   for i in range(4, line('$'))
     if getline(i) =~# '^[-+x*] '.a:name.':'
-      return i
+      for j in range(i + 1, line('$'))
+        if getline(j) !~ '^ '
+          return [i, j - 1]
+        endif
+      endfor
+      return [i, i]
     endif
   endfor
+  return [0, 0]
 endfunction
 
 function! s:log(bullet, name, lines)
   if s:switch_in()
-    let pos = s:logpos(a:name)
-    if pos > 0
-      silent execute pos 'd _'
-      if pos > winheight('.')
-        let pos = 4
+    let [b, e] = s:logpos(a:name)
+    if b > 0
+      silent execute printf('%d,%d d _', b, e)
+      if b > winheight('.')
+        let b = 4
       endif
     else
-      let pos = 4
+      let b = 4
     endif
-    call append(pos - 1, s:format_message(a:bullet, a:name, a:lines))
+    " FIXME For some reason, nomodifiable is set after :d in vim8
+    setlocal modifiable
+    call append(b - 1, s:format_message(a:bullet, a:name, a:lines))
     call s:switch_out()
   endif
 endfunction
@@ -1270,10 +1290,10 @@ while 1 " Without TCO, Vim stack is bound to explode
         let fetch_opt = (has_tag && !empty(globpath(spec.dir, '.git/shallow'))) ? '--depth 99999999' : ''
         call s:spawn(name, printf('git fetch %s %s 2>&1', fetch_opt, prog), { 'dir': spec.dir })
       else
-        let s:jobs[name] = { 'running': 0, 'result': 'Already installed', 'error': 0 }
+        let s:jobs[name] = { 'running': 0, 'lines': ['Already installed'], 'error': 0 }
       endif
     else
-      let s:jobs[name] = { 'running': 0, 'result': error, 'error': 1 }
+      let s:jobs[name] = { 'running': 0, 'lines': s:lines(error), 'error': 1 }
     endif
   else
     call s:spawn(name,
