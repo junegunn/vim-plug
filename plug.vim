@@ -257,8 +257,8 @@ function! plug#end()
     for [mode, map_prefix, key_prefix] in
           \ [['i', '<C-O>', ''], ['n', '', ''], ['v', '', 'gv'], ['o', '', '']]
       execute printf(
-      \ '%snoremap <silent> %s %s:<C-U>call <SID>lod_map(%s, %s, "%s")<CR>',
-      \ mode, map, map_prefix, string(map), string(names), key_prefix)
+      \ '%snoremap <silent> %s %s:<C-U>call <SID>lod_map(%s, %s, %s, "%s")<CR>',
+      \ mode, map, map_prefix, string(map), string(names), mode != 'i', key_prefix)
     endfor
   endfor
 
@@ -498,7 +498,7 @@ function! s:lod_cmd(cmd, bang, l1, l2, args, names)
   execute printf('%s%s%s %s', (a:l1 == a:l2 ? '' : (a:l1.','.a:l2)), a:cmd, a:bang, a:args)
 endfunction
 
-function! s:lod_map(map, names, prefix)
+function! s:lod_map(map, names, with_prefix, prefix)
   call s:lod(a:names, ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
   call s:dobufread(a:names)
   let extra = ''
@@ -510,15 +510,17 @@ function! s:lod_map(map, names, prefix)
     let extra .= nr2char(c)
   endwhile
 
-  let prefix = v:count ? v:count : ''
-  let prefix .= '"'.v:register.a:prefix
-  if mode(1) == 'no'
-    if v:operator == 'c'
-      let prefix = "\<esc>" . prefix
+  if a:with_prefix
+    let prefix = v:count ? v:count : ''
+    let prefix .= '"'.v:register.a:prefix
+    if mode(1) == 'no'
+      if v:operator == 'c'
+        let prefix = "\<esc>" . prefix
+      endif
+      let prefix .= v:operator
     endif
-    let prefix .= v:operator
+    call feedkeys(prefix, 'n')
   endif
-  call feedkeys(prefix, 'n')
   call feedkeys(substitute(a:map, '^<Plug>', "\<Plug>", '') . extra)
 endfunction
 
