@@ -471,7 +471,7 @@ Execute (PlugDiff):
 Execute (Trying to execute on-demand commands when plugin is not installed):
   call ReloadPlug()
   call plug#begin()
-  Plug 'junegunn/vim-easy-align', { 'on': ['EasyAlign', 'LiveEasyAlign'] }
+  Plug 'junegunn/vim-easy-align', { 'on': ['EasyAlign', 'LiveEasyAlign!'] }
   call plug#end()
 
   Assert exists(':EasyAlign')
