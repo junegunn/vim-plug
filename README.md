@@ -37,7 +37,7 @@ curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
 ###### Neovim
 
 ```sh
-curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs \
+curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 ```
 
@@ -69,6 +69,7 @@ Add a vim-plug section to your `~/.vimrc` (or `~/.config/nvim/init.vim` for Neov
 #### Example
 
 ```vim
+" Specify a directory for plugins (for Neovim: ~/.local/share/nvim/plugged)
 call plug#begin('~/.vim/plugged')
 
 " Make sure you use single quotes
