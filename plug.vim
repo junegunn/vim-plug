@@ -2018,18 +2018,15 @@ function! s:git_validate(spec, check_branch)
               \ a:spec.branch), a:spec.dir)), '\t')
         if !v:shell_error && ahead
           if behind
-            let base_error = printf(
-                  \ 'Diverged from origin/%%s (%%d commit(s) ahead and %d commit(s) behind!', behind)
+            " Only mention PlugClean if diverged, otherwise it's likely to be
+            " pushable (and probably not that messed up).
+            let err = printf(
+                  \ "Diverged from origin/%s (%d commit(s) ahead and %d commit(s) behind!\n"
+                  \ .'Backup local changes and run PlugClean and PlugUpdate to reinstall it.', a:spec.branch, ahead, behind)
           else
-            let base_error = 'Ahead of origin/%s by %d commit(s).'
-          endif
-          let err = join([printf(base_error, a:spec.branch, ahead),
-                \ 'Can you push it yourself?',
-                \ 'Otherwise try reinstalling it after cleaning it manually.'], "\n")
-          " Only mention PlugClean if diverged, otherwise it's likely to be
-          " pushable (and probably not that messed up).
-          if behind
-            let err .= "\nTry PlugClean after backing it up."
+            let err = printf("Ahead of origin/%s by %d commit(s).\n"
+                  \ .'Cannot update until local changes are pushed.',
+                  \ a:spec.branch, ahead)
           endif
         endif
       endif
