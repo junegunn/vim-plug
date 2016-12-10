@@ -1,6 +1,10 @@
 #!/bin/bash
 
-cd $(dirname "${BASH_SOURCE[0]}")
+# Privileged mode, ignores $CDPATH etc.
+set -p
+set -eu
+
+cd "$(dirname "${BASH_SOURCE[0]}")"
 
 export BASE="$PWD"
 export PLUG_SRC="$PWD/../plug.vim"
@@ -16,8 +20,8 @@ set shell=/bin/bash
 VIMRC
 
 clone() {
-  if [ ! -d $2 ]; then
-    git clone $1 $2
+  if [ ! -d "$2" ]; then
+    git clone "$1" "$2"
   fi
 }
 
@@ -44,8 +48,8 @@ make_dirs() (
   cd "$PLUG_FIXTURES/$1"
   mkdir -p autoload colors ftdetect ftplugin indent plugin syntax
   for d in *; do
-    [ -d $d ] || continue
-    cat > $d/xxx.vim << EOF
+    [ -d "$d" ] || continue
+    cat > "$d/xxx.vim" << EOF
     " echom expand('<sfile>')
     let g:total_order = get(g:, 'total_order', [])
     let g:$2 = get(g:, '$2', [])
@@ -97,7 +101,7 @@ DOC
 
 select_vim() {
   local vim=/usr/bin/vim
-  if [ -n "$DEPS" ] && [ -e "${DEPS}/bin/vim" ]; then
+  if [ -n "${DEPS:-}" ] && [ -e "${DEPS}/bin/vim" ]; then
     vim="${DEPS}/bin/vim"
   elif [ -e "/usr/local/bin/vim" ]; then
     vim=/usr/local/bin/vim
@@ -111,7 +115,7 @@ prepare
 git --version
 VIM=$(select_vim)
 echo "Selected Vim: $VIM"
-if [ "$1" = '!' ]; then
+if [ "${1:-}" = '!' ]; then
   $VIM -Nu $TEMP/mini-vimrc -c 'Vader! test.vader' > /dev/null &&
   prepare &&
   $VIM -Nu $TEMP/mini-vimrc -c 'let g:plug_threads = 1 | Vader! test.vader' > /dev/null
