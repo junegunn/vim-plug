@@ -109,13 +109,12 @@ clone_repos
 prepare
 
 git --version
-VIM=$(select_vim)
+vim=$(select_vim)
 echo "Selected Vim: $VIM"
 if [ "$1" = '!' ]; then
-  $VIM -Nu $TEMP/mini-vimrc -c 'Vader! test.vader' > /dev/null &&
+  $vim -Nu $TEMP/mini-vimrc -c 'Vader! test.vader' > /dev/null &&
   prepare &&
-  $VIM -Nu $TEMP/mini-vimrc -c 'let g:plug_threads = 1 | Vader! test.vader' > /dev/null
+  $vim -Nu $TEMP/mini-vimrc -c 'let g:plug_threads = 1 | Vader! test.vader' > /dev/null
 else
-  $VIM -Nu $TEMP/mini-vimrc -c 'Vader test.vader'
+  $vim -Nu $TEMP/mini-vimrc -c 'Vader test.vader'
 fi
-
