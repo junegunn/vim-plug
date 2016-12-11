@@ -2013,10 +2013,21 @@ function! s:git_validate(spec, check_branch)
               \ branch, a:spec.branch)
       endif
       if empty(err)
-        let commits = len(s:lines(s:system(printf('git rev-list origin/%s..HEAD', a:spec.branch), a:spec.dir)))
-        if !v:shell_error && commits
-          let err = join([printf('Diverged from origin/%s by %d commit(s).', a:spec.branch, commits),
-                        \ 'Reinstall after PlugClean.'], "\n")
+        let [ahead, behind] = split(s:lastline(s:system(printf(
+              \ 'git rev-list --count --left-right HEAD...origin/%s',
+              \ a:spec.branch), a:spec.dir)), '\t')
+        if !v:shell_error && ahead
+          if behind
+            " Only mention PlugClean if diverged, otherwise it's likely to be
+            " pushable (and probably not that messed up).
+            let err = printf(
+                  \ "Diverged from origin/%s (%d commit(s) ahead and %d commit(s) behind!\n"
+                  \ .'Backup local changes and run PlugClean and PlugUpdate to reinstall it.', a:spec.branch, ahead, behind)
+          else
+            let err = printf("Ahead of origin/%s by %d commit(s).\n"
+                  \ .'Cannot update until local changes are pushed.',
+                  \ a:spec.branch, ahead)
+          endif
         endif
       endif
     endif
