@@ -270,8 +270,8 @@ Execute (PlugClean! to remove vim-emoji):
   PlugClean!
   AssertExpect '^\~ ', 1
   AssertEqual 'Removed 1 directories.', getline(4)
-  Assert empty(globpath(&rtp, 'colors/seoul256.vim'))
-  Assert empty(globpath(&rtp, 'autoload/emoji.vim'))
+  Assert empty(globpath(&rtp, 'colors/seoul256.vim')), 'seoul256.vim was removed'
+  Assert empty(globpath(&rtp, 'autoload/emoji.vim')), 'emoji was removed'
   q
 
 Execute (PlugUpdate to install both again):
