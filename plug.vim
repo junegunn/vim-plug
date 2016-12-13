@@ -1153,7 +1153,7 @@ function! s:job_cb(fn, job, ch, data)
   call call(a:fn, [a:job, a:data])
 endfunction
 
-function! s:nvim_cb(job_id, data, event) abort
+function! s:nvim_cb(job_id, data, event) dict abort
   return a:event == 'stdout' ?
     \ s:job_cb('s:job_out_cb',  self, 0, join(a:data, "\n")) :
     \ s:job_cb('s:job_exit_cb', self, 0, a:data)
