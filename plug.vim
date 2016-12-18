@@ -40,7 +40,7 @@
 "   " Unmanaged plugin (manually installed and updated)
 "   Plug '~/my-prototype-plugin'
 "
-"   " Add plugins to &runtimepath
+"   " Initialize plugin system
 "   call plug#end()
 "
 " Then reload .vimrc and :PlugInstall to install plugins.
