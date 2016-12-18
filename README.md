@@ -65,6 +65,8 @@ Add a vim-plug section to your `~/.vimrc` (or `~/.config/nvim/init.vim` for Neov
 1. Begin the section with `call plug#begin()`
 1. List the plugins with `Plug` commands
 1. `call plug#end()` to update `&runtimepath` and initialize plugin system
+    - Automatically executes `filetype plugin indent on` and `syntax enable`.
+      You can revert the settings after the call. e.g. `filetype indent off`, `syntax off`, etc.
 
 #### Example
 
