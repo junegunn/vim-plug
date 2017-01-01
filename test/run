@@ -114,8 +114,7 @@ prepare
 
 git --version
 vim=$(select_vim)
-echo "Selected Vim: $VIM"
-
+echo "Selected Vim: $vim"
 if [ "${1:-}" = '!' ]; then
   $vim -Nu $TEMP/mini-vimrc -c 'Vader! test.vader' > /dev/null &&
   prepare &&
