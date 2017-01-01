@@ -1,5 +1,5 @@
 language: ruby
-sudo: required
+sudo: false
 env:
   global:
     - DEPS=$HOME/deps
@@ -30,13 +30,10 @@ install: |
     ln -s /usr/bin/vim.nox ${DEPS}/bin/vim
     return
   elif [ "$ENV" == "neovim" ]; then
-    # https://github.com/neovim/neovim/wiki/Installing-Neovim
-    sudo apt-get install -y software-properties-common
-    sudo add-apt-repository -y ppa:neovim-ppa/unstable
-    sudo apt-get update -y
-    sudo apt-get install -y neovim
+    # https://github.com/neovim/bot-ci#nightly-builds
+    eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) nightly-x64"
     mkdir -p ${DEPS}/bin
-    ln -s /usr/bin/nvim ${DEPS}/bin/vim
+    ln -s $(which nvim) ${DEPS}/bin/vim
     return
   fi
 
