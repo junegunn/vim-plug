@@ -65,6 +65,8 @@ Add a vim-plug section to your `~/.vimrc` (or `~/.config/nvim/init.vim` for Neov
 1. Begin the section with `call plug#begin()`
 1. List the plugins with `Plug` commands
 1. `call plug#end()` to update `&runtimepath` and initialize plugin system
+    - Automatically executes `filetype plugin indent on` and `syntax enable`.
+      You can revert the settings after the call. e.g. `filetype indent off`, `syntax off`, etc.
 
 #### Example
 
@@ -80,7 +82,7 @@ Plug 'junegunn/vim-easy-align'
 " Any valid git URL is allowed
 Plug 'https://github.com/junegunn/vim-github-dashboard.git'
 
-" Group dependencies, vim-snippets depends on ultisnips
+" Multiple Plug commands can be written in a single line using | separators
 Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
 
 " On-demand loading
@@ -102,7 +104,7 @@ Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 " Unmanaged plugin (manually installed and updated)
 Plug '~/my-prototype-plugin'
 
-" Add plugins to &runtimepath
+" Initialize plugin system
 call plug#end()
 ```
 

@@ -212,7 +212,7 @@ Expect:
   [==]
   x seoul256.vim:
 
-Execute (Corrected the URI but diverged from master):
+Execute (Corrected the URI but ahead of upstream):
   call plug#begin()
   Plug 'junegunn/seoul256.vim'
   Plug 'file:///tmp/vim-plug-test/jg/vim-emoji'
@@ -223,8 +223,8 @@ Execute (Corrected the URI but diverged from master):
   call PlugStatusSorted()
 
 Expect:
-      Diverged from origin/master by 3 commit(s).
-      Reinstall after PlugClean.
+      Ahead of origin/master by 3 commit(s).
+      Cannot update until local changes are pushed.
   - vim-emoji: OK
   Finished. 1 error(s).
   [==]
@@ -237,11 +237,44 @@ Expect:
 #   q
 #   PGdd
 
-Execute (PlugClean! to remove seoul256.vim):
+Execute (PlugClean! keeps seoul256.vim):
   PlugClean!
-  " Three removed, emoji left
-  AssertEqual 'Removed 3 directories.', getline(4)
-  AssertExpect '^\~ ', 3
+  " Two removed, emoji and seoul256 left
+  AssertEqual 'Removed 2 directories.', getline(4)
+  AssertExpect '^\~ ', 2
+  AssertExpect 'Diverged', 0
+  Assert !empty(globpath(&rtp, 'colors/seoul256.vim'))
+  Assert !empty(globpath(&rtp, 'autoload/emoji.vim'))
+  q
+
+Execute (Make seoul256 to be diverged):
+  call plug#begin()
+  Plug 'junegunn/seoul256.vim'
+  Plug 'file:///tmp/vim-plug-test/jg/vim-emoji'
+  call plug#end()
+  call system(printf(join([
+    \ 'cd "%s"',
+    \ 'git fetch --unshallow',
+    \ 'git reset "@{u}~1"',
+    \ 'git commit --allow-empty -m "diverged1"',
+    \ 'git commit --allow-empty -m "diverged2"'], ' && '),
+    \ g:plugs['seoul256.vim'].dir))
+  Assert empty(v:shell_error), 'Got shell error: '.v:shell_error
+  call PlugStatusSorted()
+
+Expect:
+      Backup local changes and run PlugClean and PlugUpdate to reinstall it.
+      Diverged from origin/master (2 commit(s) ahead and 1 commit(s) behind!
+  - vim-emoji: OK
+  Finished. 1 error(s).
+  [==]
+  x seoul256.vim:
+
+Execute (PlugClean! removes seoul256.vim):
+  PlugClean!
+  " One removed, emoji left
+  AssertEqual 'Removed 1 directories.', getline(4)
+  AssertExpect '^\~ ', 1
   AssertExpect 'Diverged', 1
   Assert empty(globpath(&rtp, 'colors/seoul256.vim'))
   Assert !empty(globpath(&rtp, 'autoload/emoji.vim'))
@@ -270,8 +303,8 @@ Execute (PlugClean! to remove vim-emoji):
   PlugClean!
   AssertExpect '^\~ ', 1
   AssertEqual 'Removed 1 directories.', getline(4)
-  Assert empty(globpath(&rtp, 'colors/seoul256.vim'))
-  Assert empty(globpath(&rtp, 'autoload/emoji.vim'))
+  Assert empty(globpath(&rtp, 'colors/seoul256.vim')), 'seoul256.vim was removed'
+  Assert empty(globpath(&rtp, 'autoload/emoji.vim')), 'emoji was removed'
   q
 
 Execute (PlugUpdate to install both again):
