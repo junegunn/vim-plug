@@ -2288,7 +2288,12 @@ function! s:preview_commit()
     wincmd P
   endif
   setlocal previewwindow filetype=git buftype=nofile nobuflisted modifiable
-  execute 'silent %!cd' s:shellesc(g:plugs[name].dir) '&& git show --no-color --pretty=medium' sha
+  try
+    let [sh, shrd] = s:chsh(1)
+    execute 'silent %!cd' s:shellesc(g:plugs[name].dir) '&& git show --no-color --pretty=medium' sha
+  finally
+    let [&shell, &shellredir] = [sh, shrd]
+  endtry
   setlocal nomodifiable
   nnoremap <silent> <buffer> q :q<cr>
   wincmd p

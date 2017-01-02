@@ -414,6 +414,27 @@ Execute (Test g:plug_pwindow):
   normal q
   unlet g:plug_pwindow
 
+Execute (#572 - Commit preview should work with non-POSIX-compliant &shell):
+  " Invalid shell
+  let shell = &shell
+  set shell=shellfish
+
+  try
+    " Preview commit should still work
+    PlugDiff
+    execute "normal ]]jo"
+    wincmd P
+    Log getline(1, '$')
+    Assert getline(1) =~ 'commit', 'Preview window is empty'
+    AssertEqual 'shellfish', &shell
+  finally
+    " Restore &shell
+    let &shell = shell
+    unlet shell
+    pclose
+    q
+  endtry
+
 Execute (Reuse Plug window in another tab):
   let tabnr = tabpagenr()
   PlugDiff
