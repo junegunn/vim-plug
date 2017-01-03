@@ -61,7 +61,7 @@
 " More information: https://github.com/junegunn/vim-plug
 "
 "
-" Copyright (c) 2016 Junegunn Choi
+" Copyright (c) 2017 Junegunn Choi
 "
 " MIT License
 "
@@ -919,7 +919,8 @@ function! s:check_ruby()
 endfunction
 
 function! s:update_impl(pull, force, args) abort
-  let args = copy(a:args)
+  let sync = index(a:args, '--sync') >= 0 || has('vim_starting')
+  let args = filter(copy(a:args), 'v:val != "--sync"')
   let threads = (len(args) > 0 && args[-1] =~ '^[1-9][0-9]*$') ?
                   \ remove(args, -1) : get(g:, 'plug_threads', 16)
 
@@ -1020,7 +1021,7 @@ function! s:update_impl(pull, force, args) abort
     endtry
   else
     call s:update_vim()
-    while use_job && has('vim_starting')
+    while use_job && sync
       sleep 100m
       if s:update.fin
         break
