@@ -20,7 +20,7 @@ A minimalist Vim plugin manager.
 
 [40/4]: https://raw.githubusercontent.com/junegunn/i/master/vim-plug/40-in-4.gif
 [nv]: http://neovim.org/
-[startup-time]: https://github.com/junegunn/vim-startuptime-benchmark
+[startup-time]: https://github.com/junegunn/vim-startuptime-benchmark#result
 
 ### Installation
 
