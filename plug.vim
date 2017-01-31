@@ -1143,9 +1143,6 @@ endfunction
 function! s:job_exit_cb(self, data) abort
   let a:self.running = 0
   let a:self.error = a:data != 0
-  if has_key(a:self, 'tempname')
-    call delete(a:self.tempname)
-  endif
   call s:reap(a:self.name)
   call s:tick()
 endfunction
@@ -1167,8 +1164,8 @@ function! s:spawn(name, cmd, opts)
   let job = { 'name': a:name, 'running': 1, 'error': 0, 'lines': [''],
             \ 'new': get(a:opts, 'new', 0) }
   let s:jobs[a:name] = job
-  let cmd = has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd
-  let argv = s:is_win ? cmd : ['sh', '-c', cmd]
+  let argv = add(s:is_win ? ['cmd', '/c'] : ['sh', '-c'],
+               \ has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd)
 
   if s:nvim
     call extend(job, {
@@ -1185,12 +1182,7 @@ function! s:spawn(name, cmd, opts)
             \ 'Invalid arguments (or job table is full)']
     endif
   elseif s:vim8
-    if s:is_win
-      let job.tempname = tempname().'.bat'
-      call writefile([argv], job.tempname)
-      let argv = job.tempname
-    endif
-    let jid = job_start(argv, {
+    let jid = job_start(s:is_win ? join(argv, ' ') : argv, {
     \ 'out_cb':   function('s:job_cb', ['s:job_out_cb',  job]),
     \ 'exit_cb':  function('s:job_cb', ['s:job_exit_cb', job]),
     \ 'out_mode': 'raw'
