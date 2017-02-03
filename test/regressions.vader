@@ -304,17 +304,19 @@ Execute (#474: Load ftdetect files in filetypedetect augroup):
   bd
 
 **********************************************************************
-Execute (#489 On-demand loading with 'on' option should trigger BufRead autocmd):
+Execute (#489/#587 On-demand loading with 'on' option should trigger BufRead autocmd w/o nomodeline):
   call plug#begin('$PLUG_FIXTURES')
   Plug 'ftplugin-msg', { 'on': 'XXX' }
   call plug#end()
 
   tabnew a.java
+  call setline(1, '// vim: set filetype=lava:')
   redir => out
   silent! XXX
   redir END
   Assert stridx(out, 'ftplugin-java') >= 0
-  q
+  AssertEqual 'lava', &filetype
+  q!
 
 **********************************************************************
 Execute (Cursor moved to another window during post-update hook):
