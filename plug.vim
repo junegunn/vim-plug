@@ -594,7 +594,12 @@ function! s:update(force, names)
 endfunction
 
 function! s:open(force, name)
-  exec ':Sexplore'.a:force.' '.g:plug_home.'/'.a:name.'/'
+  let plugpath = g:plug_home.'/'.a:name.'/'
+  if a:force
+    exec ':Sexplore! '. plugpath
+  else
+    exec ':Sexplore '. plugpath
+  endif
 endfunction
 
 function! plug#helptags()
