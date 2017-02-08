@@ -138,6 +138,7 @@ function! s:define_commands()
   endif
   command! -nargs=* -bar -bang -complete=customlist,s:names PlugInstall call s:install(<bang>0, [<f-args>])
   command! -nargs=* -bar -bang -complete=customlist,s:names PlugUpdate  call s:update(<bang>0, [<f-args>])
+  command! -nargs=* -bar -bang -complete=customlist,s:names PlugOpen    call s:open(<bang>'',<f-args>)
   command! -nargs=0 -bar -bang PlugClean call s:clean(<bang>0)
   command! -nargs=0 -bar PlugUpgrade if s:upgrade() | execute 'source' s:esc(s:me) | endif
   command! -nargs=0 -bar PlugStatus  call s:status()
@@ -590,6 +591,10 @@ endfunction
 
 function! s:update(force, names)
   call s:update_impl(1, a:force, a:names)
+endfunction
+
+function! s:open(force, name)
+  exec ':Sexplore'.a:force.' '.g:plug_home.'/'.a:name.'/'
 endfunction
 
 function! plug#helptags()
