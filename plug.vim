@@ -1768,6 +1768,7 @@ function! s:update_ruby()
   tries = VIM::evaluate('get(g:, "plug_retries", 2)') + 1
   nthr  = VIM::evaluate('s:update.threads').to_i
   maxy  = VIM::evaluate('winheight(".")').to_i
+  vim7  = VIM::evaluate('v:version').to_i <= 703 && RUBY_PLATFORM =~ /darwin/
   cd    = iswin ? 'cd /d' : 'cd'
   tot   = VIM::evaluate('len(s:update.todo)') || 0
   bar   = ''
@@ -1857,11 +1858,17 @@ function! s:update_ruby()
   main = Thread.current
   threads = []
   watcher = Thread.new {
-    require 'io/console' # >= Ruby 1.9
-    nil until IO.console.getch == 3.chr
+    if vim7
+      while VIM::evaluate('getchar(1)')
+        sleep 0.1
+      end
+    else
+      require 'io/console' # >= Ruby 1.9
+      nil until IO.console.getch == 3.chr
+    end
     mtx.synchronize do
       running = false
-      threads.each { |t| t.raise Interrupt }
+      threads.each { |t| t.raise Interrupt } unless vim7
     end
     threads.each { |t| t.join rescue nil }
     main.kill
