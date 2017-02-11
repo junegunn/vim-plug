@@ -332,3 +332,12 @@ Execute (Cursor moved to another window during post-update hook):
   AssertEqual 'empty', getline(1)
   q!
   q
+
+**********************************************************************
+Execute (#593 Add plugin to &rtp before running post-update hook with : prefix):
+  call ReloadPlug()
+  call plug#begin()
+  Plug 'junegunn/vim-pseudocl', { 'on': 'XXX', 'do': ':let g:bar = pseudocl#complete#extract_words(''a b'')' }
+  call plug#end()
+  PlugInstall!
+  AssertEqual ['a', 'b'], g:bar

@@ -820,6 +820,10 @@ function! s:do(pull, force, todo)
       let type = type(spec.do)
       if type == s:TYPE.string
         if spec.do[0] == ':'
+          if !get(s:loaded, name, 0)
+            let s:loaded[name] = 1
+            call s:reorg_rtp()
+          endif
           call s:load_plugin(spec)
           try
             execute spec.do[1:]
