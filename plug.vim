@@ -1979,11 +1979,21 @@ endfunction
 
 function! s:system(cmd, ...)
   try
+    let maxfuncdepth = &maxfuncdepth
+    set maxfuncdepth=99999
     let [sh, shrd] = s:chsh(1)
     let cmd = a:0 > 0 ? s:with_cd(a:cmd, a:1) : a:cmd
+    if s:vim8
+      let out = ''
+      let job = job_start([&shell, &shellcmdflag, cmd], {'out_cb': {ch,msg->[execute("let out .= msg"), out]}, 'out_mode': 'raw'})
+      while job_status(job) == 'run'
+        sleep 10m
+      endwhile
+      return out
+    endif
     return system(s:is_win ? '('.cmd.')' : cmd)
   finally
-    let [&shell, &shellredir] = [sh, shrd]
+    let [&shell, &shellredir, &maxfuncdepth] = [sh, shrd, maxfuncdepth]
   endtry
 endfunction
 
