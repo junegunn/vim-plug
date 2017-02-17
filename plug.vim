@@ -621,10 +621,10 @@ function! s:syntax()
   syn match plugTag /(tag: [^)]\+)/
   syn match plugInstall /\(^+ \)\@<=[^:]*/
   syn match plugUpdate /\(^* \)\@<=[^:]*/
-  syn match plugCommit /^  \X*[0-9a-f]\{7} .*/ contains=plugRelDate,plugEdge,plugTag
+  syn match plugCommit /^  \X*[0-9a-f]\{7,9} .*/ contains=plugRelDate,plugEdge,plugTag
   syn match plugEdge /^  \X\+$/
   syn match plugEdge /^  \X*/ contained nextgroup=plugSha
-  syn match plugSha /[0-9a-f]\{7}/ contained
+  syn match plugSha /[0-9a-f]\{7,9}/ contained
   syn match plugRelDate /([^)]*)$/ contained
   syn match plugNotLoaded /(not loaded)$/
   syn match plugError /^x.*/
@@ -2285,7 +2285,7 @@ function! s:preview_commit()
     let b:plug_preview = !s:is_preview_window_open()
   endif
 
-  let sha = matchstr(getline('.'), '^  \X*\zs[0-9a-f]\{7}')
+  let sha = matchstr(getline('.'), '^  \X*\zs[0-9a-f]\{7,9}')
   if empty(sha)
     return
   endif
