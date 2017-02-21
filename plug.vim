@@ -2050,14 +2050,14 @@ function! s:git_validate(spec, check_branch)
         let [output, shellerror] = s:system(printf(
               \ 'git rev-list --count --left-right HEAD...origin/%s',
               \ a:spec.branch), a:spec.dir)
-        let [ahead, behind] = split(s:lastline(output), '\t')
-        if !shellerror && ahead
-          if behind
+        let [ahead; behind] = split(s:lastline(output), '\t')
+        if !shellerror && ahead && len(behind) == 1
+          if behind[0]
             " Only mention PlugClean if diverged, otherwise it's likely to be
             " pushable (and probably not that messed up).
             let err = printf(
                   \ "Diverged from origin/%s (%d commit(s) ahead and %d commit(s) behind!\n"
-                  \ .'Backup local changes and run PlugClean and PlugUpdate to reinstall it.', a:spec.branch, ahead, behind)
+                  \ .'Backup local changes and run PlugClean and PlugUpdate to reinstall it.', a:spec.branch, ahead, behind[0])
           else
             let err = printf("Ahead of origin/%s by %d commit(s).\n"
                   \ .'Cannot update until local changes are pushed.',
