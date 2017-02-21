@@ -865,8 +865,8 @@ endfunction
 
 function! s:checkout(spec)
   let sha = a:spec.commit
-  let output = s:system('git rev-parse HEAD', a:spec.dir)
-  if !v:shell_error && !s:hash_match(sha, s:lines(output)[0])
+  let [output, shellerror] = s:system_with_error('git rev-parse HEAD', a:spec.dir)
+  if !shellerror && !s:hash_match(sha, s:lines(output)[0])
     let output = s:system(
           \ 'git fetch --depth 999999 && git checkout '.s:esc(sha), a:spec.dir)
   endif
@@ -1053,14 +1053,16 @@ function! s:update_finish()
       if !pos
         continue
       endif
+      let shellerror = 0
       if has_key(spec, 'commit')
         call s:log4(name, 'Checking out '.spec.commit)
         let out = s:checkout(spec)
       elseif has_key(spec, 'tag')
         let tag = spec.tag
         if tag =~ '\*'
-          let tags = s:lines(s:system('git tag --list '.string(tag).' --sort -version:refname 2>&1', spec.dir))
-          if !v:shell_error && !empty(tags)
+          let [output, shellerror] = s:system_with_error('git tag --list '.string(tag).' --sort -version:refname 2>&1', spec.dir)
+          let tags = s:lines(output)
+          if !shellerror && !empty(tags)
             let tag = tags[0]
             call s:log4(name, printf('Latest tag for %s -> %s', spec.tag, tag))
             call append(3, '')
@@ -1074,13 +1076,13 @@ function! s:update_finish()
         let out = s:system('git checkout -q '.branch.' 2>&1'
               \. (has_key(s:update.new, name) ? '' : ('&& git merge --ff-only origin/'.branch.' 2>&1')), spec.dir)
       endif
-      if !v:shell_error && filereadable(spec.dir.'/.gitmodules') &&
+      if !shellerror && filereadable(spec.dir.'/.gitmodules') &&
             \ (s:update.force || has_key(s:update.new, name) || s:is_updated(spec.dir))
         call s:log4(name, 'Updating submodules. This may take a while.')
         let out .= s:bang('git submodule update --init --recursive 2>&1', spec.dir)
       endif
-      let msg = s:format_message(v:shell_error ? 'x': '-', name, out)
-      if v:shell_error
+      let msg = s:format_message(shellerror ? 'x': '-', name, out)
+      if shellerror
         call add(s:update.errors, name)
         call s:regress_bar()
         silent execute pos 'd _'
@@ -1203,8 +1205,9 @@ function! s:spawn(name, cmd, opts)
     endif
   else
     let params = has_key(a:opts, 'dir') ? [a:cmd, a:opts.dir] : [a:cmd]
-    let job.lines = s:lines(call('s:system', params))
-    let job.error = v:shell_error != 0
+    let [output, shellerror] = call('s:system_with_error', params)
+    let job.lines = s:lines(output)
+    let job.error = shellerror != 0
     let job.running = 0
   endif
 endfunction
@@ -1997,26 +2000,52 @@ function! s:system(cmd, ...)
   endtry
 endfunction
 
+function! s:system_with_error(cmd, ...)
+  try
+    let maxfuncdepth = &maxfuncdepth
+    set maxfuncdepth=99999
+    let [sh, shrd] = s:chsh(1)
+    let cmd = a:0 > 0 ? s:with_cd(a:cmd, a:1) : a:cmd
+    if s:vim8
+      let [out, exit_code] = ['', 0]
+      let job = job_start([&shell, &shellcmdflag, cmd], {
+      \ 'out_cb': {ch,msg->[execute("let out .= msg"), out]},
+      \ 'err_cb': {ch,msg->[execute("let out .= msg"), out]},
+      \ 'exit_cb': {job,code->[execute("let exit_code=code"), exit_code]},
+      \ 'out_mode': 'raw'})
+      while job_status(job) == 'run'
+        sleep 10m
+      endwhile
+      return [out, exit_code]
+    endif
+    return [system(s:is_win ? '('.cmd.')' : cmd), v:shell_error]
+  finally
+    let [&shell, &shellredir, &maxfuncdepth] = [sh, shrd, maxfuncdepth]
+  endtry
+endfunction
+
 function! s:system_chomp(...)
-  let ret = call('s:system', a:000)
-  return v:shell_error ? '' : substitute(ret, '\n$', '', '')
+  let [ret, shellerror] = call('s:system_with_error', a:000)
+  return shellerror ? '' : substitute(ret, '\n$', '', '')
 endfunction
 
 function! s:git_validate(spec, check_branch)
   let err = ''
   if isdirectory(a:spec.dir)
-    let result = s:lines(s:system('git rev-parse --abbrev-ref HEAD 2>&1 && git config -f .git/config remote.origin.url', a:spec.dir))
+    let [output, shellerror] = s:system_with_error('git rev-parse --abbrev-ref HEAD 2>&1 && git config -f .git/config remote.origin.url', a:spec.dir)
+    let result = s:lines(output)
     let remote = result[-1]
-    if v:shell_error
+    if shellerror
       let err = join([remote, 'PlugClean required.'], "\n")
     elseif !s:compare_git_uri(remote, a:spec.uri)
       let err = join(['Invalid URI: '.remote,
                     \ 'Expected:    '.a:spec.uri,
                     \ 'PlugClean required.'], "\n")
     elseif a:check_branch && has_key(a:spec, 'commit')
-      let result = s:lines(s:system('git rev-parse HEAD 2>&1', a:spec.dir))
+      let [output, shellerror] = s:system_with_error('git rev-parse HEAD 2>&1', a:spec.dir)
+      let result = s:lines(output)
       let sha = result[-1]
-      if v:shell_error
+      if shellerror
         let err = join(add(result, 'PlugClean required.'), "\n")
       elseif !s:hash_match(sha, a:spec.commit)
         let err = join([printf('Invalid HEAD (expected: %s, actual: %s)',
@@ -2038,10 +2067,11 @@ function! s:git_validate(spec, check_branch)
               \ branch, a:spec.branch)
       endif
       if empty(err)
-        let [ahead, behind] = split(s:lastline(s:system(printf(
+        let [output, shellerror] = s:system_with_error(printf(
               \ 'git rev-list --count --left-right HEAD...origin/%s',
-              \ a:spec.branch), a:spec.dir)), '\t')
-        if !v:shell_error && ahead
+              \ a:spec.branch), a:spec.dir)
+        let [ahead, behind] = split(s:lastline(output), '\t')
+        if !shellerror && ahead
           if behind
             " Only mention PlugClean if diverged, otherwise it's likely to be
             " pushable (and probably not that messed up).
@@ -2173,8 +2203,8 @@ function! s:upgrade()
   let new = tmp . '/plug.vim'
 
   try
-    let out = s:system(printf('git clone --depth 1 %s %s', s:plug_src, tmp))
-    if v:shell_error
+    let [out, shellerror] = s:system_with_error(printf('git clone --depth 1 %s %s', s:plug_src, tmp))
+    if shellerror
       return s:err('Error upgrading vim-plug: '. out)
     endif
 
