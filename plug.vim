@@ -1992,7 +1992,9 @@ function! s:system(cmd, ...)
       \ 'out_cb': {ch,msg->[execute("let out .= msg"), out]},
       \ 'err_cb': {ch,msg->[execute("let out .= msg"), out]},
       \ 'exit_cb': {job,code->[execute("let exit_code=code"), exit_code]},
-      \ 'out_mode': 'raw'})
+      \ 'out_mode': 'raw',
+      \ 'err_mode': 'raw',
+      \})
       while job_status(job) == 'run'
         sleep 10m
       endwhile
