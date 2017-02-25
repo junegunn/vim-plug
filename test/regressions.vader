@@ -341,3 +341,16 @@ Execute (#593 Add plugin to &rtp before running post-update hook with : prefix):
   call plug#end()
   PlugInstall!
   AssertEqual ['a', 'b'], g:bar
+
+**********************************************************************
+Execute (#602 Confusion with branch name and path name):
+  call plug#begin()
+  Plug expand('file:////tmp/vim-plug-test/new-branch'), { 'branch': 'plugin' }
+  call plug#end()
+  PlugUpdate
+  call PlugStatusSorted()
+
+Expect:
+  - new-branch: OK
+  Finished. 0 error(s).
+  [=]

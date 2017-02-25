@@ -1473,7 +1473,7 @@ Execute (Commit hash support):
   PlugUpdate
   Log getline(1, '$')
   AssertEqual 'x goyo.vim:', getline(5)
-  AssertEqual '    error: pathspec ''ffffffff'' did not match any file(s) known to git.', getline(6)
+  AssertEqual '    fatal: invalid reference: ffffffff', getline(6)
   AssertEqual 0, stridx(getline(7), '- vim-emoji: HEAD is now at 9db7fcf...')
 
   let hash = system(printf('cd %s && git rev-parse HEAD', g:plugs['vim-emoji'].dir))[:-2]

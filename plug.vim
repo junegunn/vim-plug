@@ -868,7 +868,7 @@ function! s:checkout(spec)
   let output = s:system('git rev-parse HEAD', a:spec.dir)
   if !v:shell_error && !s:hash_match(sha, s:lines(output)[0])
     let output = s:system(
-          \ 'git fetch --depth 999999 && git checkout '.s:esc(sha), a:spec.dir)
+          \ 'git fetch --depth 999999 && git checkout '.s:esc(sha).' --', a:spec.dir)
   endif
   return output
 endfunction
@@ -1067,11 +1067,11 @@ function! s:update_finish()
           endif
         endif
         call s:log4(name, 'Checking out '.tag)
-        let out = s:system('git checkout -q '.s:esc(tag).' 2>&1', spec.dir)
+        let out = s:system('git checkout -q '.s:esc(tag).' -- 2>&1', spec.dir)
       else
         let branch = s:esc(get(spec, 'branch', 'master'))
         call s:log4(name, 'Merging origin/'.branch)
-        let out = s:system('git checkout -q '.branch.' 2>&1'
+        let out = s:system('git checkout -q '.branch.' -- 2>&1'
               \. (has_key(s:update.new, name) ? '' : ('&& git merge --ff-only origin/'.branch.' 2>&1')), spec.dir)
       endif
       if !v:shell_error && filereadable(spec.dir.'/.gitmodules') &&
@@ -2390,7 +2390,7 @@ function! s:revert()
     return
   endif
 
-  call s:system('git reset --hard HEAD@{1} && git checkout '.s:esc(g:plugs[name].branch), g:plugs[name].dir)
+  call s:system('git reset --hard HEAD@{1} && git checkout '.s:esc(g:plugs[name].branch).' --', g:plugs[name].dir)
   setlocal modifiable
   normal! "_dap
   setlocal nomodifiable

@@ -95,6 +95,8 @@ DOC
   echo 'let g:foo = 1' > plugin/foo.vim
   git add plugin/foo.vim
   git commit -m initial
+  git checkout -b plugin
+  git checkout master
 
   cd "$BASE"
 }
