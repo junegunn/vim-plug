@@ -1128,6 +1128,7 @@ Execute (plug#helptags):
 **********************************************************************
 
 Execute (plug#load - invalid arguments):
+  call ResetPlug()
   AssertEqual 0, plug#load()
   AssertEqual 0, plug#load('non-existent-plugin')
   AssertEqual 0, plug#load('non-existent-plugin', 'another-non-existent-plugin')

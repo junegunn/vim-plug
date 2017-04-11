@@ -1,5 +1,6 @@
 **********************************************************************
 Execute (#112 On-demand loading should not suppress messages from ftplugin):
+  call ResetPlug()
   call plug#begin('$PLUG_FIXTURES')
   Plug '$PLUG_FIXTURES/ftplugin-msg', { 'for': 'c' }
   call plug#end()
@@ -7,13 +8,14 @@ Execute (#112 On-demand loading should not suppress messages from ftplugin):
   redir => out
   tabnew a.c
   redir END
-  Assert stridx(out, 'ftplugin-c') >= 0
+  Assert stridx(out, 'ftplugin-c') >= 0, 'Unexpected output (1): '.out
 
 * The same applies to plug#load())
+  call ResetPlug()
   redir => out
   call plug#load('ftplugin-msg')
   redir END
-  Assert stridx(out, 'ftplugin-c') >= 0
+  Assert stridx(out, 'ftplugin-c') >= 0, 'Unexpected output (2): '.out
   q
 
 
@@ -89,10 +91,11 @@ Execute (#139-1 Using new remote branch):
   PlugUpdate
 
   unlet! g:foo g:bar g:baz
+  call ResetPlug()
   call plug#load('new-branch')
-  Assert exists('g:foo'),  'g:foo should be found'
-  Assert !exists('g:bar'), 'g:bar should not be found'
-  Assert !exists('g:baz'), 'g:baz should not be found'
+  Assert exists('g:foo'),  'g:foo should be found (1)'
+  Assert !exists('g:bar'), 'g:bar should not be found (1)'
+  Assert !exists('g:baz'), 'g:baz should not be found (1)'
 
   " Create a new branch on origin
   call system('cd /tmp/vim-plug-test/new-branch && git checkout -b new &&'
@@ -110,10 +113,11 @@ Execute (#139-1 Using new remote branch):
   Assert @" !~? 'error', 'Should be able to use new remote branch: ' . @"
 
   unlet! g:foo g:bar g:baz
+  call ResetPlug()
   call plug#load('new-branch')
-  Assert exists('g:foo'),  'g:foo should be found'
-  Assert exists('g:bar'),  'g:bar should be found'
-  Assert !exists('g:baz'), 'g:baz should not be found'
+  Assert exists('g:foo'),  'g:foo should be found (2)'
+  Assert exists('g:bar'),  'g:bar should be found (2)'
+  Assert !exists('g:baz'), 'g:baz should not be found (2)'
 
   call PlugStatusSorted()
 
@@ -140,6 +144,7 @@ Execute (#139-2 Using yet another new remote branch):
   Assert @" !~? 'error', 'Should be able to use new remote branch: ' . @"
 
   unlet! g:foo g:bar g:baz
+  call ResetPlug()
   call plug#load('new-branch')
   Assert exists('g:foo'),  'g:foo should be found'
   Assert !exists('g:bar'), 'g:bar should not be found'
