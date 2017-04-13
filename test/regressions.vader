@@ -354,3 +354,16 @@ Expect:
   - new-branch: OK
   Finished. 0 error(s).
   [=]
+
+**********************************************************************
+Execute (PlugStatus showed error with wildcard tag):
+  call plug#begin()
+  Plug 'junegunn/vim-easy-align', { 'tag': '*' }
+  call plug#end()
+  PlugUpdate
+  call PlugStatusSorted()
+
+Expect:
+  - vim-easy-align: OK
+  Finished. 0 error(s).
+  [=]
