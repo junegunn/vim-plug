@@ -124,16 +124,16 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 
 ### `Plug` options
 
-| Option                  | Description                                      |
-| ----------------------- | ------------------------------------------------ |
-| `branch`/`tag`/`commit` | Branch/tag/commit of the repository to use       |
-| `rtp`                   | Subdirectory that contains Vim plugin            |
-| `dir`                   | Custom directory for the plugin                  |
-| `as`                    | Use different name for the plugin                |
-| `do`                    | Post-update hook (string or funcref)             |
-| `on`                    | On-demand loading: Commands or `<Plug>`-mappings |
-| `for`                   | On-demand loading: File types                    |
-| `frozen`                | Do not update unless explicitly specified        |
+| Option                  | Description                                                  |
+| ----------------------- | -----------------------------------------------------------  |
+| `branch`/`tag`/`commit` | Branch/tag/commit of the repository to use                   |
+| `rtp`                   | Subdirectory that contains Vim plugin                        |
+| `dir`                   | Custom directory for the plugin                              |
+| `as`                    | Use different name for the plugin                            |
+| `do`                    | Post-update hook (string or funcref)                         |
+| `on`                    | On-demand loading: Commands, `<Plug>`-mappings, or #autocmds |
+| `for`                   | On-demand loading: File types                                |
+| `frozen`                | Do not update unless explicitly specified                    |
 
 ### Global options
 
@@ -182,6 +182,9 @@ Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 
 " Multiple file types
 Plug 'kovisoft/paredit', { 'for': ['clojure', 'scheme'] }
+
+" On autocmd
+Plug 'SirVer/ultisnips', { 'on': '#InsertEnter' }
 
 " On-demand loading on both conditions
 Plug 'junegunn/vader.vim',  { 'on': 'Vader', 'for': 'vader' }

@@ -230,9 +230,16 @@ function! plug#end()
             call s:assoc(lod.cmd, cmd, name)
           endif
           call add(s:triggers[name].cmd, cmd)
+        elseif cmd[0] == '#' && exists('##'.split(cmd, '#')[0])
+          let tokens = split(cmd, '#')
+          let group = 'Plug/'.name
+          execute 'augroup' group
+          autocmd!
+          execute 'autocmd' tokens[0] get(tokens, 1, '*') printf('call s:lod_autocmd(%s)', string(name))
+          execute 'augroup END'
         else
           call s:err('Invalid `on` option: '.cmd.
-          \ '. Should start with an uppercase letter or `<Plug>`.')
+          \ '. Should start with an uppercase letter, `<Plug>`, or `#`.')
         endif
       endfor
     endif
@@ -447,9 +454,7 @@ function! plug#load(...)
     let s = len(unknowns) > 1 ? 's' : ''
     return s:err(printf('Unknown plugin%s: %s', s, join(unknowns, ', ')))
   end
-  for name in a:000
-    call s:lod([name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
-  endfor
+  call s:lod(a:000, ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
   call s:dobufread(a:000)
   return 1
 endfunction
@@ -528,6 +533,14 @@ function! s:lod_map(map, names, with_prefix, prefix)
     call feedkeys(prefix, 'n')
   endif
   call feedkeys(substitute(a:map, '^<Plug>', "\<Plug>", '') . extra)
+endfunction
+
+function! s:lod_autocmd(name)
+  call s:lod([a:name], ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
+  call s:dobufread([a:name])
+  let group = 'Plug/'.a:name
+  execute 'autocmd!' group
+  execute 'augroup!' group
 endfunction
 
 function! plug#(repo, ...)
