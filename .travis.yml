@@ -34,6 +34,7 @@ install: |
     eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) nightly-x64"
     mkdir -p ${DEPS}/bin
     ln -s $(which nvim) ${DEPS}/bin/vim
+    export VADER_OUTPUT_FILE=/dev/stderr
     return
   fi
 
