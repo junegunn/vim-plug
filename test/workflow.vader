@@ -57,11 +57,16 @@ Execute (Test Plug command):
   AssertEqual join([g:temp_plugged, 'vim-emoji/'], '/'), g:plugs['vim-emoji'].dir
 
   " vim-scripts/
-  Plug 'beauty256'
+  Plug 'vim-scripts/beauty256'
   AssertEqual 'file:///tmp/vim-plug-test/vim-scripts/beauty256', g:plugs.beauty256.uri
   AssertEqual 'master', g:plugs.beauty256.branch
 
   AssertEqual 4, len(g:plugs)
+
+  redir => out
+  Plug 'beauty256'
+  redir END
+  Assert out =~ 'Invalid argument: beauty256'
 
 Execute (Plug command with dictionary option):
   Log string(g:plugs)
@@ -1230,7 +1235,7 @@ Execute (Using g:plug_url_format):
   let g:plug_url_format = 'git@bitbucket.org:%s.git'
   Plug 'junegunn/seoul256.vim'
   let g:plug_url_format = 'git@bitsocket.org:%s.git'
-  Plug 'beauty256'
+  Plug 'vim-scripts/beauty256'
   AssertEqual 'git@bitbucket.org:junegunn/seoul256.vim.git', g:plugs['seoul256.vim'].uri
   AssertEqual 'git@bitsocket.org:vim-scripts/beauty256.git', g:plugs['beauty256'].uri
   let g:plug_url_format = prev_plug_url_format

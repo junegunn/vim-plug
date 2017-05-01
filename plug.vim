@@ -579,7 +579,7 @@ function! s:infer_properties(name, repo)
       let uri = repo
     else
       if repo !~ '/'
-        let repo = 'vim-scripts/'. repo
+        throw printf('Invalid argument: %s (implicit `vim-scripts'' expansion is deprecated)', repo)
       endif
       let fmt = get(g:, 'plug_url_format', 'https://git::@github.com/%s.git')
       let uri = printf(fmt, repo)

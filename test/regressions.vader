@@ -230,7 +230,7 @@ Execute (#159: shell=/bin/tcsh):
 **********************************************************************
 Execute (#154: Spaces in &rtp should not be escaped):
   call plug#begin('/tmp/vim-plug-test/plug it')
-  Plug 'seoul256 vim'
+  Plug 'foo/seoul256 vim'
   call plug#end()
   Log &rtp
   Assert stridx(&rtp, 'plug it/seoul256 vim') >= 0
@@ -238,12 +238,12 @@ Execute (#154: Spaces in &rtp should not be escaped):
 **********************************************************************
 Execute (#184: Duplicate entries in &rtp):
   call plug#begin('/tmp/vim-plug-test/plugged')
-  Plug 'plugin1'
-    \| Plug 'plugin0'
+  Plug 'foo/plugin1'
+    \| Plug 'foo/plugin0'
 
-  Plug 'plugin2'
-    \| Plug 'plugin0'
-    \| Plug 'plugin1'
+  Plug 'foo/plugin2'
+    \| Plug 'foo/plugin0'
+    \| Plug 'foo/plugin1'
   call plug#end()
 
   Log &rtp
@@ -311,7 +311,7 @@ Execute (#474: Load ftdetect files in filetypedetect augroup):
 **********************************************************************
 Execute (#489/#587 On-demand loading with 'on' option should trigger BufRead autocmd w/o nomodeline):
   call plug#begin('$PLUG_FIXTURES')
-  Plug 'ftplugin-msg', { 'on': 'XXX' }
+  Plug 'foo/ftplugin-msg', { 'on': 'XXX' }
   call plug#end()
 
   tabnew a.java
