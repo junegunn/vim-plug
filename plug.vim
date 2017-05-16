@@ -127,6 +127,14 @@ function! plug#begin(...)
   let g:plugs_order = []
   let s:triggers = {}
 
+  if !executable('git')
+    command! -nargs=+ -bar Plug   call s:add(<args>)
+    if (a:0 <= 1) || (a:2 == 0)
+      return s:err('`git` executable not found. vim-plug requires git.')
+    endif
+    return 1
+  endif
+
   call s:define_commands()
   return 1
 endfunction
