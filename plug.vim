@@ -57,6 +57,7 @@
 "| `on`                    | On-demand loading: Commands or `<Plug>`-mappings |
 "| `for`                   | On-demand loading: File types                    |
 "| `frozen`                | Do not update unless explicitly specified        |
+"| `submod`                | Recursively fetch sub-repositories (submodules)  |              |
 "
 " More information: https://github.com/junegunn/vim-plug
 "
@@ -100,7 +101,7 @@ let s:is_win = has('win32') || has('win64')
 let s:nvim = has('nvim-0.2') || (has('nvim') && exists('*jobwait') && !s:is_win)
 let s:vim8 = has('patch-8.0.0039') && exists('*job_start')
 let s:me = resolve(expand('<sfile>:p'))
-let s:base_spec = { 'branch': 'master', 'frozen': 0 }
+let s:base_spec = { 'branch': 'master', 'frozen': 0, 'submod': 1 }
 let s:TYPE = {
 \   'string':  type(''),
 \   'list':    type([]),
@@ -1082,7 +1083,7 @@ function! s:update_finish()
         let out = s:system('git checkout -q '.branch.' -- 2>&1'
               \. (has_key(s:update.new, name) ? '' : ('&& git merge --ff-only origin/'.branch.' 2>&1')), spec.dir)
       endif
-      if !v:shell_error && filereadable(spec.dir.'/.gitmodules') &&
+      if !v:shell_error && filereadable(spec.dir.'/.gitmodules') && get(spec, 'submod', 1) &&
             \ (s:update.force || has_key(s:update.new, name) || s:is_updated(spec.dir))
         call s:log4(name, 'Updating submodules. This may take a while.')
         let out .= s:bang('git submodule update --init --recursive 2>&1', spec.dir)
@@ -2194,6 +2195,7 @@ endfunction
 function! s:upgrade_specs()
   for spec in values(g:plugs)
     let spec.frozen = get(spec, 'frozen', 0)
+    let spec.submod = get(spec, 'submod', 0)
   endfor
 endfunction
 
