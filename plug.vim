@@ -988,7 +988,7 @@ function! s:update_impl(pull, force, args) abort
   silent! redraw
 
   let s:clone_opt = get(g:, 'plug_shallow', 1) ?
-        \ '--depth 1' . (s:git_version_requirement(1, 7, 10) ? ' --no-single-branch' : '') : ''
+        \ '--depth 1' . (s:git_version_requirement(1, 7, 10) ? ' --no-single-branch' : '') . (has('win32unix') ? ' -c core.autocrlf=false' : '') : ''
 
   if has('win32unix')
     let s:clone_opt .= ' -c core.eol=lf -c core.autocrlf=input'
