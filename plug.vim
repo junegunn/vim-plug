@@ -57,6 +57,7 @@
 "| `on`                    | On-demand loading: Commands or `<Plug>`-mappings |
 "| `for`                   | On-demand loading: File types                    |
 "| `frozen`                | Do not update unless explicitly specified        |
+"| `via`                   | Use either https or ssh to clone                 |
 "
 " More information: https://github.com/junegunn/vim-plug
 "
@@ -543,7 +544,7 @@ function! plug#(repo, ...)
     let repo = s:trim(a:repo)
     let opts = a:0 == 1 ? s:parse_options(a:1) : s:base_spec
     let name = get(opts, 'as', fnamemodify(repo, ':t:s?\.git$??'))
-    let spec = extend(s:infer_properties(name, repo), opts)
+    let spec = extend(s:infer_properties(name, repo, opts), opts)
     if !has_key(g:plugs, name)
       call add(g:plugs_order, name)
     endif
@@ -570,8 +571,9 @@ function! s:parse_options(arg)
   return opts
 endfunction
 
-function! s:infer_properties(name, repo)
+function! s:infer_properties(name, repo, opts)
   let repo = a:repo
+  let opts = a:opts
   if s:is_local_plug(repo)
     return { 'dir': s:dirpath(expand(repo)) }
   else
@@ -581,7 +583,11 @@ function! s:infer_properties(name, repo)
       if repo !~ '/'
         throw printf('Invalid argument: %s (implicit `vim-scripts'' expansion is deprecated)', repo)
       endif
-      let fmt = get(g:, 'plug_url_format', 'https://git::@github.com/%s.git')
+      let default = 'https://git::@github.com/%s.git'
+      if has_key(opts, 'via') && opts.via ==# 'ssh'
+          let default = 'git@github.com:%s.git'
+      endif
+      let fmt = get(g:, 'plug_url_format', default)
       let uri = printf(fmt, repo)
     endif
     return { 'dir': s:dirpath(g:plug_home.'/'.a:name), 'uri': uri }
