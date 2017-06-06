@@ -1141,6 +1141,12 @@ Execute (plug#load - invalid arguments):
   AssertEqual 0, plug#load('xxx', 'non-existent-plugin')
   AssertEqual 0, plug#load('non-existent-plugin', 'xxx')
 
+Execute (plug#load - list argument (#638)):
+  redir => out
+  call plug#load(keys(g:plugs))
+  redir END
+  AssertEqual '', out
+
 Execute (on: []):
   call plug#begin()
   Plug 'junegunn/rust.vim', { 'on': [] }
