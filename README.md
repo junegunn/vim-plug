@@ -53,6 +53,14 @@ curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 ```
 
+**OR** _(if previous didn't work)_
+
+```sh
+curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs \
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+```
+_Last one is better for later versions of neovim_
+
 ###### Windows (PowerShell)
 
 ```powershell
