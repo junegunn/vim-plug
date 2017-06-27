@@ -263,6 +263,22 @@ let g:fzf_install = 'yes | ./install'
 Plug 'junegunn/fzf', { 'do': g:fzf_install }
 ```
 
+### Operating system specific plugins and options
+
+While this functionality is not built into the plugin, you can easily archieve this with Vim's own commands. For example configuring the post-update hooks for `vimproc` differently on FreeBSD:
+
+```vim
+let g:os=substitute(system('uname'), '\n', '', '')
+
+if g:os ==# 'FreeBSD'
+    Plug 'Shougo/vimproc', { 'do': 'gmake' }
+else
+    Plug 'Shougo/vimproc', { 'do': 'make' }
+endif
+```
+
+This approach enables you to build whatever complex plugin sets you need, depending on setting a global variable.
+
 ### `PlugInstall!` and `PlugUpdate!`
 
 The installer takes the following steps when installing/updating a plugin:
