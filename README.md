@@ -83,7 +83,9 @@ Add a vim-plug section to your `~/.vimrc` (or `~/.config/nvim/init.vim` for Neov
 #### Example
 
 ```vim
-" Specify a directory for plugins (for Neovim: ~/.local/share/nvim/plugged)
+" Specify a directory for plugins
+" - For Neovim: ~/.local/share/nvim/plugged
+" - Avoid using standard Vim directory names like 'plugin'
 call plug#begin('~/.vim/plugged')
 
 " Make sure you use single quotes

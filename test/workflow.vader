@@ -19,6 +19,13 @@ Execute (plug#begin() without path argument with empty &rtp):
   let &rtp = save_rtp
   unlet save_rtp
 
+Execute (Standard runtime path is not allowed):
+  redir => out
+  silent! AssertEqual 0, plug#begin(split(&rtp, ',')[0].'/plugin')
+  redir END
+  Log out
+  Assert stridx(out, 'Invalid plug home') >= 0
+
 Execute (plug#begin(path)):
   call plug#begin(g:temp_plugged.'/')
   Assert g:plug_home !~ '[/\\]$', 'Trailing / should be stripped from g:plug_home'

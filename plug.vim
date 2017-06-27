@@ -121,6 +121,9 @@ function! plug#begin(...)
   else
     return s:err('Unable to determine plug home. Try calling plug#begin() with a path argument.')
   endif
+  if fnamemodify(home, ':t') ==# 'plugin' && fnamemodify(home, ':h') ==# s:first_rtp
+    return s:err('Invalid plug home. '.home.' is a standard Vim runtime path and is not allowed.')
+  endif
 
   let g:plug_home = home
   let g:plugs = {}
