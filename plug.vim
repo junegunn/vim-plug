@@ -782,8 +782,10 @@ function! s:assign_name()
 endfunction
 
 function! s:chsh(swap)
-  let prev = [&shell, &shellredir]
-  if !s:is_win && a:swap
+  let prev = [&shell, &shellcmdflag, &shellredir]
+  if s:is_win
+    set shell=cmd.exe shellcmdflag=/c shellredir=>%s\ 2>&1
+  elseif a:swap
     set shell=sh shellredir=>%s\ 2>&1
   endif
   return prev
@@ -791,15 +793,23 @@ endfunction
 
 function! s:bang(cmd, ...)
   try
-    let [sh, shrd] = s:chsh(a:0)
+    let [sh, shellcmdflag, shrd] = s:chsh(a:0)
     " FIXME: Escaping is incomplete. We could use shellescape with eval,
     "        but it won't work on Windows.
     let cmd = a:0 ? s:with_cd(a:cmd, a:1) : a:cmd
+    if s:is_win
+      let batchfile = tempname().'.bat'
+      call writefile(['@echo off', cmd], batchfile)
+      let cmd = batchfile
+    endif
     let g:_plug_bang = '!'.escape(cmd, '#!%')
     execute "normal! :execute g:_plug_bang\<cr>\<cr>"
   finally
     unlet g:_plug_bang
-    let [&shell, &shellredir] = [sh, shrd]
+    let [&shell, &shellcmdflag, &shellredir] = [sh, shellcmdflag, shrd]
+    if s:is_win
+      call delete(batchfile)
+    endif
   endtry
   return v:shell_error ? 'Exit status: ' . v:shell_error : ''
 endfunction
@@ -1181,10 +1191,15 @@ endfunction
 
 function! s:spawn(name, cmd, opts)
   let job = { 'name': a:name, 'running': 1, 'error': 0, 'lines': [''],
+            \ 'batchfile': (s:is_win && (s:nvim || s:vim8)) ? tempname().'.bat' : '',
             \ 'new': get(a:opts, 'new', 0) }
   let s:jobs[a:name] = job
-  let argv = add(s:is_win ? ['cmd', '/c'] : ['sh', '-c'],
-               \ has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd)
+  let cmd = has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd
+  if !empty(job.batchfile)
+    call writefile(['@echo off', cmd], job.batchfile)
+    let cmd = job.batchfile
+  endif
+  let argv = add(s:is_win ? ['cmd', '/c'] : ['sh', '-c'], cmd)
 
   if s:nvim
     call extend(job, {
@@ -1214,8 +1229,7 @@ function! s:spawn(name, cmd, opts)
       let job.lines   = ['Failed to start job']
     endif
   else
-    let params = has_key(a:opts, 'dir') ? [a:cmd, a:opts.dir] : [a:cmd]
-    let job.lines = s:lines(call('s:system', params))
+    let job.lines = s:lines(call('s:system', [cmd]))
     let job.error = v:shell_error != 0
     let job.running = 0
   endif
@@ -1235,6 +1249,9 @@ function! s:reap(name)
   call s:log(bullet, a:name, empty(result) ? 'OK' : result)
   call s:bar()
 
+  if has_key(job, 'batchfile') && !empty(job.batchfile)
+    call delete(job.batchfile)
+  endif
   call remove(s:jobs, a:name)
 endfunction
 
@@ -1952,8 +1969,19 @@ function! s:update_ruby()
 EOF
 endfunction
 
+function! s:shellesc_cmd(arg)
+  let escaped = substitute(a:arg, '[&|<>()@^]', '^&', 'g')
+  let escaped = substitute(escaped, '%', '%%', 'g')
+  let escaped = substitute(escaped, '"', '\\^&', 'g')
+  let escaped = substitute(escaped, '\(\\\+\)\(\\^\)', '\1\1\2', 'g')
+  return '^"'.substitute(escaped, '\(\\\+\)$', '\1\1', '').'^"'
+endfunction
+
 function! s:shellesc(arg)
-  return '"'.escape(a:arg, '"').'"'
+  if &shell =~# 'cmd.exe$'
+    return s:shellesc_cmd(a:arg)
+  endif
+  return shellescape(a:arg)
 endfunction
 
 function! s:glob_dir(path)
@@ -1991,11 +2019,19 @@ endfunction
 
 function! s:system(cmd, ...)
   try
-    let [sh, shrd] = s:chsh(1)
+    let [sh, shellcmdflag, shrd] = s:chsh(1)
     let cmd = a:0 > 0 ? s:with_cd(a:cmd, a:1) : a:cmd
+    if s:is_win
+      let batchfile = tempname().'.bat'
+      call writefile(['@echo off', cmd], batchfile)
+      let cmd = batchfile
+    endif
     return system(s:is_win ? '('.cmd.')' : cmd)
   finally
-    let [&shell, &shellredir] = [sh, shrd]
+    let [&shell, &shellcmdflag, &shellredir] = [sh, shellcmdflag, shrd]
+    if s:is_win
+      call delete(batchfile)
+    endif
   endtry
 endfunction
 
@@ -2316,10 +2352,19 @@ function! s:preview_commit()
   endif
   setlocal previewwindow filetype=git buftype=nofile nobuflisted modifiable
   try
-    let [sh, shrd] = s:chsh(1)
-    execute 'silent %!cd' s:shellesc(g:plugs[name].dir) '&& git show --no-color --pretty=medium' sha
+    let [sh, shellcmdflag, shrd] = s:chsh(1)
+    let cmd = 'cd '.s:shellesc(g:plugs[name].dir).' && git show --no-color --pretty=medium '.sha
+    if s:is_win
+      let batchfile = tempname().'.bat'
+      call writefile(['@echo off', cmd], batchfile)
+      let cmd = batchfile
+    endif
+    execute 'silent %!' cmd
   finally
-    let [&shell, &shellredir] = [sh, shrd]
+    let [&shell, &shellcmdflag, &shellredir] = [sh, shellcmdflag, shrd]
+    if s:is_win
+      call delete(batchfile)
+    endif
   endtry
   setlocal nomodifiable
   nnoremap <silent> <buffer> q :q<cr>
