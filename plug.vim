@@ -802,7 +802,7 @@ function! s:bang(cmd, ...)
       call writefile(['@echo off', cmd], batchfile)
       let cmd = batchfile
     endif
-    let g:_plug_bang = '!'.escape(cmd, '#!%')
+    let g:_plug_bang = (s:is_win && has('gui_running') ? 'silent ' : '').'!'.escape(cmd, '#!%')
     execute "normal! :execute g:_plug_bang\<cr>\<cr>"
   finally
     unlet g:_plug_bang
