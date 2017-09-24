@@ -77,6 +77,10 @@ DOC
 
   make_dirs yyy/ yyy
   make_dirs yyy/after yyy
+  mkdir -p "$PLUG_FIXTURES/yyy/rtp/doc"
+  cat > "$PLUG_FIXTURES/yyy/rtp/doc/yyy.txt" << DOC
+hello *yyy*
+DOC
   gitinit yyy
 
   make_dirs z1/ z1

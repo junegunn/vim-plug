@@ -1130,10 +1130,17 @@ Before:
 **********************************************************************
 
 Execute (plug#helptags):
+  call plug#begin()
+  Plug '$PLUG_FIXTURES/xxx'
+  Plug '$PLUG_FIXTURES/yyy', { 'rtp': 'rtp' }
+  call plug#end()
   silent! call delete(expand('$PLUG_FIXTURES/xxx/doc/tags'))
+  silent! call delete(expand('$PLUG_FIXTURES/yyy/rtp/doc/tags'))
   Assert !filereadable(expand('$PLUG_FIXTURES/xxx/doc/tags'))
+  Assert !filereadable(expand('$PLUG_FIXTURES/yyy/rtp/doc/tags'))
   AssertEqual 1, plug#helptags()
   Assert filereadable(expand('$PLUG_FIXTURES/xxx/doc/tags'))
+  Assert filereadable(expand('$PLUG_FIXTURES/yyy/rtp/doc/tags'))
 
 **********************************************************************
 ~ Manual loading
@@ -1141,6 +1148,10 @@ Execute (plug#helptags):
 
 Execute (plug#load - invalid arguments):
   call ResetPlug()
+  call plug#begin()
+  Plug '$PLUG_FIXTURES/xxx', { 'for': 'xxx' }
+  Plug '$PLUG_FIXTURES/yyy', { 'for': 'yyy' }
+  call plug#end()
   AssertEqual 0, plug#load()
   AssertEqual 0, plug#load('non-existent-plugin')
   AssertEqual 0, plug#load('non-existent-plugin', 'another-non-existent-plugin')

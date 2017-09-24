@@ -605,7 +605,7 @@ function! plug#helptags()
     return s:err('plug#begin was not called')
   endif
   for spec in values(g:plugs)
-    let docd = join([spec.dir, 'doc'], '/')
+    let docd = join([s:rtp(spec), 'doc'], '/')
     if isdirectory(docd)
       silent! execute 'helptags' s:esc(docd)
     endif
