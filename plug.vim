@@ -109,6 +109,8 @@ let s:TYPE = {
 \ }
 let s:loaded = get(s:, 'loaded', {})
 let s:triggers = get(s:, 'triggers', {})
+let s:need_filetypeplugin_au = 0
+let s:need_filetypeindent_au = 0
 
 function! plug#begin(...)
   if a:0 > 0
@@ -209,6 +211,21 @@ function! plug#end()
   if exists('g:did_load_filetypes')
     filetype off
   endif
+
+  let warn = []
+  if exists('g:did_load_ftplugin')
+    let warn += ['plugin']
+    let s:need_filetypeindent_au = 1
+  endif
+  if exists('g:did_indent_on')
+    let warn += ['indent']
+    let s:need_filetypeplugin_au = 1
+  endif
+  if !empty(warn)
+    redraw
+    call s:warn('echom', printf('[vim-plug] "filetype %s on" should not be used manually with vim-plug, please remove it from your vimrc.', join(warn)))
+  endif
+
   for name in g:plugs_order
     if !has_key(g:plugs, name)
       continue
@@ -502,8 +519,17 @@ function! s:lod_ft(pat, names)
   let syn = 'syntax/'.a:pat.'.vim'
   call s:lod(a:names, ['plugin', 'after/plugin'], syn, 'after/'.syn)
   execute 'autocmd! PlugLOD FileType' a:pat
-  call s:doautocmd('filetypeplugin', 'FileType')
-  call s:doautocmd('filetypeindent', 'FileType')
+
+  " Executing this is only necessary if "filetype plugin indent on" was used
+  " before plug#end, and can be skipped when Vim has not entered always.
+  if v:vim_did_enter
+    if s:need_filetypeplugin_au
+      call s:doautocmd('filetypeplugin', 'FileType')
+    endif
+    if s:need_filetypeindent_au
+      call s:doautocmd('filetypeindent', 'FileType')
+    endif
+  endif
 endfunction
 
 function! s:lod_cmd(cmd, bang, l1, l2, args, names)
