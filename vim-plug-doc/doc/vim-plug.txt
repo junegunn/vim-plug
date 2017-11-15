@@ -1,0 +1,3 @@
+*vim-plug*
+
+ vim:tw=78:ts=4:ft=help:norl:
