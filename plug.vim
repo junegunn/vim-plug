@@ -146,6 +146,7 @@ function! s:define_commands()
   command! -nargs=0 -bar PlugStatus  call s:status()
   command! -nargs=0 -bar PlugDiff    call s:diff()
   command! -nargs=? -bar -bang -complete=file PlugSnapshot call s:snapshot(<bang>0, <f-args>)
+  command! -nargs=0 -bar PlugHelp    call s:readme()
 endfunction
 
 function! s:to_a(v)
@@ -598,6 +599,26 @@ endfunction
 
 function! s:update(force, names)
   call s:update_impl(1, a:force, a:names)
+endfunction
+
+function! s:readme()
+    let str=matchstr(getline('.'), "'\\zs[^']\\+\\ze'")
+    let str=fnamemodify(str, ":t")
+    let plug_dir=g:plug_home.'/'.str
+
+    if isdirectory(plug_dir)
+        let globbed=glob(plug_dir.'/[Rr][Ee][Aa][Dd][Mm][Ee]*')
+
+        if strlen(globbed) > 0
+            let readme=split(globbed, '\n')[0]
+            if filereadable(readme)
+                execute 'vsplit '.readme
+                return 0
+            endif
+        endif
+    endif
+
+    return -1
 endfunction
 
 function! plug#helptags()
