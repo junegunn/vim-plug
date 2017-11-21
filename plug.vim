@@ -613,7 +613,6 @@ function! s:readme()
             let readme=split(globbed, '\n')[0]
             if filereadable(readme)
                 execute 'vsplit '.readme
-                " echom readme
                 return 0
             endif
         endif
