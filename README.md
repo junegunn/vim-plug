@@ -31,9 +31,20 @@ and put it in the "autoload" directory.
 
 ###### Unix
 
+- Terminal way:
+
 ```sh
 curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+```
+
+- Vimrc way:
+
+```vim
+" Put these lines into your vimrc. vim-plug will be installed automatically.
+if !filereadable(glob('~/.vim/autoload/plug.vim'))
+    call system("curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim")
+endif
 ```
 
 ###### Windows (PowerShell)
@@ -53,9 +64,20 @@ $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 
 ###### Unix
 
+- Terminal way:
+
 ```sh
 curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+```
+
+- Vimrc way:
+
+```vim
+" Put these lines into your vimrc. vim-plug will be installed automatically. 
+if !filereadable(glob('~/.local/share/nvim/site/autoload/plug.vim'))
+    call system("curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim")
+endif
 ```
 
 ###### Windows (PowerShell)
