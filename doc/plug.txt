@@ -1,0 +1,376 @@
+plug.txt	plug	Last change: November 27 2017
+PLUG - TABLE OF CONTENTS                                         *plug* *plug-toc*
+==============================================================================
+
+  vim-plug
+    Pros.
+    Installation
+      Vim
+        Unix
+        Windows (PowerShell)
+      Neovim
+        Unix
+        Windows (PowerShell)
+    Getting Help
+    Usage
+      Example
+    Commands
+    Plug options
+    Global options
+    Keybindings
+    Example: A small sensible Vim configuration
+    On-demand loading of plugins
+    Post-update hooks
+    PlugInstall! and PlugUpdate!
+    Articles
+    License
+
+VIM-PLUG                                                              *vim-plug*
+==============================================================================
+
+A minimalist Vim plugin manager.
+
+https://raw.githubusercontent.com/junegunn/i/master/vim-plug/installer.gif
+
+
+< Pros. >_____________________________________________________________________~
+                                                                     *plug-pros*
+
+ - Easier to setup: Single file. No boilerplate code required.
+ - Easier to use: Concise, intuitive syntax
+ - {Super-fast}{1} parallel installation/update (with any of `+job`, `+python`,
+   `+python3`, `+ruby`, or {Neovim}{2})
+ - Creates shallow clones to minimize disk space usage and download time
+ - On-demand loading for {faster startup time}{3}
+ - Can review and rollback updates
+ - Branch/tag/commit support
+ - Post-update hooks
+ - Support for externally managed plugins
+
+  {1} https://raw.githubusercontent.com/junegunn/i/master/vim-plug/40-in-4.gif
+  {2} http://neovim.org/
+  {3} https://github.com/junegunn/vim-startuptime-benchmark#result
+
+
+< Installation >______________________________________________________________~
+                                                             *plug-installation*
+
+{Download plug.vim}{4} and put it in the "autoload" directory.
+
+       {4} https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+
+
+Vim~
+                                                                      *plug-vim*
+
+
+>> Unix~
+>
+    curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
+        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+<
+You can automate the process by putting the command in your Vim configuration
+file as suggested {here}{5}.
+
+     {5} https://github.com/junegunn/vim-plug/wiki/tips#automatic-installation
+
+
+>> Windows (PowerShell)~
+>
+    md ~\vimfiles\autoload
+    $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+    (New-Object Net.WebClient).DownloadFile(
+      $uri,
+      $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath(
+        "~\vimfiles\autoload\plug.vim"
+      )
+    )
+<
+
+Neovim~
+                                                                   *plug-neovim*
+
+
+>> Unix~
+>
+    curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
+        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+<
+
+>> Windows (PowerShell)~
+>
+    md ~\AppData\Local\nvim\autoload
+    $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+    (New-Object Net.WebClient).DownloadFile(
+      $uri,
+      $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath(
+        "~\AppData\Local\nvim\autoload\plug.vim"
+      )
+    )
+<
+
+< Getting Help >______________________________________________________________~
+                                                             *plug-getting-help*
+
+ - See {tutorial}{6} page to learn the basics of vim-plug
+ - See {tips}{7} and {FAQ}{8} pages for common problems and questions
+ - See {requirements}{9} page for debugging information & tested configurations
+ - Create an {issue}{10}
+
+                    {6} https://github.com/junegunn/vim-plug/wiki/tutorial
+                    {7} https://github.com/junegunn/vim-plug/wiki/tips
+                    {8} https://github.com/junegunn/vim-plug/wiki/faq
+                    {9} https://github.com/junegunn/vim-plug/wiki/requirements
+                    {10} https://github.com/junegunn/vim-plug/issues/new
+
+
+< Usage >_____________________________________________________________________~
+                                                                    *plug-usage*
+
+Add a vim-plug section to your `~/.vimrc` (or `~/.config/nvim/init.vim` for
+Neovim):
+
+                                                           *plug#begin* *plug#end*
+
+ 1. Begin the section with `call plug#begin()`
+ 2. List the plugins with `Plug` commands
+ 3. `call plug#end()` to update 'runtimepath' and initialize plugin system
+   - Automatically executes `filetype plugin indent on` and `syntax enable`.
+     You can revert the settings after the call. e.g. `filetype indent off`,
+     `syntax off`, etc.
+
+
+Example~
+                                                                  *plug-example*
+>
+    " Specify a directory for plugins
+    " - For Neovim: ~/.local/share/nvim/plugged
+    " - Avoid using standard Vim directory names like 'plugin'
+    call plug#begin('~/.vim/plugged')
+
+    " Make sure you use single quotes
+
+    " Shorthand notation; fetches https://github.com/junegunn/vim-easy-align
+    Plug 'junegunn/vim-easy-align'
+
+    " Any valid git URL is allowed
+    Plug 'https://github.com/junegunn/vim-github-dashboard.git'
+
+    " Multiple Plug commands can be written in a single line using | separators
+    Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
+
+    " On-demand loading
+    Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
+    Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
+
+    " Using a non-master branch
+    Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
+
+    " Using a tagged release; wildcard allowed (requires git 1.9.2 or above)
+    Plug 'fatih/vim-go', { 'tag': '*' }
+
+    " Plugin options
+    Plug 'nsf/gocode', { 'tag': 'v.20150303', 'rtp': 'vim' }
+
+    " Plugin outside ~/.vim/plugged with post-update hook
+    Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+
+    " Unmanaged plugin (manually installed and updated)
+    Plug '~/my-prototype-plugin'
+
+    " Initialize plugin system
+    call plug#end()
+<
+                                                                  *:PlugInstall*
+
+Reload .vimrc and `:PlugInstall` to install plugins.
+
+
+< Commands >__________________________________________________________________~
+                                                                 *plug-commands*
+
+ ------------------------------------+-------------------------------------------------------------------
+ Command                             | Description                                                       ~
+ ------------------------------------+-------------------------------------------------------------------
+  `PlugInstall [name ...] [#threads]`  | Install plugins
+  `PlugUpdate [name ...] [#threads]`   | Install or update plugins
+  `PlugClean[!]`                       | Remove unused directories (bang version will clean without prompt)
+  `PlugUpgrade`                        | Upgrade vim-plug itself
+  `PlugStatus`                         | Check the status of plugins
+  `PlugDiff`                           | Examine changes from the previous update and the pending changes
+  `PlugSnapshot[!] [output path]`      | Generate script for restoring the current snapshot of the plugins
+ ------------------------------------+-------------------------------------------------------------------
+
+
+< Plug options >______________________________________________________________~
+                                                                  *plug-options*
+
+ ------------------------+-----------------------------------------------
+ Option                  | Description                                   ~
+ ------------------------+-----------------------------------------------
+  `branch` / `tag` / `commit`  | Branch/tag/commit of the repository to use
+  `rtp`                    | Subdirectory that contains Vim plugin
+  `dir`                    | Custom directory for the plugin
+  `as`                     | Use different name for the plugin
+  `do`                     | Post-update hook (string or funcref)
+  `on`                     | On-demand loading: Commands or <Plug>-mappings
+  `for`                    | On-demand loading: File types
+  `frozen`                 | Do not update unless explicitly specified
+ ------------------------+-----------------------------------------------
+
+
+< Global options >____________________________________________________________~
+                                                           *plug-global-options*
+
+     *g:plug_threads* *g:plug_timeout* *g:plug_retries* *g:plug_shallow* *g:plug_window*
+                                              *g:plug_pwindow* *g:plug_url_format*
+
+ --------------------+-----------------------------------+-----------------------------------------------------------------------------------
+ Flag                | Default                           | Description                                                                       ~
+ --------------------+-----------------------------------+-----------------------------------------------------------------------------------
+  `g:plug_threads`     | 16                                | Default number of threads to use
+  `g:plug_timeout`     | 60                                | Time limit of each task in seconds (Ruby & Python)
+  `g:plug_retries`     | 2                                 | Number of retries in case of timeout (Ruby & Python)
+  `g:plug_shallow`     | 1                                 | Use shallow clone
+  `g:plug_window`      |  `vertical topleft new`             | Command to open plug window
+  `g:plug_pwindow`     |  `above 12new`                      | Command to open preview window in  `PlugDiff`
+  `g:plug_url_format`  |  `https://git::@github.com/%s.git`  |  `printf`  format to build repo URL (Only applies to the subsequent  `Plug`  commands)
+ --------------------+-----------------------------------+-----------------------------------------------------------------------------------
+
+
+< Keybindings >_______________________________________________________________~
+                                                              *plug-keybindings*
+
+                                                         *:PlugStatus* *:PlugDiff*
+
+ - `D` - `PlugDiff`
+ - `S` - `PlugStatus`
+ - `R` - Retry failed update or installation tasks
+ - `U` - Update plugins in the selected range
+ - `q` - Close the window
+ - `:PlugStatus`
+   - `L` - Load plugin
+ - `:PlugDiff`
+   - `X` - Revert the update
+
+
+< Example: A small sensible Vim configuration >_______________________________~
+                               *plug-example-a-small-sensible-vim-configuration*
+>
+    call plug#begin()
+    Plug 'tpope/vim-sensible'
+    call plug#end()
+<
+
+< On-demand loading of plugins >______________________________________________~
+                                             *plug-on-demand-loading-of-plugins*
+>
+    " NERD tree will be loaded on the first invocation of NERDTreeToggle command
+    Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
+
+    " Multiple commands
+    Plug 'junegunn/vim-github-dashboard', { 'on': ['GHDashboard', 'GHActivity'] }
+
+    " Loaded when clojure file is opened
+    Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
+
+    " Multiple file types
+    Plug 'kovisoft/paredit', { 'for': ['clojure', 'scheme'] }
+
+    " On-demand loading on both conditions
+    Plug 'junegunn/vader.vim',  { 'on': 'Vader', 'for': 'vader' }
+
+    " Code to execute when the plugin is lazily loaded on demand
+    Plug 'junegunn/goyo.vim', { 'for': 'markdown' }
+    autocmd! User goyo.vim echom 'Goyo is now loaded!'
+<
+`for` option is generally not needed as most plugins for specific file types
+usually don't have too much code in `plugin` directory. You might want to
+examine the output of `vim --startuptime` before applying the option.
+
+
+< Post-update hooks >_________________________________________________________~
+                                                        *plug-post-update-hooks*
+
+There are some plugins that require extra steps after installation or update.
+In that case, use `do` option to describe the task to be performed.
+>
+    Plug 'Shougo/vimproc.vim', { 'do': 'make' }
+    Plug 'Valloric/YouCompleteMe', { 'do': './install.py' }
+<
+If the value starts with `:`, it will be recognized as a Vim command.
+
+                                                            *:GoInstallBinaries*
+>
+    Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
+<
+If you need more control, you can pass a reference to a Vim function that
+takes a single argument.
+>
+    function! BuildYCM(info)
+      " info is a dictionary with 3 fields
+      " - name:   name of the plugin
+      " - status: 'installed', 'updated', or 'unchanged'
+      " - force:  set on PlugInstall! or PlugUpdate!
+      if a:info.status == 'installed' || a:info.force
+        !./install.py
+      endif
+    endfunction
+
+    Plug 'Valloric/YouCompleteMe', { 'do': function('BuildYCM') }
+<
+Both forms of post-update hook are executed inside the directory of the plugin
+and only run when the repository has changed, but you can force it to run
+unconditionally with the bang-versions of the commands: `PlugInstall!` and
+`PlugUpdate!`.
+
+Make sure to escape BARs and double-quotes when you write `do` option inline
+as they are mistakenly recognized as command separator or the start of the
+trailing comment.
+>
+    Plug 'junegunn/fzf', { 'do': 'yes \| ./install' }
+<
+But you can avoid the escaping if you extract the inline specification using a
+variable (or any Vimscript expression) as follows:
+
+                                                                 *g:fzf_install*
+>
+    let g:fzf_install = 'yes | ./install'
+    Plug 'junegunn/fzf', { 'do': g:fzf_install }
+<
+
+< PlugInstall! and PlugUpdate! >______________________________________________~
+                                                    *pluginstall-and-plugupdate*
+
+The installer takes the following steps when installing/updating a plugin:
+
+ 1. `git clone` or `git fetch` from its origin
+ 2. Check out branch, tag, or commit and optionally `git merge` remote branch
+ 3. If the plugin was updated (or installed for the first time)
+   1. Update submodules
+   2. Execute post-update hooks
+
+The commands with `!` suffix ensure that all steps are run unconditionally.
+
+
+< Articles >__________________________________________________________________~
+                                                                 *plug-articles*
+
+ - {Writing my own Vim plugin manager}{11}
+ - {Vim plugins and startup time}{12}
+ - ~~{Thoughts on Vim plugin dependency}{13}~~
+   - Support for Plugfile has been removed since 0.5.0
+
+             {11} http://junegunn.kr/2013/09/writing-my-own-vim-plugin-manager
+             {12} http://junegunn.kr/2014/07/vim-plugins-and-startup-time
+             {13} http://junegunn.kr/2013/09/thoughts-on-vim-plugin-dependency
+
+
+< License >___________________________________________________________________~
+                                                                  *plug-license*
+
+MIT
+
+
+==============================================================================
+vim:tw=78:sw=2:ts=2:ft=help:norl:nowrap:
