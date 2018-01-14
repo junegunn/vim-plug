@@ -298,7 +298,15 @@ function! plug#end()
     if has('syntax') && !exists('g:syntax_on')
       syntax enable
     end
+
+    " NOTE: v:vim_did_enter might not exist with older Vims, and handling it
+    " manually can be used in tests.
+    let s:vim_did_enter = 0
+    augroup PlugLOD
+      autocmd VimEnter * let s:vim_did_enter = 1
+    augroup END
   else
+    let s:vim_did_enter = 1
     call s:reload_plugins()
   endif
 endfunction
@@ -522,7 +530,7 @@ function! s:lod_ft(pat, names)
 
   " Executing this is only necessary if "filetype plugin indent on" was used
   " before plug#end, and can be skipped when Vim has not entered always.
-  if v:vim_did_enter
+  if s:vim_did_enter
     if s:need_filetypeplugin_au
       call s:doautocmd('filetypeplugin', 'FileType')
     endif
