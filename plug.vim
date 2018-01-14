@@ -908,7 +908,7 @@ function! s:finish(pull)
     call add(msgs, "Press 'R' to retry.")
   endif
   if a:pull && len(s:update.new) < len(filter(getline(5, '$'),
-                \ "v:val =~ '^- ' && stridx(v:val, 'Already up-to-date') < 0"))
+                \ "v:val =~ '^- ' && v:val !~# 'Already up.to.date'"))
     call add(msgs, "Press 'D' to see the updated changes.")
   endif
   echo join(msgs, ' ')

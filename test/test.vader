@@ -37,9 +37,10 @@ Execute (Initialize test environment):
     g/^$/d
   endfunction
 
-  function! AssertExpect(bang, pat, cnt)
+  function! AssertExpect(bang, pat, cnt, ...)
     let op = a:bang ? '==#' : '=~#'
-    AssertEqual a:cnt, len(filter(getline(1, '$'), "v:val ".op." '".a:pat."'"))
+    let args = [a:cnt, len(filter(getline(1, '$'), "v:val ".op." '".a:pat."'"))] + a:000
+    call call('vader#assert#equal', args)
   endfunction
   command! -nargs=+ -bang AssertExpect call AssertExpect('<bang>' == '!', <args>)
 
