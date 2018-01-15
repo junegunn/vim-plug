@@ -689,9 +689,12 @@ Execute (PlugUpdate still should not care):
 Execute (PlugStatus with no error):
   PlugStatus
   Log getline(1, '$')
-  AssertExpect 'x fzf', 0
-  AssertExpect 'Not found', 0
-  q
+  try
+    AssertExpect 'x fzf', 0
+    AssertExpect 'Not found', 0
+  finally
+    q
+  endtry
 
 Execute (Check &rtp after SomeCommand):
   Log &rtp
@@ -1606,6 +1609,8 @@ Execute (#530 - Comparison of incompatible git URIs):
   Assert !CompareURI('https://github.com/junegunn/vim-plug.git', 'https://github.com:12345/junegunn/vim-plug.git')
 
 Execute (#532 - Reuse plug window):
+  AssertEqual 1, winnr('$'), 'Starts with 1 window'
+
   call plug#begin()
   Plug 'junegunn/goyo.vim'
   call plug#end()
