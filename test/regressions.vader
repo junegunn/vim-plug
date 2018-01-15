@@ -5,6 +5,10 @@ Execute (#112 On-demand loading should not suppress messages from ftplugin):
   Plug '$PLUG_FIXTURES/ftplugin-msg', { 'for': 'c' }
   call plug#end()
 
+  " Trigger VimEnter (simulate Vim being started), so that s:lod handles
+  " filetypeindent/filetypeplugin."
+  doautocmd VimEnter
+
   redir => out
   tabnew a.c
   redir END
