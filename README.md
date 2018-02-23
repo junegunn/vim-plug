@@ -98,7 +98,7 @@ Add a vim-plug section to your `~/.vimrc` (or `~/.config/nvim/init.vim` for Neov
     - Automatically executes `filetype plugin indent on` and `syntax enable`.
       You can revert the settings after the call. e.g. `filetype indent off`, `syntax off`, etc.
 
-#### Example
+#### Example .vimrc file
 
 ```vim
 " Specify a directory for plugins
