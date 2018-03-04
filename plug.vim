@@ -1329,6 +1329,7 @@ while 1 " Without TCO, Vim stack is bound to explode
     if empty(error)
       if pull
         let fetch_opt = (has_tag && !empty(globpath(spec.dir, '.git/shallow'))) ? '--depth 99999999' : ''
+        let fetch_opt .= has_tag ? ' --tags' : ''
         call s:spawn(name, printf('git fetch %s %s 2>&1', fetch_opt, prog), { 'dir': spec.dir })
       else
         let s:jobs[name] = { 'running': 0, 'lines': ['Already installed'], 'error': 0 }
@@ -1636,6 +1637,7 @@ class Plugin(object):
       self.write(Action.UPDATE, self.name, ['Updating ...'])
       callback = functools.partial(self.write, Action.UPDATE, self.name)
       fetch_opt = '--depth 99999999' if self.tag and os.path.isfile(os.path.join(self.args['dir'], '.git/shallow')) else ''
+      fetch_opt += self.tag ? ' --tags' : ''
       cmd = 'git fetch {0} {1} 2>&1'.format(fetch_opt, G_PROGRESS)
       com = Command(cmd, self.args['dir'], G_TIMEOUT, callback)
       result = com.execute(G_RETRIES)
@@ -1944,6 +1946,7 @@ function! s:update_ruby()
                 if pull
                   log.call name, 'Updating ...', :update
                   fetch_opt = (tag && File.exist?(File.join(dir, '.git/shallow'))) ? '--depth 99999999' : ''
+                  fetch_opt += tag ? ' --tags' : ''
                   bt.call "#{chdir} && git fetch #{fetch_opt} #{progress} 2>&1", name, :update, nil
                 else
                   [true, skip]
