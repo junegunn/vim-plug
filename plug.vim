@@ -111,6 +111,7 @@ let s:loaded = get(s:, 'loaded', {})
 let s:triggers = get(s:, 'triggers', {})
 let s:need_filetypeplugin_au = 0
 let s:need_filetypeindent_au = 0
+let s:autocmd_queue_for_vimenter = []
 
 function! plug#begin(...)
   if a:0 > 0
@@ -302,8 +303,14 @@ function! plug#end()
     " NOTE: v:vim_did_enter might not exist with older Vims, and handling it
     " manually can be used in tests.
     let s:vim_did_enter = 0
+    function! s:plug_on_vimenter()
+      let s:vim_did_enter = 1
+      for event in s:autocmd_queue_for_vimenter
+        call s:doautocmd(event)
+      endfor
+    endfunction
     augroup PlugLOD
-      autocmd VimEnter * let s:vim_did_enter = 1
+      autocmd VimEnter * call s:plug_on_vimenter()
     augroup END
   else
     let s:vim_did_enter = 1
@@ -444,6 +451,12 @@ function! s:reorg_rtp()
 endfunction
 
 function! s:doautocmd(...)
+  if !s:vim_did_enter
+    if index(s:autocmd_queue_for_vimenter, a:000) == -1
+      call add(s:autocmd_queue_for_vimenter, a:000)
+    endif
+    return
+  endif
   if exists('#'.join(a:000, '#'))
     execute 'doautocmd' ((v:version > 703 || has('patch442')) ? '<nomodeline>' : '') join(a:000)
   endif
@@ -454,9 +467,7 @@ function! s:dobufread(names)
     let path = s:rtp(g:plugs[name]).'/**'
     for dir in ['ftdetect', 'ftplugin']
       if len(finddir(dir, path))
-        if exists('#BufRead')
-          doautocmd BufRead
-        endif
+        call s:doautocmd('BufRead')
         return
       endif
     endfor
