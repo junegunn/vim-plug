@@ -799,7 +799,7 @@ function! s:bang(cmd, ...)
     let cmd = a:0 ? s:with_cd(a:cmd, a:1) : a:cmd
     if s:is_win
       let batchfile = tempname().'.bat'
-      call writefile(['@echo off', cmd], batchfile)
+      call writefile(["@echo off\r", cmd . "\r"], batchfile)
       let cmd = batchfile
     endif
     let g:_plug_bang = (s:is_win && has('gui_running') ? 'silent ' : '').'!'.escape(cmd, '#!%')
@@ -1196,7 +1196,7 @@ function! s:spawn(name, cmd, opts)
   let s:jobs[a:name] = job
   let cmd = has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd
   if !empty(job.batchfile)
-    call writefile(['@echo off', cmd], job.batchfile)
+    call writefile(["@echo off\r", cmd . "\r"], job.batchfile)
     let cmd = job.batchfile
   endif
   let argv = add(s:is_win ? ['cmd', '/c'] : ['sh', '-c'], cmd)
@@ -2023,7 +2023,7 @@ function! s:system(cmd, ...)
     let cmd = a:0 > 0 ? s:with_cd(a:cmd, a:1) : a:cmd
     if s:is_win
       let batchfile = tempname().'.bat'
-      call writefile(['@echo off', cmd], batchfile)
+      call writefile(["@echo off\r", cmd . "\r"], batchfile)
       let cmd = batchfile
     endif
     return system(s:is_win ? '('.cmd.')' : cmd)
@@ -2357,7 +2357,7 @@ function! s:preview_commit()
     let cmd = 'cd '.s:shellesc(g:plugs[name].dir).' && git show --no-color --pretty=medium '.sha
     if s:is_win
       let batchfile = tempname().'.bat'
-      call writefile(['@echo off', cmd], batchfile)
+      call writefile(["@echo off\r", cmd . "\r"], batchfile)
       let cmd = batchfile
     endif
     execute 'silent %!' cmd
