@@ -16,6 +16,7 @@ Execute (Initialize test environment):
   call system('cp "$PLUG_SRC" "$PLUG_TMP"')
   let patch =
   \ ['function! ResetPlug()', 'let s:loaded = {}', 'endfunction',
+  \  'function! ResetPlugConfig()', 'unlet s:config_dirs', 'endfunction',
   \  'function! CompareURI(a, b)', 'return s:compare_git_uri(a:a, a:b)', 'endfunction']
 
   if $ENV != 'vim8'

@@ -86,6 +86,10 @@ DOC
   make_dirs z1/ z1
   make_dirs z2/ z2
 
+
+  mkdir -p "$TEMP/configs"
+  echo "let g:plug_config_vader_test = 1" > "$TEMP/configs/yyy.vim"
+
   rm -rf "$PLUG_FIXTURES/ftplugin-msg"
   mkdir -p "$PLUG_FIXTURES/ftplugin-msg/ftplugin"
   echo "echomsg 'ftplugin-c'" > "$PLUG_FIXTURES/ftplugin-msg/ftplugin/c.vim"

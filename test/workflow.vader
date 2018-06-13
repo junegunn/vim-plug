@@ -1631,3 +1631,46 @@ Execute (#532 - Reuse plug window):
   AssertEqual 2, winnr(), 'Current window is #2 after PlugStatus (but is '.winnr().')'
   AssertEqual 2, winnr('$'), 'Three windows after PlugStatus (but got '.winnr('$').')'
   q
+
+Execute (PlugConfig shall create a new file 1/2):
+  call ResetPlug()
+  call ResetPlugConfig()
+  let g:plug_config_dir = $TEMP . '/configs'
+  let $PLUG_CONFIG_DIR = g:plug_config_dir
+  let g:plug_config_dirs = [g:plug_config_dir]
+  call plug#begin()
+  Plug '$PLUG_FIXTURES/xxx', { 'for': 'xxx' }
+  call plug#end()
+  AssertEqual 1, plug#load('xxx'), 'Loading Plugin Failed'
+  redir => out
+  PlugConfig xxx
+  AssertEqual 1, bufexists(g:plug_config_dir . '/xxx.vim'), 'Buffer not created ' . g:plug_config_dir . '/xxx.vim'
+  redir END
+
+Execute (PlugConfig shall load config if lazy):
+  AssertEqual 1, filereadable(g:plug_config_dir . '/yyy.vim')
+  call ResetPlugConfig()
+  let g:plug_config_dirs = [g:plug_config_dir]
+  call ResetPlug()
+  call plug#begin()
+  Plug '$PLUG_FIXTURES/yyy', { 'for': 'yyy' }
+  call plug#end()
+  redir => out
+  AssertEqual 0, exists('g:plug_config_vader_test'), 'Variable is set unexpected'
+  AssertEqual 1, plug#load('yyy'), 'Loading failed'
+  AssertEqual 1, exists('g:plug_config_vader_test'), 'Variable has not been set by config'
+  unlet g:plug_config_vader_test
+  redir END
+
+Execute (PlugConfig shall load config automatically):
+  AssertEqual 1, filereadable(g:plug_config_dir . '/yyy.vim')
+  call ResetPlugConfig()
+  let g:plug_config_dirs = [g:plug_config_dir]
+  call ResetPlug()
+  AssertEqual 0, exists('g:plug_config_vader_test'), 'Variable is set unexpected'
+  call plug#begin()
+  Plug '$PLUG_FIXTURES/yyy'
+  call plug#end()
+  redir => out
+  AssertEqual 1, exists('g:plug_config_vader_test'), 'Variable has not been set by config'
+  redir END
