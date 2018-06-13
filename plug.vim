@@ -141,6 +141,7 @@ function! s:define_commands()
   endif
   command! -nargs=* -bar -bang -complete=customlist,s:names PlugInstall call s:install(<bang>0, [<f-args>])
   command! -nargs=* -bar -bang -complete=customlist,s:names PlugUpdate  call s:update(<bang>0, [<f-args>])
+  command! -nargs=1 -bar -complete=customlist,s:names PlugConfig call s:edit_config(<f-args>)
   command! -nargs=0 -bar -bang PlugClean call s:clean(<bang>0)
   command! -nargs=0 -bar PlugUpgrade if s:upgrade() | execute 'source' s:esc(s:me) | endif
   command! -nargs=0 -bar PlugStatus  call s:status()
@@ -284,6 +285,7 @@ function! plug#end()
   else
     call s:reload_plugins()
   endif
+  call s:load_all_configs()
 endfunction
 
 function! s:loaded_names()
@@ -494,6 +496,7 @@ function! s:lod(names, types, ...)
       endif
       call s:source(rtp, a:2)
     endif
+    call s:load_config(name)
     call s:doautocmd('User', name)
   endfor
 endfunction
@@ -598,6 +601,51 @@ endfunction
 
 function! s:update(force, names)
   call s:update_impl(1, a:force, a:names)
+endfunction
+
+function! s:get_config_path(name, create)
+  " uniform name, remove vim prefix
+  let l:pluginconfig = tolower(a:name).'.vim'
+  if !exists('s:config_dirs')
+    let s:config_dirs = get(g:, 'plug_config_dirs', [split(&rtp, ',')[0] . '/configs'])
+  endif
+  " look in paths for file, else use first one as default
+  for path in s:config_dirs
+    let l:file = glob(path.'/'.l:pluginconfig)
+    if filereadable(l:file)
+      return l:file
+    endif
+  endfor
+  if a:create && len(s:config_dirs) > 0
+    if !isdirectory(s:config_dirs[0])
+      try
+        call mkdir(s:config_dirs[0], 'p')
+      catch
+        return ''
+      endtry
+    endif
+    return s:config_dirs[0].'/'.l:pluginconfig
+  else
+    return ''
+  endif
+endfunction
+
+function! s:edit_config(name)
+  let l:file = s:get_config_path(a:name, 1)
+  exe 'tabedit ' . l:file
+endfunction
+
+function! s:load_config(name)
+  let l:file = s:get_config_path(a:name, 0)
+  if l:file != '' && filereadable(l:file)
+    exe 'source ' . l:file
+  endif
+endfunction
+
+function! s:load_all_configs()
+  for plug in filter(keys(s:loaded), 's:loaded[v:val] == 1')
+    call s:load_config(plug)
+  endfor
 endfunction
 
 function! plug#helptags()
