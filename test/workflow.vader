@@ -370,8 +370,15 @@ Execute (New commits on remote, PlugUpdate, then PlugDiff):
   AssertEqual 1, &previewwindow
   AssertEqual 'git', &filetype
 
-  " Back to plug window
-  wincmd p
+  " Close preview window
+  pclose
+
+  " Open and go to preview window with a custom mapping
+  nmap <buffer> <c-o> <plug>(plug-preview)<c-w>P
+  execute "normal \<c-o>"
+  AssertEqual 1, &previewwindow, 'Should be on preview window'
+  normal q
+  AssertEqual 0, &previewwindow, 'Should not be on preview window'
 
   " ]] motion
   execute 'normal $]]'
