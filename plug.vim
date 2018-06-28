@@ -600,13 +600,28 @@ function! s:update(force, names)
   call s:update_impl(1, a:force, a:names)
 endfunction
 
+function! s:is_exec_helptags(docdir)
+  execute 'lcd' a:docdir
+  let result = v:false
+  let exts = uniq(sort(map(s:glob(a:docdir, '*.{txt,??x}'), 'v:val[-3:]')))
+  for ext in exts
+    let tagname = 'tags' . (ext == 'txt' ? '' : '-' . ext[:1])
+    if !filereadable(tagname) || empty(s:system('git ls-files ' . tagname))
+      let result = v:true
+      break
+    endif
+  endfor
+  lcd -
+  return result
+endfunc
+
 function! plug#helptags()
   if !exists('g:plugs')
     return s:err('plug#begin was not called')
   endif
   for spec in values(g:plugs)
     let docd = join([s:rtp(spec), 'doc'], '/')
-    if isdirectory(docd)
+    if isdirectory(docd) && s:is_exec_helptags(docd)
       silent! execute 'helptags' s:esc(docd)
     endif
   endfor
