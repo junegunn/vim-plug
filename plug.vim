@@ -601,7 +601,7 @@ function! s:update(force, names)
 endfunction
 
 function! s:is_exec_helptags(docdir)
-  let exts = uniq(sort(map(s:glob(a:docdir, '*.{txt,??x}'), 'v:val[-3:]')))
+  let exts = s:uniq(sort(map(s:glob(a:docdir, '*.{txt,??x}'), 'v:val[-3:]')))
   for ext in exts
     let tagname = 'tags' . (ext == 'txt' ? '' : '-' . ext[:1])
     if !filereadable(a:docdir .'/'. tagname) || empty(s:system('cd ' . s:shellesc(a:docdir) . ' && git ls-files ' . tagname))
@@ -2110,6 +2110,23 @@ function! s:git_validate(spec, check_branch)
   endif
   return [err, err =~# 'PlugClean']
 endfunction
+
+if exists('*uniq')
+  function! s:uniq(list) abort
+    return uniq(a:list)
+  endfunction
+else
+  function! s:uniq(list) abort
+    let i = len(a:list) - 1
+    while 0 < i
+      if a:list[i] ==# a:list[i - 1]
+        call remove(a:list, i)
+      endif
+      let i -= 1
+    endwhile
+    return a:list
+  endfunction
+endif
 
 function! s:rm_rf(dir)
   if isdirectory(a:dir)
