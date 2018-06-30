@@ -601,17 +601,15 @@ function! s:update(force, names)
 endfunction
 
 function! s:is_exec_helptags(docdir)
-  execute 'lcd' a:docdir
   let result = v:false
   let exts = uniq(sort(map(s:glob(a:docdir, '*.{txt,??x}'), 'v:val[-3:]')))
   for ext in exts
     let tagname = 'tags' . (ext == 'txt' ? '' : '-' . ext[:1])
-    if !filereadable(tagname) || empty(s:system('git ls-files ' . tagname))
+    if !filereadable(a:docdir .'/'. tagname) || empty(s:system('cd ' . s:shellesc(a:docdir) . ' && git ls-files ' . tagname))
       let result = v:true
       break
     endif
   endfor
-  lcd -
   return result
 endfunc
 
