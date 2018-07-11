@@ -600,7 +600,7 @@ function! s:update(force, names)
   call s:update_impl(1, a:force, a:names)
 endfunction
 
-function! s:is_exec_helptags(docdir)
+function! s:do_need_exec_helptags(docdir)
   let exts = s:uniq(sort(map(s:glob(a:docdir, '*.{txt,??x}'), 'v:val[-3:]')))
   for ext in exts
     let tagname = 'tags' . (ext == 'txt' ? '' : '-' . ext[:1])
@@ -617,7 +617,7 @@ function! plug#helptags()
   endif
   for spec in values(g:plugs)
     let docd = join([s:rtp(spec), 'doc'], '/')
-    if isdirectory(docd) && s:is_exec_helptags(docd)
+    if isdirectory(docd) && s:do_need_exec_helptags(docd)
       silent! execute 'helptags' s:esc(docd)
     endif
   endfor
