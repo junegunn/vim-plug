@@ -763,6 +763,9 @@ function! s:prepare(...)
     execute 'silent! unmap <buffer>' k
   endfor
   setlocal buftype=nofile bufhidden=wipe nobuflisted nolist noswapfile nowrap cursorline modifiable nospell
+  if exists('+colorcolumn')
+    setlocal colorcolumn=
+  endif
   setf vim-plug
   if exists('g:syntax_on')
     call s:syntax()
