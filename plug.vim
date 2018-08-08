@@ -1321,7 +1321,7 @@ while 1 " Without TCO, Vim stack is bound to explode
 
   let name = keys(s:update.todo)[0]
   let spec = remove(s:update.todo, name)
-  let new  = !isdirectory(spec.dir)
+  let new  = empty(globpath(spec.dir, '.git', 1))
 
   call s:log(new ? '+' : '*', name, pull ? 'Updating ...' : 'Installing ...')
   redraw
