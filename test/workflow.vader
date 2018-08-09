@@ -1641,6 +1641,7 @@ Execute (#532 - Reuse plug window):
 
 Execute (#766 - Allow cloning into an empty directory):
   let d = '/tmp/vim-plug-test/goyo-already'
+  call system('rm -rf ' . d)
   call mkdir(d)
   call plug#begin()
   Plug 'junegunn/goyo.vim', { 'dir': d }
