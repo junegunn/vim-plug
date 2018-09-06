@@ -1011,6 +1011,8 @@ function! s:update_impl(pull, force, args) abort
     let s:clone_opt .= ' -c core.eol=lf -c core.autocrlf=input'
   endif
 
+  let s:submodule_opt = s:git_version_requirement(2, 8) ? ' --jobs='.threads : ''
+
   " Python version requirement (>= 2.7)
   if python && !has('python3') && !ruby && !use_job && s:update.threads > 1
     redir => pyv
@@ -1102,7 +1104,7 @@ function! s:update_finish()
       if !v:shell_error && filereadable(spec.dir.'/.gitmodules') &&
             \ (s:update.force || has_key(s:update.new, name) || s:is_updated(spec.dir))
         call s:log4(name, 'Updating submodules. This may take a while.')
-        let out .= s:bang('git submodule update --init --recursive 2>&1', spec.dir)
+        let out .= s:bang('git submodule update --init --recursive'.s:submodule_opt.' 2>&1', spec.dir)
       endif
       let msg = s:format_message(v:shell_error ? 'x': '-', name, out)
       if v:shell_error
