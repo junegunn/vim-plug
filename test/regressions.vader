@@ -41,6 +41,7 @@ Execute (#130 Proper cleanup of on-demand loading triggers):
   Plug 'junegunn/vim-emoji', { 'on':  ['EmojiCommand', 'EmojiCommand2', '<Plug>(EmojiMapping)'] }
   call plug#end()
   PlugInstall | q
+  call mkdir(g:plugs['vim-emoji'].dir.'/after/plugin', 'p')
 
   Assert exists(':EmojiCommand'), 'EmojiCommand not defined'
   Assert exists(':EmojiCommand2'), 'EmojiCommand2 not defined'
