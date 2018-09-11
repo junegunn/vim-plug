@@ -195,7 +195,7 @@ endfunction
 
 function! s:has_for(plug)
   return has_key(a:plug, 'for') &&
-        \ (empty(s:to_a(a:plug.for)) || len(s:glob(s:rtp(a:plug), 'plugin')))
+        \ (empty(s:to_a(a:plug.for)) || !isdirectory(a:plug.dir) || len(s:glob(s:rtp(a:plug), 'plugin')))
 endfunction
 
 function! plug#end()
