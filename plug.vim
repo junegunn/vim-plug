@@ -193,6 +193,11 @@ function! s:ask_no_interrupt(...)
   endtry
 endfunction
 
+function! s:has_for(plug)
+  return has_key(a:plug, 'for') &&
+        \ (empty(s:to_a(a:plug.for)) || len(s:glob(s:rtp(a:plug), 'plugin')))
+endfunction
+
 function! plug#end()
   if !exists('g:plugs')
     return s:err('Call plug#begin() first')
@@ -214,7 +219,7 @@ function! plug#end()
       continue
     endif
     let plug = g:plugs[name]
-    if get(s:loaded, name, 0) || !has_key(plug, 'on') && !has_key(plug, 'for')
+    if get(s:loaded, name, 0) || !has_key(plug, 'on') && !s:has_for(plug)
       let s:loaded[name] = 1
       continue
     endif
