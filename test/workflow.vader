@@ -1511,7 +1511,7 @@ Execute (Commit hash support):
   Log getline(1, '$')
   AssertEqual 'x goyo.vim:', getline(5)
   AssertEqual '    fatal: invalid reference: ffffffff', getline(6)
-  AssertEqual 0, stridx(getline(7), '- vim-emoji: HEAD is now at 9db7fcf...')
+  AssertEqual 0, stridx(getline(7), '- vim-emoji: HEAD is now at 9db7fcf')
 
   let hash = system(printf('cd %s && git rev-parse HEAD', g:plugs['vim-emoji'].dir))[:-2]
   AssertEqual '9db7fcfee0d90dafdbcb7a32090c0a9085eb054a', hash
@@ -1638,3 +1638,15 @@ Execute (#532 - Reuse plug window):
   AssertEqual 2, winnr(), 'Current window is #2 after PlugStatus (but is '.winnr().')'
   AssertEqual 2, winnr('$'), 'Three windows after PlugStatus (but got '.winnr('$').')'
   q
+
+Execute (#766 - Allow cloning into an empty directory):
+  let d = '/tmp/vim-plug-test/goyo-already'
+  call system('rm -rf ' . d)
+  call mkdir(d)
+  call plug#begin()
+  Plug 'junegunn/goyo.vim', { 'dir': d }
+  call plug#end()
+  PlugInstall
+  AssertExpect! '[=]', 1
+  q
+  unlet d
