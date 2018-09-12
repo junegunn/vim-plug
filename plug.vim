@@ -193,6 +193,14 @@ function! s:ask_no_interrupt(...)
   endtry
 endfunction
 
+function! s:lazy(plug, opt)
+  return has_key(a:plug, a:opt) &&
+        \ (empty(s:to_a(a:plug[a:opt]))         ||
+        \  !isdirectory(a:plug.dir)             ||
+        \  len(s:glob(s:rtp(a:plug), 'plugin')) ||
+        \  len(s:glob(s:rtp(a:plug), 'after/plugin')))
+endfunction
+
 function! plug#end()
   if !exists('g:plugs')
     return s:err('Call plug#begin() first')
@@ -214,7 +222,7 @@ function! plug#end()
       continue
     endif
     let plug = g:plugs[name]
-    if get(s:loaded, name, 0) || !has_key(plug, 'on') && !has_key(plug, 'for')
+    if get(s:loaded, name, 0) || !s:lazy(plug, 'on') && !s:lazy(plug, 'for')
       let s:loaded[name] = 1
       continue
     endif
