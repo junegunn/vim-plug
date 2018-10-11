@@ -1337,6 +1337,8 @@ while 1 " Without TCO, Vim stack is bound to explode
   redraw
 
   let has_tag = has_key(spec, 'tag')
+  let has_clone_opt = has_key(spec, 'clone_opt')
+  let clone_opt = has_clone_opt ? spec.clone_opt : s:clone_opt
   if !new
     let [error, _] = s:git_validate(spec, 0)
     if empty(error)
@@ -1352,7 +1354,7 @@ while 1 " Without TCO, Vim stack is bound to explode
   else
     call s:spawn(name,
           \ printf('git clone %s %s %s %s 2>&1',
-          \ has_tag ? '' : s:clone_opt,
+          \ has_tag ? '' : clone_opt,
           \ prog,
           \ s:shellesc(spec.uri),
           \ s:shellesc(s:trim(spec.dir))), { 'new': 1 })

@@ -216,6 +216,7 @@ Reload .vimrc and `:PlugInstall` to install plugins.
   `on`                     | On-demand loading: Commands or <Plug>-mappings
   `for`                    | On-demand loading: File types
   `frozen`                 | Do not update unless explicitly specified
+  `clone_opt`              | Override git cloning options for the plugin
  ------------------------+-----------------------------------------------
 
 
