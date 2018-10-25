@@ -537,6 +537,51 @@ Execute (PlugDiff):
   Assert !empty(mapcheck("\<cr>"))
   q
 
+Execute (Do not show diff for commits outside of rtp):
+  call plug#begin()
+  call plug#end()
+  PlugClean!
+
+  call plug#begin()
+  Plug 'file://'.expand('$PLUG_FIXTURES').'/xxx'
+  Plug 'file://'.expand('$PLUG_FIXTURES').'/yyy', { 'rtp': 'rtp' }
+  call plug#end()
+  PlugInstall
+  Log getline(1, '$')
+
+  call system('cd "$PLUG_FIXTURES/xxx" && git commit --allow-empty -m update-xxx && git tag -f xxx')
+  call system('cd "$PLUG_FIXTURES/yyy" && git commit --allow-empty -m update-yyy && git tag -f yyy')
+
+  let g:plugs.yyy.tag = 'yyy'
+  PlugUpdate
+  Log getline(1, '$')
+
+  PlugDiff
+  " 1 plugin(s) updated.
+  " [==]
+  "
+  " Last update:
+  " ------------
+  "
+  " - xxx:
+  "   * 7faa9b2 update-xxx (0 seconds ago)
+  "
+  " Pending updates:
+  " ----------------
+  "
+  " N/A
+  "
+  Log getline(1, '$')
+  AssertEqual 14, line('$')
+  AssertEqual '1 plugin(s) updated.', getline(1)
+  AssertEqual '[==]', getline(2)
+  AssertEqual 'Last update:', getline(4)
+  AssertEqual '- xxx:', getline(7)
+  Assert !empty(mapcheck('o'))
+  Assert !empty(mapcheck('X'))
+  Assert !empty(mapcheck("\<cr>"))
+  q
+
 **********************************************************************
 ~ On-demand loading / Partial installation/update ~
 **********************************************************************
