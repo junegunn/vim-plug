@@ -2422,7 +2422,7 @@ function! s:diff()
       let range = origin ? '..origin/'.v.branch : 'HEAD@{1}..'
       let cmd = 'git log --graph --color=never '.join(map(['--pretty=format:%x01%h%x01%d%x01%s%x01%cr', range], 's:shellesc(v:val)'))
       if has_key(v, 'rtp')
-        let cmd .= ' -- '.v.rtp
+        let cmd .= ' -- '.s:shellesc(v.rtp)
       endif
       let diff = s:system_chomp(cmd, v.dir)
       if !empty(diff)
