@@ -1,14 +1,14 @@
 " vim-plug: Vim plugin manager
 " ============================
 "
-" Download plug.vim and put it in ~/.vim/autoload
+" Download plug.neovim and put it in ~/.local/share/nvim/site/autoload/ as plug.vim
 "
-"   curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
-"     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+"   curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
+"     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.neovim
 "
-" Edit your .vimrc
+" Edit your ~/.config/nvim/init.vim  so it contains something like
 "
-"   call plug#begin('~/.vim/plugged')
+"   call plug#begin('~/.config/nvim/plugged')
 "
 "   " Make sure you use single quotes
 "
