@@ -60,14 +60,14 @@ $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 
 ```sh
 curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
-    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.neovim
 ```
 
 ###### Windows (PowerShell)
 
 ```powershell
 md ~\AppData\Local\nvim\autoload
-$uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+$uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.neovim'
 (New-Object Net.WebClient).DownloadFile(
   $uri,
   $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath(
