@@ -87,7 +87,7 @@ DOC
   make_dirs z2/ z2
 
   rm -rf "$PLUG_FIXTURES/ftplugin-msg"
-  mkdir -p "$PLUG_FIXTURES/ftplugin-msg/ftplugin"
+  mkdir -p "$PLUG_FIXTURES"/ftplugin-msg/{plugin,ftplugin}
   echo "echomsg 'ftplugin-c'" > "$PLUG_FIXTURES/ftplugin-msg/ftplugin/c.vim"
   echo "echomsg 'ftplugin-java'" > "$PLUG_FIXTURES/ftplugin-msg/ftplugin/java.vim"
 
