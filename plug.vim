@@ -935,7 +935,7 @@ function! s:prepare(...)
     call s:new_window()
   endif
 
-  nnoremap <silent> <buffer> q  :if b:plug_preview==1<bar>pc<bar>endif<bar>bd<cr>
+  nnoremap <silent> <buffer> q :call <SID>close_pane()<cr>
   if a:0 == 0
     call s:finish_bindings()
   endif
@@ -954,6 +954,15 @@ function! s:prepare(...)
   setf vim-plug
   if exists('g:syntax_on')
     call s:syntax()
+  endif
+endfunction
+
+function! s:close_pane()
+  if b:plug_preview == 1
+    pc
+    let b:plug_preview = -1
+  else
+    bd
   endif
 endfunction
 
