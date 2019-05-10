@@ -436,7 +436,7 @@ function! s:dobufread(names)
   for name in a:names
     let path = s:rtp(g:plugs[name]).'/**'
     for dir in ['ftdetect', 'ftplugin']
-      if len(finddir(dir, path))
+      if !empty(finddir(dir, path, 1))
         if exists('#BufRead')
           doautocmd BufRead
         endif
