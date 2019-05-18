@@ -199,7 +199,7 @@ Reload .vimrc and `:PlugInstall` to install plugins.
   `PlugStatus`                         | Check the status of plugins
   `PlugDiff`                           | Examine changes from the previous update and the pending changes
   `PlugSnapshot[!] [output path]`      | Generate script for restoring the current snapshot of the plugins
-  `PlugConfig`                         | Edit configuration of plugin
+  `PlugConfig name`                    | Edit configuration of plugin
  ------------------------------------+-------------------------------------------------------------------
 
 

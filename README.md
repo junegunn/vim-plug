@@ -153,6 +153,7 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 | `PlugStatus`                        | Check the status of plugins                                        |
 | `PlugDiff`                          | Examine changes from the previous update and the pending changes   |
 | `PlugSnapshot[!] [output path]`     | Generate script for restoring the current snapshot of the plugins  |
+| `PlugConfig name`                   | Open or create a config file for a plugin                          |
 
 ### `Plug` options
 
@@ -178,6 +179,7 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 | `g:plug_window`     | `vertical topleft new`            | Command to open plug window                            |
 | `g:plug_pwindow`    | `above 12new`                     | Command to open preview window in `PlugDiff`           |
 | `g:plug_url_format` | `https://git::@github.com/%s.git` | `printf` format to build repo URL (Only applies to the subsequent `Plug` commands) |
+| `g:plug_config_dirs`| `{rtp}/configs`                   | Dirs to look for configs, first dir is used for creating new config files |
 
 
 ### Keybindings
@@ -226,6 +228,8 @@ autocmd! User goyo.vim echom 'Goyo is now loaded!'
 `for` option is generally not needed as most plugins for specific file types
 usually don't have too much code in `plugin` directory. You might want to
 examine the output of `vim --startuptime` before applying the option.
+
+Configurations for plugins are loaded with the plugin so you can use all the commands the plugin provides in your config.
 
 ### Post-update hooks
 
