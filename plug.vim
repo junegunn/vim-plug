@@ -434,8 +434,8 @@ endfunction
 
 function! s:dobufread(names)
   for name in a:names
-    let path = s:rtp(g:plugs[name]).'/**'
-    for dir in ['ftdetect', 'ftplugin']
+    let path = s:rtp(g:plugs[name])
+    for dir in ['ftdetect', 'ftplugin', 'after/ftdetect', 'after/ftplugin']
       if len(finddir(dir, path))
         if exists('#BufRead')
           doautocmd BufRead
