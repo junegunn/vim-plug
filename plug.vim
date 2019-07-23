@@ -809,7 +809,7 @@ function! s:bang(cmd, ...)
     if s:is_win
       let batchfile = tempname().'.bat'
       call writefile(["@echo off\r", cmd . "\r"], batchfile)
-      let cmd = s:shellesc(expand(batchfile))
+      let cmd = s:shellesc(expand(batchfile), &shell)
     endif
     let g:_plug_bang = (s:is_win && has('gui_running') ? 'silent ' : '').'!'.escape(cmd, '#!%')
     execute "normal! :execute g:_plug_bang\<cr>\<cr>"
@@ -1208,7 +1208,7 @@ function! s:spawn(name, cmd, opts)
   let cmd = has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd
   if !empty(job.batchfile)
     call writefile(["@echo off\r", cmd . "\r"], job.batchfile)
-    let cmd = s:shellesc(expand(job.batchfile))
+    let cmd = s:shellesc(expand(job.batchfile), &shell)
   endif
   let argv = add(s:is_win ? ['cmd', '/c'] : ['sh', '-c'], cmd)
 
@@ -1988,8 +1988,9 @@ function! s:shellesc_cmd(arg)
   return '^"'.substitute(escaped, '\(\\\+\)$', '\1\1', '').'^"'
 endfunction
 
-function! s:shellesc(arg)
-  if &shell =~# 'cmd.exe$'
+function! s:shellesc(arg, ...)
+  let shell = get(a:000, 0, s:is_win ? 'cmd.exe' : 'sh')
+  if shell =~# 'cmd.exe$'
     return s:shellesc_cmd(a:arg)
   endif
   return shellescape(a:arg)
@@ -2035,7 +2036,7 @@ function! s:system(cmd, ...)
     if s:is_win
       let batchfile = tempname().'.bat'
       call writefile(["@echo off\r", cmd . "\r"], batchfile)
-      let cmd = s:shellesc(expand(batchfile))
+      let cmd = s:shellesc(expand(batchfile), &shell)
     endif
     return system(cmd)
   finally
@@ -2369,7 +2370,7 @@ function! s:preview_commit()
     if s:is_win
       let batchfile = tempname().'.bat'
       call writefile(["@echo off\r", cmd . "\r"], batchfile)
-      let cmd = expand(batchfile)
+      let cmd = s:shellesc(expand(batchfile), &shell)
     endif
     execute 'silent %!' cmd
   finally
