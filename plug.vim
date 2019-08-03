@@ -809,7 +809,7 @@ function! s:bang(cmd, ...)
     if s:is_win
       let batchfile = tempname().'.bat'
       call writefile(["@echo off\r", cmd . "\r"], batchfile)
-      let cmd = s:shellesc(expand(batchfile), &shell)
+      let cmd = s:shellesc(batchfile, &shell)
     endif
     let g:_plug_bang = (s:is_win && has('gui_running') ? 'silent ' : '').'!'.escape(cmd, '#!%')
     execute "normal! :execute g:_plug_bang\<cr>\<cr>"
@@ -1206,11 +1206,11 @@ function! s:spawn(name, cmd, opts)
             \ 'new': get(a:opts, 'new', 0) }
   let s:jobs[a:name] = job
   let cmd = has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd
-  let argv = add(s:is_win ? ['cmd', '/c'] : ['sh', '-c'], cmd)
   if !empty(job.batchfile)
     call writefile(["@echo off\r", cmd . "\r"], job.batchfile)
-    let argv = s:vim8 ? 'cmd.exe '.s:shellesc(job.batchfile) : ['cmd.exe', job.batchfile]
+    let cmd = s:shellesc(job.batchfile)
   endif
+  let argv = add(s:is_win ? ['cmd', '/c'] : ['sh', '-c'], cmd)
 
   if s:nvim
     call extend(job, {
@@ -1227,7 +1227,7 @@ function! s:spawn(name, cmd, opts)
             \ 'Invalid arguments (or job table is full)']
     endif
   elseif s:vim8
-    let jid = job_start(argv, {
+    let jid = job_start(s:is_win ? join(argv, ' ') : argv, {
     \ 'out_cb':   function('s:job_cb', ['s:job_out_cb',  job]),
     \ 'exit_cb':  function('s:job_cb', ['s:job_exit_cb', job]),
     \ 'out_mode': 'raw'
@@ -2036,7 +2036,7 @@ function! s:system(cmd, ...)
     if s:is_win
       let batchfile = tempname().'.bat'
       call writefile(["@echo off\r", cmd . "\r"], batchfile)
-      let cmd = s:shellesc(expand(batchfile), &shell)
+      let cmd = s:shellesc(batchfile, &shell)
     endif
     return system(cmd)
   finally
@@ -2370,7 +2370,7 @@ function! s:preview_commit()
     if s:is_win
       let batchfile = tempname().'.bat'
       call writefile(["@echo off\r", cmd . "\r"], batchfile)
-      let cmd = s:shellesc(expand(batchfile), &shell)
+      let cmd = s:shellesc(batchfile, &shell)
     endif
     execute 'silent %!' cmd
   finally
