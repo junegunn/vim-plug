@@ -810,6 +810,9 @@ function! s:bang(cmd, ...)
       let batchfile = tempname().'.bat'
       call writefile(["@echo off\r", cmd . "\r"], batchfile)
       let cmd = s:shellesc(batchfile, &shell)
+      if &shell =~# 'powershell\.exe$'
+        let cmd = '& ' . cmd
+      endif
     endif
     let g:_plug_bang = (s:is_win && has('gui_running') ? 'silent ' : '').'!'.escape(cmd, '#!%')
     execute "normal! :execute g:_plug_bang\<cr>\<cr>"
@@ -2036,6 +2039,9 @@ function! s:system(cmd, ...)
       let batchfile = tempname().'.bat'
       call writefile(["@echo off\r", cmd . "\r"], batchfile)
       let cmd = s:shellesc(batchfile, &shell)
+      if &shell =~# 'powershell\.exe$'
+        let cmd = '& ' . cmd
+      endif
     endif
     return system(cmd)
   finally
@@ -2370,6 +2376,9 @@ function! s:preview_commit()
       let batchfile = tempname().'.bat'
       call writefile(["@echo off\r", cmd . "\r"], batchfile)
       let cmd = s:shellesc(batchfile, &shell)
+      if &shell =~# 'powershell\.exe$'
+        let cmd = '& ' . cmd
+      endif
     endif
     execute 'silent %!' cmd
   finally
