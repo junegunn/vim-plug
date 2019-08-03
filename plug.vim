@@ -1202,15 +1202,10 @@ endfunction
 
 function! s:spawn(name, cmd, opts)
   let job = { 'name': a:name, 'running': 1, 'error': 0, 'lines': [''],
-            \ 'batchfile': (s:is_win && (s:nvim || s:vim8)) ? tempname().'.bat' : '',
             \ 'new': get(a:opts, 'new', 0) }
   let s:jobs[a:name] = job
   let cmd = has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd
-  if !empty(job.batchfile)
-    call writefile(["@echo off\r", cmd . "\r"], job.batchfile)
-    let cmd = s:shellesc(job.batchfile)
-  endif
-  let argv = add(s:is_win ? ['cmd', '/c'] : ['sh', '-c'], cmd)
+  let argv = s:is_win ? ['cmd', '/s', '/c', '"'.cmd.'"'] : ['sh', '-c', cmd]
 
   if s:nvim
     call extend(job, {
@@ -1260,9 +1255,6 @@ function! s:reap(name)
   call s:log(bullet, a:name, empty(result) ? 'OK' : result)
   call s:bar()
 
-  if has_key(job, 'batchfile') && !empty(job.batchfile)
-    call delete(job.batchfile)
-  endif
   call remove(s:jobs, a:name)
 endfunction
 
