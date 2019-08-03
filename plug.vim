@@ -1980,10 +1980,17 @@ function! s:shellesc_cmd(arg)
   return '^"'.substitute(escaped, '\(\\\+\)$', '\1\1', '').'^"'
 endfunction
 
+function! s:shellesc_ps1(arg)
+  return "'".substitute(escape(a:arg, '\"'), "'", "''", 'g')."'"
+endfunction
+
 function! s:shellesc(arg, ...)
   let shell = get(a:000, 0, s:is_win ? 'cmd.exe' : 'sh')
-  if shell =~# 'cmd.exe$'
+  if shell =~# 'cmd\.exe$'
     return s:shellesc_cmd(a:arg)
+  endif
+  if shell =~# 'powershell\.exe$'
+    return s:shellesc_ps1(a:arg)
   endif
   return shellescape(a:arg)
 endfunction
