@@ -361,7 +361,7 @@ if s:is_win
   function! s:batchfile(cmd)
     let batchfile = tempname().'.bat'
     call writefile(s:wrap_cmds(a:cmd), batchfile)
-    let cmd = s:shellesc(batchfile, &shell)
+    let cmd = s:shellesc(batchfile, {'shell': &shell, 'script': 1})
     if &shell =~# 'powershell\.exe$'
       let cmd = '& ' . cmd
     endif
@@ -1219,7 +1219,7 @@ function! s:spawn(name, cmd, opts)
   let job = { 'name': a:name, 'running': 1, 'error': 0, 'lines': [''],
             \ 'new': get(a:opts, 'new', 0) }
   let s:jobs[a:name] = job
-  let cmd = has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir) : a:cmd
+  let cmd = has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir, 0) : a:cmd
   let argv = s:is_win ? ['cmd', '/s', '/c', '"'.cmd.'"'] : ['sh', '-c', cmd]
 
   if s:nvim
@@ -1359,8 +1359,8 @@ while 1 " Without TCO, Vim stack is bound to explode
           \ printf('git clone %s %s %s %s 2>&1',
           \ has_tag ? '' : s:clone_opt,
           \ prog,
-          \ s:shellesc(spec.uri),
-          \ s:shellesc(s:trim(spec.dir))), { 'new': 1 })
+          \ s:shellesc(spec.uri, {'script': 0}),
+          \ s:shellesc(s:trim(spec.dir), {'script': 0})), { 'new': 1 })
   endif
 
   if !s:jobs[name].running
@@ -1987,12 +1987,9 @@ function! s:update_ruby()
 EOF
 endfunction
 
-function! s:shellesc_cmd(arg)
-  let escaped = substitute(a:arg, '[&|<>()@^]', '^&', 'g')
-  let escaped = substitute(escaped, '%', '%%', 'g')
-  let escaped = substitute(escaped, '"', '\\^&', 'g')
-  let escaped = substitute(escaped, '\(\\\+\)\(\\^\)', '\1\1\2', 'g')
-  return '^"'.substitute(escaped, '\(\\\+\)$', '\1\1', '').'^"'
+function! s:shellesc_cmd(arg, script)
+  let escaped = substitute(a:arg, '%', (a:script ? '%' : '^') . '&', 'g')
+  return substitute('"'.escaped.'"', '[&|<>()@^!"]', '^&', 'g')
 endfunction
 
 function! s:shellesc_ps1(arg)
@@ -2000,9 +1997,11 @@ function! s:shellesc_ps1(arg)
 endfunction
 
 function! s:shellesc(arg, ...)
-  let shell = get(a:000, 0, s:is_win ? 'cmd.exe' : 'sh')
+  let opts = get(a:000, 0, {})
+  let shell = get(opts, 'shell', s:is_win ? 'cmd.exe' : 'sh')
+  let script = get(opts, 'script', 1)
   if shell =~# 'cmd\.exe$'
-    return s:shellesc_cmd(a:arg)
+    return s:shellesc_cmd(a:arg, script)
   endif
   if shell =~# 'powershell\.exe$'
     return s:shellesc_ps1(a:arg)
@@ -2039,8 +2038,9 @@ function! s:format_message(bullet, name, message)
   endif
 endfunction
 
-function! s:with_cd(cmd, dir)
-  return printf('cd%s %s && %s', s:is_win ? ' /d' : '', s:shellesc(a:dir), a:cmd)
+function! s:with_cd(cmd, dir, ...)
+  let script = get(a:000, 0, 1)
+  return printf('cd%s %s && %s', s:is_win ? ' /d' : '', s:shellesc(a:dir, {'script': script}), a:cmd)
 endfunction
 
 function! s:system(cmd, ...)
