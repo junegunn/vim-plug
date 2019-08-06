@@ -102,8 +102,7 @@ Add a vim-plug section to your `~/.vimrc` (or `~/.config/nvim/init.vim` for Neov
 
 ```vim
 " Specify a directory for plugins
-" - For Neovim: ~/.local/share/nvim/plugged
-" - For Neovim on Windows: ~/AppData/Local/nvim/autoload
+" - For Neovim: `stdpath('data') . '/plugged'`
 " - Avoid using standard Vim directory names like 'plugin'
 call plug#begin('~/.vim/plugged')
 
