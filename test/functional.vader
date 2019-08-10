@@ -1,0 +1,37 @@
+Execute (plug#shellescape() works without optional arguments):
+  if has('unix')
+    AssertEqual "''", plug#shellescape("")
+    AssertEqual "'foo'\\'''", plug#shellescape("foo'")
+  endif
+
+Execute (plug#shellescape() ignores invalid optional argument):
+  if has('unix')
+    AssertEqual "''", plug#shellescape("", '')
+    AssertEqual "'foo'\\'''", plug#shellescape("foo'", [])
+  endif
+
+Execute (plug#shellescape() depends on the shell):
+  AssertEqual "'foo'\\'''", plug#shellescape("foo'", {'shell': 'sh'})
+  AssertEqual '^"foo''^"', plug#shellescape("foo'", {'shell': 'cmd.exe'})
+  AssertEqual "'foo'''", plug#shellescape("foo'", {'shell': 'powershell.exe'})
+  AssertEqual "'foo'''", plug#shellescape("foo'", {'shell': 'pwsh'})
+
+Execute (plug#shellescape() supports non-trivial cmd.exe escaping):
+  " batchfile
+  AssertEqual '^"^^%%PATH^^%%^"', plug#shellescape("^%PATH^%", {
+  \ 'shell': 'cmd.exe',
+  \ })
+  AssertEqual '^"^^%%PATH^^%%^"', plug#shellescape("^%PATH^%", {
+  \ 'shell': 'cmd.exe',
+  \ 'script': 1,
+  \ })
+  " command prompt
+  AssertEqual '^"^^^%PATH^^^%^"', plug#shellescape("^%PATH^%", {
+  \ 'shell': 'cmd.exe',
+  \ 'script': 0,
+  \ }),
+
+Execute (plug#shellescape() supports non-trivial powershell.exe escaping):
+  AssertEqual '''\"Foo\\''''\\Bar\"''', plug#shellescape('"Foo\''\Bar"', {
+  \ 'shell': 'powershell.exe',
+  \ }),

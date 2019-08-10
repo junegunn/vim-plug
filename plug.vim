@@ -361,7 +361,7 @@ if s:is_win
   function! s:batchfile(cmd)
     let batchfile = tempname().'.bat'
     call writefile(s:wrap_cmds(a:cmd), batchfile)
-    let cmd = s:shellesc(batchfile, {'shell': &shell, 'script': 1})
+    let cmd = plug#shellescape(batchfile, {'shell': &shell, 'script': 1})
     if &shell =~# 'powershell\.exe$'
       let cmd = '& ' . cmd
     endif
@@ -1107,7 +1107,7 @@ function! s:update_finish()
       elseif has_key(spec, 'tag')
         let tag = spec.tag
         if tag =~ '\*'
-          let tags = s:lines(s:system('git tag --list '.s:shellesc(tag).' --sort -version:refname 2>&1', spec.dir))
+          let tags = s:lines(s:system('git tag --list '.plug#shellescape(tag).' --sort -version:refname 2>&1', spec.dir))
           if !v:shell_error && !empty(tags)
             let tag = tags[0]
             call s:log4(name, printf('Latest tag for %s -> %s', spec.tag, tag))
@@ -1164,7 +1164,7 @@ function! s:job_abort()
       silent! call job_stop(j.jobid)
     endif
     if j.new
-      call s:system('rm -rf ' . s:shellesc(g:plugs[name].dir))
+      call s:system('rm -rf ' . plug#shellescape(g:plugs[name].dir))
     endif
   endfor
   let s:jobs = {}
@@ -1359,8 +1359,8 @@ while 1 " Without TCO, Vim stack is bound to explode
           \ printf('git clone %s %s %s %s 2>&1',
           \ has_tag ? '' : s:clone_opt,
           \ prog,
-          \ s:shellesc(spec.uri, {'script': 0}),
-          \ s:shellesc(s:trim(spec.dir), {'script': 0})), { 'new': 1 })
+          \ plug#shellescape(spec.uri, {'script': 0}),
+          \ plug#shellescape(s:trim(spec.dir), {'script': 0})), { 'new': 1 })
   endif
 
   if !s:jobs[name].running
@@ -1988,21 +1988,22 @@ EOF
 endfunction
 
 function! s:shellesc_cmd(arg, script)
-  let escaped = substitute(a:arg, '%', (a:script ? '%' : '^') . '&', 'g')
-  return substitute('"'.escaped.'"', '[&|<>()@^!"]', '^&', 'g')
+  let escaped = substitute('"'.a:arg.'"', '[&|<>()@^!"]', '^&', 'g')
+  return substitute(escaped, '%', (a:script ? '%' : '^') . '&', 'g')
 endfunction
 
 function! s:shellesc_ps1(arg)
   return "'".substitute(escape(a:arg, '\"'), "'", "''", 'g')."'"
 endfunction
 
-function! s:shellesc(arg, ...)
+function! plug#shellescape(arg, ...)
   let opts = get(a:000, 0, {})
+  let opts = type(opts) == s:TYPE.dict ? opts : {}
   let shell = get(opts, 'shell', s:is_win ? 'cmd.exe' : 'sh')
   let script = get(opts, 'script', 1)
   if shell =~# 'cmd\.exe$'
     return s:shellesc_cmd(a:arg, script)
-  elseif shell =~# 'powershell\.exe$'
+  elseif shell =~# 'powershell\.exe$' || shell =~# 'pwsh$'
     return s:shellesc_ps1(a:arg)
   endif
   return shellescape(a:arg)
@@ -2039,7 +2040,7 @@ endfunction
 
 function! s:with_cd(cmd, dir, ...)
   let script = get(a:000, 0, 1)
-  return printf('cd%s %s && %s', s:is_win ? ' /d' : '', s:shellesc(a:dir, {'script': script}), a:cmd)
+  return printf('cd%s %s && %s', s:is_win ? ' /d' : '', plug#shellescape(a:dir, {'script': script}), a:cmd)
 endfunction
 
 function! s:system(cmd, ...)
@@ -2125,7 +2126,7 @@ endfunction
 
 function! s:rm_rf(dir)
   if isdirectory(a:dir)
-    call s:system((s:is_win ? 'rmdir /S /Q ' : 'rm -rf ') . s:shellesc(a:dir))
+    call s:system((s:is_win ? 'rmdir /S /Q ' : 'rm -rf ') . plug#shellescape(a:dir))
   endif
 endfunction
 
@@ -2234,7 +2235,7 @@ function! s:upgrade()
   let new = tmp . '/plug.vim'
 
   try
-    let out = s:system(printf('git clone --depth 1 %s %s', s:shellesc(s:plug_src), s:shellesc(tmp)))
+    let out = s:system(printf('git clone --depth 1 %s %s', plug#shellescape(s:plug_src), plug#shellescape(tmp)))
     if v:shell_error
       return s:err('Error upgrading vim-plug: '. out)
     endif
@@ -2377,7 +2378,7 @@ function! s:preview_commit()
   setlocal previewwindow filetype=git buftype=nofile nobuflisted modifiable
   try
     let [sh, shellcmdflag, shrd] = s:chsh(1)
-    let cmd = 'cd '.s:shellesc(g:plugs[name].dir).' && git show --no-color --pretty=medium '.sha
+    let cmd = 'cd '.plug#shellescape(g:plugs[name].dir).' && git show --no-color --pretty=medium '.sha
     if s:is_win
       let [batchfile, cmd] = s:batchfile(cmd)
     endif
@@ -2428,9 +2429,9 @@ function! s:diff()
     call s:append_ul(2, origin ? 'Pending updates:' : 'Last update:')
     for [k, v] in plugs
       let range = origin ? '..origin/'.v.branch : 'HEAD@{1}..'
-      let cmd = 'git log --graph --color=never '.join(map(['--pretty=format:%x01%h%x01%d%x01%s%x01%cr', range], 's:shellesc(v:val)'))
+      let cmd = 'git log --graph --color=never '.join(map(['--pretty=format:%x01%h%x01%d%x01%s%x01%cr', range], 'plug#shellescape(v:val)'))
       if has_key(v, 'rtp')
-        let cmd .= ' -- '.s:shellesc(v.rtp)
+        let cmd .= ' -- '.plug#shellescape(v.rtp)
       endif
       let diff = s:system_chomp(cmd, v.dir)
       if !empty(diff)
