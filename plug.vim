@@ -2002,8 +2002,7 @@ function! s:shellesc(arg, ...)
   let script = get(opts, 'script', 1)
   if shell =~# 'cmd\.exe$'
     return s:shellesc_cmd(a:arg, script)
-  endif
-  if shell =~# 'powershell\.exe$'
+  elseif shell =~# 'powershell\.exe$'
     return s:shellesc_ps1(a:arg)
   endif
   return shellescape(a:arg)
