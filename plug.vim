@@ -1997,8 +1997,7 @@ function! s:shellesc_ps1(arg)
 endfunction
 
 function! plug#shellescape(arg, ...)
-  let opts = get(a:000, 0, {})
-  let opts = type(opts) == s:TYPE.dict ? opts : {}
+  let opts = a:0 > 0 && type(a:1) == s:TYPE.dict ? a:1 : {}
   let shell = get(opts, 'shell', s:is_win ? 'cmd.exe' : 'sh')
   let script = get(opts, 'script', 1)
   if shell =~# 'cmd\.exe$'
@@ -2039,7 +2038,7 @@ function! s:format_message(bullet, name, message)
 endfunction
 
 function! s:with_cd(cmd, dir, ...)
-  let script = get(a:000, 0, 1)
+  let script = a:0 > 0 ? a:1 : 1
   return printf('cd%s %s && %s', s:is_win ? ' /d' : '', plug#shellescape(a:dir, {'script': script}), a:cmd)
 endfunction
 
