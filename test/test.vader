@@ -18,10 +18,6 @@ Execute (Initialize test environment):
   \ ['function! ResetPlug()', 'let s:loaded = {}', 'endfunction',
   \  'function! CompareURI(a, b)', 'return s:compare_git_uri(a:a, a:b)', 'endfunction']
 
-  if $ENV != 'vim8'
-    call add(patch, 'let s:vim8 = 0')
-  endif
-
   call writefile(extend(readfile($PLUG_TMP), patch), $PLUG_TMP)
 
   set t_Co=256
