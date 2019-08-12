@@ -234,7 +234,7 @@ In that case, use `do` option to describe the task to be performed.
 
 ```vim
 Plug 'Shougo/vimproc.vim', { 'do': 'make' }
-Plug 'Valloric/YouCompleteMe', { 'do': './install.py' }
+Plug 'ycm-core/YouCompleteMe', { 'do': './install.py' }
 ```
 
 If the value starts with `:`, it will be recognized as a Vim command.
@@ -257,7 +257,7 @@ function! BuildYCM(info)
   endif
 endfunction
 
-Plug 'Valloric/YouCompleteMe', { 'do': function('BuildYCM') }
+Plug 'ycm-core/YouCompleteMe', { 'do': function('BuildYCM') }
 ```
 
 Both forms of post-update hook are executed inside the directory of the plugin
