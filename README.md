@@ -149,7 +149,7 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 | ----------------------------------- | ------------------------------------------------------------------ |
 | `PlugInstall [name ...] [#threads]` | Install plugins                                                    |
 | `PlugUpdate [name ...] [#threads]`  | Install or update plugins                                          |
-| `PlugClean[!]`                      | Remove (Uninstall) unused plugin directories (bang version will clean without prompt) |
+| `PlugClean[!]`                      | Remove (Uninstall) unlisted plugins (bang version will clean without prompt) |
 | `PlugUpgrade`                       | Upgrade vim-plug itself                                            |
 | `PlugStatus`                        | Check the status of plugins                                        |
 | `PlugDiff`                          | Examine changes from the previous update and the pending changes   |
