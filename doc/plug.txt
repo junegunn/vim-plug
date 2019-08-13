@@ -296,7 +296,7 @@ There are some plugins that require extra steps after installation or update.
 In that case, use `do` option to describe the task to be performed.
 >
     Plug 'Shougo/vimproc.vim', { 'do': 'make' }
-    Plug 'Valloric/YouCompleteMe', { 'do': './install.py' }
+    Plug 'ycm-core/YouCompleteMe', { 'do': './install.py' }
 <
 If the value starts with `:`, it will be recognized as a Vim command.
 
@@ -317,7 +317,7 @@ takes a single argument.
       endif
     endfunction
 
-    Plug 'Valloric/YouCompleteMe', { 'do': function('BuildYCM') }
+    Plug 'ycm-core/YouCompleteMe', { 'do': function('BuildYCM') }
 <
 Both forms of post-update hook are executed inside the directory of the plugin
 and only run when the repository has changed, but you can force it to run
