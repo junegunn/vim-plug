@@ -90,6 +90,7 @@ Execute (Print Interpreter Version):
 
 Include: workflow.vader
 Include: regressions.vader
+Include: functional.vader
 
 Execute (Cleanup):
   silent! call RmRf(g:temp_plugged)
