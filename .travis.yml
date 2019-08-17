@@ -1,54 +1,51 @@
-language: ruby
-dist: trusty
-sudo: false
+language: minimal
 env:
   global:
     - DEPS=$HOME/deps
     - PATH=$DEPS/bin:$PATH
 matrix:
   include:
-    - env: ENV=vim74
-      rvm: 1.8.7
-      addons: { apt: { packages: [vim-nox] } }
-    - env: ENV=python
-      rvm: 1.8.7
-      addons: { apt: { packages: [python2.7-dev] } }
-    - env: ENV=python3
-      rvm: 1.8.7
-      addons: { apt: { packages: [python3-dev] } }
-    - env: ENV=ruby18
-      rvm: 1.8.7
-    - env: ENV=ruby20
-      rvm: 2.0.0
-    - env: ENV=neovim
-    - env: ENV=vim8
+    - env: ENV=vim80-bionic
+      dist: bionic
+    - env: ENV=vim-nightly
+      dist: trusty
+    - env: ENV=neovim-stable
+      dist: xenial
+      addons: {apt: {packages: [neovim], sources: [{sourceline: 'ppa:neovim-ppa/stable'}]}}
+    - env: ENV=neovim-nightly
+      dist: xenial
+      addons: {apt: {packages: [neovim], sources: [{sourceline: 'ppa:neovim-ppa/unstable'}]}}
+    - env: ENV=vim74-trusty-python
+      dist: trusty
+    - env: ENV=vim74-xenial-python3
+      dist: xenial
+    - env: ENV=vim74-trusty-ruby
+      dist: trusty
+      addons: {apt: {packages: [vim-nox]}}
+    - env: ENV=vim74-xenial-ruby
+      dist: xenial
+      addons: {apt: {packages: [vim-nox]}}
 install: |
   git config --global user.email "you@example.com"
   git config --global user.name "Your Name"
 
-  if [ "$ENV" == "vim74" ]; then
-    mkdir -p ${DEPS}/bin
-    ln -s /usr/bin/vim.nox ${DEPS}/bin/vim
-    return
-  elif [ "$ENV" == "neovim" ]; then
-    # https://github.com/neovim/bot-ci#nightly-builds
-    eval "$(curl -Ss https://raw.githubusercontent.com/neovim/bot-ci/master/scripts/travis-setup.sh) nightly-x64"
-    mkdir -p ${DEPS}/bin
-    ln -s $(which nvim) ${DEPS}/bin/vim
-    export VADER_OUTPUT_FILE=/dev/stderr
-    return
-  fi
-
   C_OPTS="--prefix=$DEPS --with-features=huge --disable-gui "
   case "$ENV" in
-    python)
-      C_OPTS+=--enable-pythoninterp
+    vim-*)
       ;;
-    python3)
-      C_OPTS+=--enable-python3interp
+    neovim-*)
+      mkdir -p ${DEPS}/bin
+      ln -s /usr/bin/nvim ${DEPS}/bin/vim
+      export VADER_OUTPUT_FILE=/dev/stderr
+      return
       ;;
-    ruby*)
-      C_OPTS+=--enable-rubyinterp
+    vim74-* | vim80-*)
+      mkdir -p ${DEPS}/bin
+      ln -s /usr/bin/vim.nox ${DEPS}/bin/vim
+      return
+      ;;
+    *)
+      return
       ;;
   esac
 
