@@ -25,9 +25,9 @@ matrix:
     - env: ENV=vim74-xenial-ruby
       dist: xenial
       addons: {apt: {packages: [vim-nox]}}
-    - env: ENV=osx-10.14
+    - env: ENV=osx-highsierra
       os: osx
-      osx_image: xcode10.2
+      osx_image: xcode9.4
 install: |
   git config --global user.email "you@example.com"
   git config --global user.name "Your Name"
