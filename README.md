@@ -300,6 +300,11 @@ The commands with `!` suffix ensure that all steps are run unconditionally.
 - ~~[Thoughts on Vim plugin dependency](http://junegunn.kr/2013/09/thoughts-on-vim-plugin-dependency)~~
     - *Support for Plugfile has been removed since 0.5.0*
 
+### Collaborators
+
+- [Jan Edmund Lazo](https://github.com/janlazo) - Windows support
+- [Jeremy Pallats](https://github.com/starcraftman) - Python installer
+
 ### License
 
 MIT
