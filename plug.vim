@@ -2260,6 +2260,10 @@ function! s:upgrade_specs()
   endfor
 endfunction
 
+function! plug#is_loaded(name)
+    return has_key(s:loaded, a:name)
+endfunction
+
 function! s:status()
   call s:prepare()
   call append(0, 'Checking plugins')
