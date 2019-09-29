@@ -90,7 +90,7 @@ $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 
 ### Usage
 
-Add a vim-plug section to your `~/.vimrc` (or `~/.config/nvim/init.vim` for Neovim):
+Add a vim-plug section to your `~/.vimrc` (or `stdpath('config') . '/init.vim'` for Neovim)
 
 1. Begin the section with `call plug#begin()`
 1. List the plugins with `Plug` commands
@@ -102,7 +102,7 @@ Add a vim-plug section to your `~/.vimrc` (or `~/.config/nvim/init.vim` for Neov
 
 ```vim
 " Specify a directory for plugins
-" - For Neovim: ~/.local/share/nvim/plugged
+" - For Neovim: stdpath('data') . '/plugged'
 " - Avoid using standard Vim directory names like 'plugin'
 call plug#begin('~/.vim/plugged')
 
