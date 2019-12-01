@@ -369,8 +369,8 @@ if s:is_win
   function! s:batchfile(cmd)
     let batchfile = tempname().'.bat'
     call writefile(s:wrap_cmds(a:cmd), batchfile)
-    let cmd = plug#shellescape(batchfile, {'shell': &shell, 'script': 1})
-    if &shell =~# 'powershell\.exe$'
+    let cmd = plug#shellescape(batchfile, {'shell': &shell, 'script': 0})
+    if &shell =~# 'powershell\.exe'
       let cmd = '& ' . cmd
     endif
     return [batchfile, cmd]
@@ -2005,9 +2005,9 @@ function! plug#shellescape(arg, ...)
   let opts = a:0 > 0 && type(a:1) == s:TYPE.dict ? a:1 : {}
   let shell = get(opts, 'shell', s:is_win ? 'cmd.exe' : 'sh')
   let script = get(opts, 'script', 1)
-  if shell =~# 'cmd\.exe$'
+  if shell =~# 'cmd\.exe'
     return s:shellesc_cmd(a:arg, script)
-  elseif shell =~# 'powershell\.exe$' || shell =~# 'pwsh$'
+  elseif shell =~# 'powershell\.exe' || shell =~# 'pwsh$'
     return s:shellesc_ps1(a:arg)
   endif
   return shellescape(a:arg)
