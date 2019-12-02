@@ -369,8 +369,8 @@ if s:is_win
   function! s:batchfile(cmd)
     let batchfile = tempname().'.bat'
     call writefile(s:wrap_cmds(a:cmd), batchfile)
-    let cmd = plug#shellescape(batchfile, {'shell': &shell, 'script': 1})
-    if &shell =~# 'powershell\.exe$'
+    let cmd = plug#shellescape(batchfile, {'shell': &shell, 'script': 0})
+    if &shell =~# 'powershell\.exe'
       let cmd = '& ' . cmd
     endif
     return [batchfile, cmd]
@@ -915,7 +915,7 @@ function! s:checkout(spec)
   let output = s:system('git rev-parse HEAD', a:spec.dir)
   if !v:shell_error && !s:hash_match(sha, s:lines(output)[0])
     let output = s:system(
-          \ 'git fetch --depth 999999 && git checkout '.s:esc(sha).' --', a:spec.dir)
+          \ 'git fetch --depth 999999 && git checkout '.plug#shellescape(sha).' --', a:spec.dir)
   endif
   return output
 endfunction
@@ -1120,12 +1120,12 @@ function! s:update_finish()
           endif
         endif
         call s:log4(name, 'Checking out '.tag)
-        let out = s:system('git checkout -q '.s:esc(tag).' -- 2>&1', spec.dir)
+        let out = s:system('git checkout -q '.plug#shellescape(tag).' -- 2>&1', spec.dir)
       else
-        let branch = s:esc(get(spec, 'branch', 'master'))
-        call s:log4(name, 'Merging origin/'.branch)
-        let out = s:system('git checkout -q '.branch.' -- 2>&1'
-              \. (has_key(s:update.new, name) ? '' : ('&& git merge --ff-only origin/'.branch.' 2>&1')), spec.dir)
+        let branch = get(spec, 'branch', 'master')
+        call s:log4(name, 'Merging origin/'.s:esc(branch))
+        let out = s:system('git checkout -q '.plug#shellescape(branch).' -- 2>&1'
+              \. (has_key(s:update.new, name) ? '' : ('&& git merge --ff-only '.plug#shellescape('origin/'.branch).' 2>&1')), spec.dir)
       endif
       if !v:shell_error && filereadable(spec.dir.'/.gitmodules') &&
             \ (s:update.force || has_key(s:update.new, name) || s:is_updated(spec.dir))
@@ -1169,7 +1169,7 @@ function! s:job_abort()
       silent! call job_stop(j.jobid)
     endif
     if j.new
-      call s:system('rm -rf ' . plug#shellescape(g:plugs[name].dir))
+      call s:rm_rf(g:plugs[name].dir)
     endif
   endfor
   let s:jobs = {}
@@ -2005,9 +2005,9 @@ function! plug#shellescape(arg, ...)
   let opts = a:0 > 0 && type(a:1) == s:TYPE.dict ? a:1 : {}
   let shell = get(opts, 'shell', s:is_win ? 'cmd.exe' : 'sh')
   let script = get(opts, 'script', 1)
-  if shell =~# 'cmd\.exe$'
+  if shell =~# 'cmd\.exe'
     return s:shellesc_cmd(a:arg, script)
-  elseif shell =~# 'powershell\.exe$' || shell =~# 'pwsh$'
+  elseif shell =~# 'powershell\.exe' || shell =~# 'pwsh$'
     return s:shellesc_ps1(a:arg)
   endif
   return shellescape(a:arg)
@@ -2485,7 +2485,7 @@ function! s:revert()
     return
   endif
 
-  call s:system('git reset --hard HEAD@{1} && git checkout '.s:esc(g:plugs[name].branch).' --', g:plugs[name].dir)
+  call s:system('git reset --hard HEAD@{1} && git checkout '.plug#shellescape(g:plugs[name].branch).' --', g:plugs[name].dir)
   setlocal modifiable
   normal! "_dap
   setlocal nomodifiable
