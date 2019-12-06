@@ -99,7 +99,13 @@ let s:mac_gui = has('gui_macvim') && has('gui_running')
 let s:is_win = has('win32')
 let s:nvim = has('nvim-0.2') || (has('nvim') && exists('*jobwait') && !s:is_win)
 let s:vim8 = has('patch-8.0.0039') && exists('*job_start')
-let s:me = resolve(expand('<sfile>:p'))
+if s:is_win && &shellslash
+  set noshellslash
+  let s:me = resolve(expand('<sfile>:p'))
+  set shellslash
+else
+  let s:me = resolve(expand('<sfile>:p'))
+endif
 let s:base_spec = { 'branch': 'master', 'frozen': 0 }
 let s:TYPE = {
 \   'string':  type(''),
@@ -110,10 +116,42 @@ let s:TYPE = {
 let s:loaded = get(s:, 'loaded', {})
 let s:triggers = get(s:, 'triggers', {})
 
+if s:is_win
+  function! s:plug_call(fn, ...)
+    let shellslash = &shellslash
+    try
+      set noshellslash
+      return call(a:fn, a:000)
+    finally
+      let &shellslash = shellslash
+    endtry
+  endfunction
+else
+  function! s:plug_call(fn, ...)
+    return call(a:fn, a:000)
+  endfunction
+endif
+
+function! s:plug_getcwd()
+  return s:plug_call('getcwd')
+endfunction
+
+function! s:plug_fnamemodify(fname, mods)
+  return s:plug_call('fnamemodify', a:fname, a:mods)
+endfunction
+
+function! s:plug_expand(fmt)
+  return s:plug_call('expand', a:fmt, 1)
+endfunction
+
+function! s:plug_tempname()
+  return s:plug_call('tempname')
+endfunction
+
 function! plug#begin(...)
   if a:0 > 0
     let s:plug_home_org = a:1
-    let home = s:path(fnamemodify(expand(a:1), ':p'))
+    let home = s:path(s:plug_fnamemodify(s:plug_expand(a:1), ':p'))
   elseif exists('g:plug_home')
     let home = s:path(g:plug_home)
   elseif !empty(&rtp)
@@ -121,7 +159,7 @@ function! plug#begin(...)
   else
     return s:err('Unable to determine plug home. Try calling plug#begin() with a path argument.')
   endif
-  if fnamemodify(home, ':t') ==# 'plugin' && fnamemodify(home, ':h') ==# s:first_rtp
+  if s:plug_fnamemodify(home, ':t') ==# 'plugin' && s:plug_fnamemodify(home, ':h') ==# s:first_rtp
     return s:err('Invalid plug home. '.home.' is a standard Vim runtime path and is not allowed.')
   endif
 
@@ -138,6 +176,11 @@ function! s:define_commands()
   command! -nargs=+ -bar Plug call plug#(<args>)
   if !executable('git')
     return s:err('`git` executable not found. Most commands will not be available. To suppress this message, prepend `silent!` to `call plug#begin(...)`.')
+  endif
+  if has('win32')
+  \ && &shellslash
+  \ && (&shell =~# 'cmd\.exe' || &shell =~# 'powershell\.exe')
+    return s:err('vim-plug does not support shell, ' . &shell . ', when shellslash is set.')
   endif
   command! -nargs=* -bar -bang -complete=customlist,s:names PlugInstall call s:install(<bang>0, [<f-args>])
   command! -nargs=* -bar -bang -complete=customlist,s:names PlugUpdate  call s:update(<bang>0, [<f-args>])
@@ -367,7 +410,7 @@ if s:is_win
   endfunction
 
   function! s:batchfile(cmd)
-    let batchfile = tempname().'.bat'
+    let batchfile = s:plug_tempname().'.bat'
     call writefile(s:wrap_cmds(a:cmd), batchfile)
     let cmd = plug#shellescape(batchfile, {'shell': &shell, 'script': 0})
     if &shell =~# 'powershell\.exe'
@@ -575,7 +618,7 @@ function! plug#(repo, ...)
   try
     let repo = s:trim(a:repo)
     let opts = a:0 == 1 ? s:parse_options(a:1) : s:base_spec
-    let name = get(opts, 'as', fnamemodify(repo, ':t:s?\.git$??'))
+    let name = get(opts, 'as', s:plug_fnamemodify(repo, ':t:s?\.git$??'))
     let spec = extend(s:infer_properties(name, repo), opts)
     if !has_key(g:plugs, name)
       call add(g:plugs_order, name)
@@ -595,7 +638,7 @@ function! s:parse_options(arg)
   elseif type == s:TYPE.dict
     call extend(opts, a:arg)
     if has_key(opts, 'dir')
-      let opts.dir = s:dirpath(expand(opts.dir))
+      let opts.dir = s:dirpath(s:plug_expand(opts.dir))
     endif
   else
     throw 'Invalid argument type (expected: string or dictionary)'
@@ -606,7 +649,7 @@ endfunction
 function! s:infer_properties(name, repo)
   let repo = a:repo
   if s:is_local_plug(repo)
-    return { 'dir': s:dirpath(expand(repo)) }
+    return { 'dir': s:dirpath(s:plug_expand(repo)) }
   else
     if repo =~ ':'
       let uri = repo
@@ -759,7 +802,7 @@ function! s:finish_bindings()
 endfunction
 
 function! s:prepare(...)
-  if empty(getcwd())
+  if empty(s:plug_getcwd())
     throw 'Invalid current working directory. Cannot proceed.'
   endif
 
@@ -2001,6 +2044,10 @@ function! s:shellesc_ps1(arg)
   return "'".substitute(escape(a:arg, '\"'), "'", "''", 'g')."'"
 endfunction
 
+function! s:shellesc_sh(arg)
+  return "'".substitute(a:arg, "'", "'\\\\''", 'g')."'"
+endfunction
+
 function! plug#shellescape(arg, ...)
   let opts = a:0 > 0 && type(a:1) == s:TYPE.dict ? a:1 : {}
   let shell = get(opts, 'shell', s:is_win ? 'cmd.exe' : 'sh')
@@ -2010,7 +2057,7 @@ function! plug#shellescape(arg, ...)
   elseif shell =~# 'powershell\.exe' || shell =~# 'pwsh$'
     return s:shellesc_ps1(a:arg)
   endif
-  return shellescape(a:arg)
+  return s:shellesc_sh(a:arg)
 endfunction
 
 function! s:glob_dir(path)
@@ -2163,7 +2210,7 @@ function! s:clean(force)
 
   let allowed = {}
   for dir in dirs
-    let allowed[s:dirpath(fnamemodify(dir, ':h:h'))] = 1
+    let allowed[s:dirpath(s:plug_fnamemodify(dir, ':h:h'))] = 1
     let allowed[dir] = 1
     for child in s:glob_dir(dir)
       let allowed[child] = 1
@@ -2236,7 +2283,7 @@ endfunction
 function! s:upgrade()
   echo 'Downloading the latest version of vim-plug'
   redraw
-  let tmp = tempname()
+  let tmp = s:plug_tempname()
   let new = tmp . '/plug.vim'
 
   try
@@ -2513,7 +2560,7 @@ function! s:snapshot(force, ...) abort
   endfor
 
   if a:0 > 0
-    let fn = expand(a:1)
+    let fn = s:plug_expand(a:1)
     if filereadable(fn) && !(a:force || s:ask(a:1.' already exists. Overwrite?'))
       return
     endif
