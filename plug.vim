@@ -1275,7 +1275,7 @@ function! s:spawn(name, cmd, opts)
     \ 'on_stdout': function('s:nvim_cb'),
     \ 'on_exit':   function('s:nvim_cb'),
     \ })
-    let jid = jobstart(argv, job)
+    let jid = s:plug_call('jobstart', argv, job)
     if jid > 0
       let job.jobid = jid
     else
