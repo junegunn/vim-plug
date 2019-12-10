@@ -354,6 +354,7 @@ Execute (New commits on remote, PlugUpdate, then PlugDiff):
   " Now we have updates
   normal D
   AssertEqual '2 plugin(s) updated.', getline(1)
+  AssertThrows execute('/gpg')
 
   " Preview commit
   silent! wincmd P
