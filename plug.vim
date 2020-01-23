@@ -1158,7 +1158,7 @@ function! s:update_finish()
       if has_key(spec, 'commit')
         call s:log4(name, 'Checking out '.spec.commit)
         let out = s:checkout(spec)
-      elseif has_key(spec, 'tag')
+      elseif has_key(spec, 'tag') && spec.tag
         let tag = spec.tag
         if tag =~ '\*'
           let tags = s:lines(s:system('git tag --list '.plug#shellescape(tag).' --sort -version:refname 2>&1', spec.dir))
