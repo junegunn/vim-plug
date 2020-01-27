@@ -2,7 +2,7 @@ Execute (plug#end() before plug#begin() should fail):
   redir => out
   silent! AssertEqual 0, plug#end()
   redir END
-  Assert stridx(out, 'Call plug#begin() first') >= 0
+  Assert stridx(out, 'plug#end() called without calling plug#begin() first') >= 0
 
 Execute (plug#begin() without path argument):
   call plug#begin()
