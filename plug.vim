@@ -251,7 +251,7 @@ endfunction
 
 function! plug#end()
   if !exists('g:plugs')
-    return s:err('Call plug#begin() first')
+    return s:err('plug#end() called without calling plug#begin() first')
   endif
 
   if exists('#PlugLOD')
