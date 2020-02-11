@@ -115,6 +115,7 @@ let s:TYPE = {
 \ }
 let s:loaded = get(s:, 'loaded', {})
 let s:triggers = get(s:, 'triggers', {})
+let s:conds = get(s:, 'conds', {})
 
 if s:is_win
   function! s:plug_call(fn, ...)
@@ -270,7 +271,7 @@ function! plug#end()
       continue
     endif
     let plug = g:plugs[name]
-    if get(s:loaded, name, 0) || !s:lazy(plug, 'on') && !s:lazy(plug, 'for')
+    if (get(s:loaded, name, 0) || !s:lazy(plug, 'on') && !s:lazy(plug, 'for')) && s:conds[name]
       let s:loaded[name] = 1
       continue
     endif
@@ -626,11 +627,20 @@ function! plug#(repo, ...)
     let opts = a:0 == 1 ? s:parse_options(a:1) : s:base_spec
     let name = get(opts, 'as', s:plug_fnamemodify(repo, ':t:s?\.git$??'))
     let spec = extend(s:infer_properties(name, repo), opts)
-    if !has_key(g:plugs, name)
+    let cond = 1
+    if has_key(spec, 'if')
+      if type(spec.if) is s:TYPE['funcref']
+        let cond = call(spec.if, [])
+      elseif type(spec.if) is s:TYPE['string']
+        let cond = eval(spec.if)
+      endif
+    endif
+    if !has_key(g:plugs, name) && cond
       call add(g:plugs_order, name)
     endif
     let g:plugs[name] = spec
     let s:loaded[name] = get(s:loaded, name, 0)
+    let s:conds[name] = cond
   catch
     return s:err(v:exception)
   endtry

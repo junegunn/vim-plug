@@ -163,6 +163,7 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 | `dir`                   | Custom directory for the plugin                  |
 | `as`                    | Use different name for the plugin                |
 | `do`                    | Post-update hook (string or funcref)             |
+| `if`                    | Conditional loading                              |
 | `on`                    | On-demand loading: Commands or `<Plug>`-mappings |
 | `for`                   | On-demand loading: File types                    |
 | `frozen`                | Do not update unless explicitly specified        |
@@ -214,6 +215,9 @@ Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 
 " Multiple file types
 Plug 'kovisoft/paredit', { 'for': ['clojure', 'scheme'] }
+
+" Conditional loaded plugins won't be cleaned by PlugClean
+Plug 'roxma/vim-hug-neovim-rpc', {'if': {-> !has('nvim')}}
 
 " On-demand loading on both conditions
 Plug 'junegunn/vader.vim',  { 'on': 'Vader', 'for': 'vader' }
