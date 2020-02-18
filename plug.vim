@@ -623,7 +623,7 @@ function! plug#(repo, ...)
 
   try
     let repo = s:trim(a:repo)
-    let opts = a:0 == 1 ? s:parse_options(a:1) : s:base_spec
+    let opts = (a:0 == 1 && !empty(a:1)) ? s:parse_options(a:1) : s:base_spec
     let name = get(opts, 'as', s:plug_fnamemodify(repo, ':t:s?\.git$??'))
     let spec = extend(s:infer_properties(name, repo), opts)
     if !has_key(g:plugs, name)
@@ -643,6 +643,9 @@ function! s:parse_options(arg)
     let opts.tag = a:arg
   elseif type == s:TYPE.dict
     call extend(opts, a:arg)
+    if has_key(opts, 'tag') && empty(opts.tag)
+      call remove(opts, 'tag')
+    endif
     if has_key(opts, 'dir')
       let opts.dir = s:dirpath(s:plug_expand(opts.dir))
     endif
