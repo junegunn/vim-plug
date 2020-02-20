@@ -144,7 +144,7 @@ endfunction
 function! s:git_get_remote_origin_url(dir) abort
   let gitdir = s:get_gitdir(a:dir)
   if gitdir ==# ''
-    return v:null
+    return ''
   endif
   try
     let lines = readfile(gitdir . '/config')
@@ -171,14 +171,14 @@ function! s:git_get_remote_origin_url(dir) abort
     endwhile
     return url
   catch
-    return v:null
+    return ''
   endtry
 endfunction
 
 function! s:git_get_revision(dir) abort
   let l:gitdir = s:get_gitdir(a:dir)
   if l:gitdir ==# ''
-    return v:null
+    return ''
   endif
   try
     let l:line = readfile(l:gitdir . '/HEAD')[0]
@@ -195,13 +195,13 @@ function! s:git_get_revision(dir) abort
     endif
   catch
   endtry
-  return v:null
+  return ''
 endfunction
 
 function! s:git_get_branch(dir) abort
   let l:gitdir = s:get_gitdir(a:dir)
   if l:gitdir ==# ''
-    return v:null
+    return ''
   endif
   try
     let l:line = readfile(l:gitdir . '/HEAD')[0]
@@ -210,7 +210,7 @@ function! s:git_get_branch(dir) abort
     endif
     return ''
   catch
-    return v:null
+    return ''
   endtry
 endfunction
 
