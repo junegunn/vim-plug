@@ -2231,8 +2231,7 @@ function! s:git_validate(spec, check_branch)
                     \ 'Expected:    '.a:spec.uri,
                     \ 'PlugClean required.'], "\n")
     elseif a:check_branch && has_key(a:spec, 'commit')
-      let result = [s:git_get_revision(a:spec.dir)]
-      let sha = result[-1]
+      let sha = [s:git_get_revision(a:spec.dir)]
       if !s:hash_match(sha, a:spec.commit)
         let err = join([printf('Invalid HEAD (expected: %s, actual: %s)',
                               \ a:spec.commit[:6], sha[:6]),
@@ -2253,20 +2252,23 @@ function! s:git_validate(spec, check_branch)
               \ branch, a:spec.branch)
       endif
       if empty(err)
-        let [ahead, behind] = split(s:lastline(s:system(printf(
-              \ 'git rev-list --count --left-right HEAD...origin/%s',
-              \ a:spec.branch), a:spec.dir)), '\t')
-        if !v:shell_error && ahead
-          if behind
-            " Only mention PlugClean if diverged, otherwise it's likely to be
-            " pushable (and probably not that messed up).
-            let err = printf(
-                  \ "Diverged from origin/%s (%d commit(s) ahead and %d commit(s) behind!\n"
-                  \ .'Backup local changes and run PlugClean and PlugUpdate to reinstall it.', a:spec.branch, ahead, behind)
-          else
-            let err = printf("Ahead of origin/%s by %d commit(s).\n"
-                  \ .'Cannot update until local changes are pushed.',
-                  \ a:spec.branch, ahead)
+        let result = split(s:lastline(s:system(printf(
+                \ 'git rev-list --count --left-right HEAD...origin/%s',
+                \ a:spec.branch), a:spec.dir)), '\t')
+        if !v:shell_error && len(result) == 2
+          let [ahead, behind] = result
+          if ahead
+            if behind
+              " Only mention PlugClean if diverged, otherwise it's likely to be
+              " pushable (and probably not that messed up).
+              let err = printf(
+                    \ "Diverged from origin/%s (%d commit(s) ahead and %d commit(s) behind!\n"
+                    \ .'Backup local changes and run PlugClean and PlugUpdate to reinstall it.', a:spec.branch, ahead, behind)
+            else
+              let err = printf("Ahead of origin/%s by %d commit(s).\n"
+                    \ .'Cannot update until local changes are pushed.',
+                    \ a:spec.branch, ahead)
+            endif
           endif
         endif
       endif
