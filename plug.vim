@@ -116,6 +116,117 @@ let s:TYPE = {
 let s:loaded = get(s:, 'loaded', {})
 let s:triggers = get(s:, 'triggers', {})
 
+function! s:isroot(dir) abort
+  if a:dir =~# '^/' || (has('win32') && a:dir =~? '^\%(\\\|[A-Z]:\)')
+    return v:true
+  endif
+  return v:false
+endfunction
+
+function! s:get_gitdir(dir) abort
+  let l:gitdir = a:dir . '/.git'
+  if isdirectory(l:gitdir)
+    return l:gitdir
+  elseif filereadable(l:gitdir)
+    try
+      let l:line = readfile(l:gitdir)[0]
+    catch
+      return ''
+    endtry
+    if l:line =~# '^gitdir: '
+      let l:dir = l:line[8:]
+      if s:isroot(l:dir)
+        let l:gitdir = l:dir
+      else
+        let l:gitdir = a:dir . '/' . l:dir
+      endif
+      if isdirectory(l:gitdir)
+        return l:gitdir
+      endif
+    endif
+  endif
+  return ''
+endfunction
+
+function! s:git_get_remote_origin_url(dir) abort
+  let gitdir = s:get_gitdir(a:dir)
+  if gitdir ==# ''
+    return v:null
+  endif
+  try
+    let lines = readfile(gitdir . '/config')
+    let [n, ll, url] = [0, len(lines), '']
+    while n < ll
+      let line = trim(lines[n])
+      if stridx(line, '[remote "origin"]') != 0
+        let n += 1
+        continue
+      endif
+      let n += 1
+      while n < ll
+        let line = trim(lines[n])
+        if line ==# '['
+          break
+        endif
+        let url = matchstr(line, '^url\s*=\s*\zs[^ #]\+')
+        if !empty(url)
+          break
+        endif
+        let n += 1
+      endwhile
+      let n += 1
+    endwhile
+    return url
+  catch
+    return v:null
+  endtry
+endfunction
+
+function! s:git_get_revision(dir) abort
+  let gitdir = s:get_gitdir(a:dir)
+  if gitdir ==# ''
+    return v:null
+  endif
+  try
+    let line = readfile(gitdir . '/HEAD')[0]
+    if line =~# '^ref: '
+      let ref = line[5:]
+      if filereadable(gitdir . '/' . ref)
+        let rev = readfile(gitdir . '/' . ref)[0]
+      else
+        let rev = v:null
+        for line in readfile(gitdir . '/packed-refs')
+          if line =~# ' ' . ref
+            let rev = substitute(line, '^\([0-9a-f]*\) ', '\1', '')
+            break
+          endif
+        endfor
+      endif
+    else
+      let rev = line
+    endif
+    return rev
+  catch
+    return v:null
+  endtry
+endfunction
+
+function! s:git_get_branch(dir) abort
+  let gitdir = s:get_gitdir(a:dir)
+  if gitdir ==# ''
+    return v:null
+  endif
+  try
+    let line = readfile(gitdir . '/HEAD')[0]
+    if line =~# '^ref: refs/heads/'
+      return line[16:]
+    endif
+    return ''
+  catch
+    return v:null
+  endtry
+endfunction
+
 if s:is_win
   function! s:plug_call(fn, ...)
     let shellslash = &shellslash
@@ -961,8 +1072,8 @@ endfunction
 
 function! s:checkout(spec)
   let sha = a:spec.commit
-  let output = s:system('git rev-parse HEAD', a:spec.dir)
-  if !v:shell_error && !s:hash_match(sha, s:lines(output)[0])
+  let output = s:git_get_revision(a:spec.dir)
+  if !s:hash_match(sha, s:lines(output)[0])
     let output = s:system(
           \ 'git fetch --depth 999999 && git checkout '.plug#shellescape(sha).' --', a:spec.dir)
   endif
@@ -2126,20 +2237,17 @@ endfunction
 function! s:git_validate(spec, check_branch)
   let err = ''
   if isdirectory(a:spec.dir)
-    let result = s:lines(s:system('git rev-parse --abbrev-ref HEAD 2>&1 && git config -f .git/config remote.origin.url', a:spec.dir))
+    let result = [s:git_get_branch(a:spec.dir), s:git_get_remote_origin_url(a:spec.dir)]
+	echomsg string(result)
     let remote = result[-1]
-    if v:shell_error
-      let err = join([remote, 'PlugClean required.'], "\n")
-    elseif !s:compare_git_uri(remote, a:spec.uri)
+    if !s:compare_git_uri(remote, a:spec.uri)
       let err = join(['Invalid URI: '.remote,
                     \ 'Expected:    '.a:spec.uri,
                     \ 'PlugClean required.'], "\n")
     elseif a:check_branch && has_key(a:spec, 'commit')
-      let result = s:lines(s:system('git rev-parse HEAD 2>&1', a:spec.dir))
+      let result = [s:git_get_revision(a:spec.dir)]
       let sha = result[-1]
-      if v:shell_error
-        let err = join(add(result, 'PlugClean required.'), "\n")
-      elseif !s:hash_match(sha, a:spec.commit)
+      if !s:hash_match(sha, a:spec.commit)
         let err = join([printf('Invalid HEAD (expected: %s, actual: %s)',
                               \ a:spec.commit[:6], sha[:6]),
                       \ 'PlugUpdate required.'], "\n")
@@ -2561,7 +2669,7 @@ function! s:snapshot(force, ...) abort
   let names = sort(keys(filter(copy(g:plugs),
         \'has_key(v:val, "uri") && !has_key(v:val, "commit") && isdirectory(v:val.dir)')))
   for name in reverse(names)
-    let sha = s:system_chomp('git rev-parse --short HEAD', g:plugs[name].dir)
+    let sha = s:git_get_revision(g:plugs[name].dir)[:6]
     if !empty(sha)
       call append(anchor, printf("silent! let g:plugs['%s'].commit = '%s'", name, sha))
       redraw
