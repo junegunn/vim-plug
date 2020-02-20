@@ -116,35 +116,28 @@ let s:TYPE = {
 let s:loaded = get(s:, 'loaded', {})
 let s:triggers = get(s:, 'triggers', {})
 
-function! s:isroot(dir) abort
-  if a:dir =~# '^/' || (has('win32') && a:dir =~? '^\%(\\\|[A-Z]:\)')
-    return v:true
-  endif
-  return v:false
+function! s:isabsolute(dir) abort
+  return a:dir =~# '^/' || (has('win32') && a:dir =~? '^\%(\\\|[A-Z]:\)')
 endfunction
 
 function! s:get_gitdir(dir) abort
   let l:gitdir = a:dir . '/.git'
   if isdirectory(l:gitdir)
     return l:gitdir
-  elseif filereadable(l:gitdir)
-    try
-      let l:line = readfile(l:gitdir)[0]
-    catch
-      return ''
-    endtry
+  endif
+  try
+    let l:line = readfile(l:gitdir)[0]
     if l:line =~# '^gitdir: '
-      let l:dir = l:line[8:]
-      if s:isroot(l:dir)
-        let l:gitdir = l:dir
-      else
-        let l:gitdir = a:dir . '/' . l:dir
+      let l:gitdir = l:line[8:]
+      if !s:isabsolute(l:gitdir)
+        let l:gitdir = a:dir . '/' . l:gitdir
       endif
       if isdirectory(l:gitdir)
         return l:gitdir
       endif
     endif
-  endif
+  catch
+  endtry
   return ''
 endfunction
 
@@ -183,43 +176,37 @@ function! s:git_get_remote_origin_url(dir) abort
 endfunction
 
 function! s:git_get_revision(dir) abort
-  let gitdir = s:get_gitdir(a:dir)
-  if gitdir ==# ''
+  let l:gitdir = s:get_gitdir(a:dir)
+  if l:gitdir ==# ''
     return v:null
   endif
   try
-    let line = readfile(gitdir . '/HEAD')[0]
-    if line =~# '^ref: '
-      let ref = line[5:]
-      if filereadable(gitdir . '/' . ref)
-        let rev = readfile(gitdir . '/' . ref)[0]
-      else
-        let rev = v:null
-        for line in readfile(gitdir . '/packed-refs')
-          if line =~# ' ' . ref
-            let rev = substitute(line, '^\([0-9a-f]*\) ', '\1', '')
-            break
-          endif
-        endfor
+    let l:line = readfile(l:gitdir . '/HEAD')[0]
+    if l:line =~# '^ref: '
+      let l:ref = l:line[5:]
+      if filereadable(l:gitdir . '/' . l:ref)
+        return readfile(l:gitdir . '/' . l:ref)[0]
       endif
-    else
-      let rev = line
+      for l:line in readfile(l:gitdir . '/packed-refs')
+        if l:line =~# ' ' . l:ref
+          return substitute(l:line, '^\([0-9a-f]*\) ', '\1', '')
+        endif
+      endfor
     endif
-    return rev
   catch
-    return v:null
   endtry
+  return v:null
 endfunction
 
 function! s:git_get_branch(dir) abort
-  let gitdir = s:get_gitdir(a:dir)
-  if gitdir ==# ''
+  let l:gitdir = s:get_gitdir(a:dir)
+  if l:gitdir ==# ''
     return v:null
   endif
   try
-    let line = readfile(gitdir . '/HEAD')[0]
-    if line =~# '^ref: refs/heads/'
-      return line[16:]
+    let l:line = readfile(l:gitdir . '/HEAD')[0]
+    if l:line =~# '^ref: refs/heads/'
+      return l:line[16:]
     endif
     return ''
   catch
@@ -2238,7 +2225,6 @@ function! s:git_validate(spec, check_branch)
   let err = ''
   if isdirectory(a:spec.dir)
     let result = [s:git_get_branch(a:spec.dir), s:git_get_remote_origin_url(a:spec.dir)]
-	echomsg string(result)
     let remote = result[-1]
     if !s:compare_git_uri(remote, a:spec.uri)
       let err = join(['Invalid URI: '.remote,
