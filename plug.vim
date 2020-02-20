@@ -2226,13 +2226,17 @@ function! s:git_validate(spec, check_branch)
   if isdirectory(a:spec.dir)
     let result = [s:git_get_branch(a:spec.dir), s:git_get_remote_origin_url(a:spec.dir)]
     let remote = result[-1]
-    if !s:compare_git_uri(remote, a:spec.uri)
+    if type(remote) ==# v:t_null
+      let err = join([remote, 'PlugClean required.'], "\n")
+    elseif !s:compare_git_uri(remote, a:spec.uri)
       let err = join(['Invalid URI: '.remote,
                     \ 'Expected:    '.a:spec.uri,
                     \ 'PlugClean required.'], "\n")
     elseif a:check_branch && has_key(a:spec, 'commit')
-      let sha = [s:git_get_revision(a:spec.dir)]
-      if !s:hash_match(sha, a:spec.commit)
+      let sha = s:git_get_revision(a:spec.dir)
+      if type(sha) == v:t_null
+        let err = join(add(result, 'PlugClean required.'), "\n")
+      elseif !s:hash_match(sha, a:spec.commit)
         let err = join([printf('Invalid HEAD (expected: %s, actual: %s)',
                               \ a:spec.commit[:6], sha[:6]),
                       \ 'PlugUpdate required.'], "\n")
