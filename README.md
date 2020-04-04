@@ -44,13 +44,11 @@ file as suggested [here][auto].
 ###### Windows (PowerShell)
 
 ```powershell
-md ~\vimfiles\autoload
+New-Item ${env:USERPROFILE}\vimfiles\autoload -ItemType Directory -Force
 $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 (New-Object Net.WebClient).DownloadFile(
   $uri,
-  $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath(
-    "~\vimfiles\autoload\plug.vim"
-  )
+  "${env:USERPROFILE}\vimfiles\autoload\plug.vim"
 )
 ```
 
