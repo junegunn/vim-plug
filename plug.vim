@@ -2069,6 +2069,9 @@ endfunction
 "          If unset, fallback to 'cmd.exe' on Windows or 'sh'.
 " - script: If truthy and shell is cmd.exe, escape for batchfile syntax.
 function! plug#shellescape(arg, ...)
+  if a:arg =~# '^[A-Za-z0-9_/:.-]\+$'
+    return a:arg
+  endif
   let opts = a:0 > 0 && type(a:1) == s:TYPE.dict ? a:1 : {}
   let shell = get(opts, 'shell', s:is_win ? 'cmd.exe' : 'sh')
   let script = get(opts, 'script', 1)
