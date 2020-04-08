@@ -864,8 +864,15 @@ endfunction
 
 function! s:chsh(swap)
   let prev = [&shell, &shellcmdflag, &shellredir]
-  if !s:is_win && a:swap
-    set shell=sh shellredir=>%s\ 2>&1
+  if !s:is_win
+    set shell=sh
+  endif
+  if a:swap
+    if &shell =~# 'powershell\.exe' || &shell =~# 'pwsh$'
+      let &shellredir = '2>&1 | Out-File -Encoding UTF8 %s'
+    elseif &shell =~# 'sh' || &shell =~# 'cmd\.exe'
+      set shellredir=>%s\ 2>&1
+    endif
   endif
   return prev
 endfunction
