@@ -1271,7 +1271,7 @@ function! s:job_cb(fn, job, ch, data)
 endfunction
 
 function! s:nvim_cb(job_id, data, event) dict abort
-  return a:event == 'stdout' ?
+  return (a:event == 'stdout' || a:event == 'stderr') ?
     \ s:job_cb('s:job_out_cb',  self, 0, join(a:data, "\n")) :
     \ s:job_cb('s:job_exit_cb', self, 0, a:data)
 endfunction
@@ -1280,12 +1280,15 @@ function! s:spawn(name, cmd, opts)
   let job = { 'name': a:name, 'running': 1, 'error': 0, 'lines': [''],
             \ 'new': get(a:opts, 'new', 0) }
   let s:jobs[a:name] = job
-  let cmd = has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir, 0) : a:cmd
-  let argv = s:is_win ? ['cmd', '/s', '/c', '"'.cmd.' 2>&1"'] : ['sh', '-c', cmd.' 2>&1']
 
   if s:nvim
+    if has_key(a:opts, 'dir')
+      let job.cwd = a:opts.dir
+    endif
+    let argv = s:is_win ? ['cmd', '/s', '/c', '"'.a:cmd.'"'] : ['sh', '-c', a:cmd]
     call extend(job, {
     \ 'on_stdout': function('s:nvim_cb'),
+    \ 'on_stderr': function('s:nvim_cb'),
     \ 'on_exit':   function('s:nvim_cb'),
     \ })
     let jid = s:plug_call('jobstart', argv, job)
@@ -1298,6 +1301,8 @@ function! s:spawn(name, cmd, opts)
             \ 'Invalid arguments (or job table is full)']
     endif
   elseif s:vim8
+    let cmd = has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir, 0) : a:cmd
+    let argv = s:is_win ? ['cmd', '/s', '/c', '"'.cmd.' 2>&1"'] : ['sh', '-c', cmd.' 2>&1']
     let jid = job_start(s:is_win ? join(argv, ' ') : argv, {
     \ 'out_cb':   function('s:job_cb', ['s:job_out_cb',  job]),
     \ 'exit_cb':  function('s:job_cb', ['s:job_exit_cb', job]),
@@ -1311,7 +1316,7 @@ function! s:spawn(name, cmd, opts)
       let job.lines   = ['Failed to start job']
     endif
   else
-    let job.lines = s:lines(call('s:system', [cmd]))
+    let job.lines = s:lines(call('s:system', has_key(a:opts, 'dir') ? [a:cmd, a:opts.dir] : [a:cmd]))
     let job.error = v:shell_error != 0
     let job.running = 0
   endif
