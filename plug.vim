@@ -1281,7 +1281,7 @@ function! s:spawn(name, cmd, opts)
             \ 'new': get(a:opts, 'new', 0) }
   let s:jobs[a:name] = job
   let cmd = has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir, 0) : a:cmd
-  let argv = s:is_win ? ['cmd', '/s', '/c', '"'.cmd.'"'] : ['sh', '-c', cmd]
+  let argv = s:is_win ? ['cmd', '/s', '/c', '"'.cmd.' 2>&1"'] : ['sh', '-c', cmd.' 2>&1']
 
   if s:nvim
     call extend(job, {
@@ -1409,7 +1409,7 @@ while 1 " Without TCO, Vim stack is bound to explode
     if empty(error)
       if pull
         let fetch_opt = (has_tag && !empty(globpath(spec.dir, '.git/shallow'))) ? '--depth 99999999' : ''
-        call s:spawn(name, printf('git fetch %s %s 2>&1', fetch_opt, prog), { 'dir': spec.dir })
+        call s:spawn(name, printf('git fetch %s %s', fetch_opt, prog), { 'dir': spec.dir })
       else
         let s:jobs[name] = { 'running': 0, 'lines': ['Already installed'], 'error': 0 }
       endif
@@ -1418,7 +1418,7 @@ while 1 " Without TCO, Vim stack is bound to explode
     endif
   else
     call s:spawn(name,
-          \ printf('git clone %s %s %s %s 2>&1',
+          \ printf('git clone %s %s %s %s',
           \ has_tag ? '' : s:clone_opt,
           \ prog,
           \ plug#shellescape(spec.uri, {'script': 0}),
