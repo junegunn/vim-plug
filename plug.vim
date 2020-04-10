@@ -1302,10 +1302,12 @@ function! s:spawn(name, cmd, opts)
     endif
   elseif s:vim8
     let cmd = has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir, 0) : a:cmd
-    let argv = s:is_win ? ['cmd', '/s', '/c', '"'.cmd.' 2>&1"'] : ['sh', '-c', cmd.' 2>&1']
+    let argv = s:is_win ? ['cmd', '/s', '/c', '"'.cmd.'"'] : ['sh', '-c', cmd]
     let jid = job_start(s:is_win ? join(argv, ' ') : argv, {
     \ 'out_cb':   function('s:job_cb', ['s:job_out_cb',  job]),
+    \ 'err_cb':   function('s:job_cb', ['s:job_out_cb',  job]),
     \ 'exit_cb':  function('s:job_cb', ['s:job_exit_cb', job]),
+    \ 'err_mode': 'raw',
     \ 'out_mode': 'raw'
     \})
     if job_status(jid) == 'run'
