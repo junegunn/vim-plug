@@ -1086,11 +1086,16 @@ function! s:update_impl(pull, force, args) abort
   normal! 2G
   silent! redraw
 
-  let s:clone_opt = get(g:, 'plug_shallow', 1) ?
-        \ '--depth 1' . (s:git_version_requirement(1, 7, 10) ? ' --no-single-branch' : '') : ''
+  let s:clone_opt = []
+  if get(g:, 'plug_shallow', 1)
+    call extend(s:clone_opt, ['--depth', '1'])
+    if s:git_version_requirement(1, 7, 10)
+      call add(s:clone_opt, '--no-single-branch')
+    endif
+  endif
 
   if has('win32unix') || has('wsl')
-    let s:clone_opt .= ' -c core.eol=lf -c core.autocrlf=input'
+    call extend(s:clone_opt, ['-c', 'core.eol=lf', '-c', 'core.autocrlf=input'])
   endif
 
   let s:submodule_opt = s:git_version_requirement(2, 8) ? ' --jobs='.threads : ''
@@ -1285,7 +1290,7 @@ function! s:spawn(name, cmd, opts)
     if has_key(a:opts, 'dir')
       let job.cwd = a:opts.dir
     endif
-    let argv = s:is_win ? ['cmd', '/s', '/c', '"'.a:cmd.'"'] : ['sh', '-c', a:cmd]
+    let argv = a:cmd
     call extend(job, {
     \ 'on_stdout': function('s:nvim_cb'),
     \ 'on_stderr': function('s:nvim_cb'),
@@ -1301,7 +1306,10 @@ function! s:spawn(name, cmd, opts)
             \ 'Invalid arguments (or job table is full)']
     endif
   elseif s:vim8
-    let cmd = has_key(a:opts, 'dir') ? s:with_cd(a:cmd, a:opts.dir, 0) : a:cmd
+    let cmd = join(map(copy(a:cmd), 'plug#shellescape(v:val, {"script": 0})'))
+    if has_key(a:opts, 'dir')
+      let cmd = s:with_cd(cmd, a:opts.dir, 0)
+    endif
     let argv = s:is_win ? ['cmd', '/s', '/c', '"'.cmd.'"'] : ['sh', '-c', cmd]
     let jid = job_start(s:is_win ? join(argv, ' ') : argv, {
     \ 'out_cb':   function('s:job_cb', ['s:job_out_cb',  job]),
@@ -1415,8 +1423,14 @@ while 1 " Without TCO, Vim stack is bound to explode
     let [error, _] = s:git_validate(spec, 0)
     if empty(error)
       if pull
-        let fetch_opt = (has_tag && !empty(globpath(spec.dir, '.git/shallow'))) ? '--depth 99999999' : ''
-        call s:spawn(name, printf('git fetch %s %s', fetch_opt, prog), { 'dir': spec.dir })
+        let cmd = ['git', 'fetch']
+        if has_tag && !empty(globpath(spec.dir, '.git/shallow'))
+          call extend(cmd, ['--depth', '99999999'])
+        endif
+        if !empty(prog)
+          call add(cmd, prog)
+        endif
+        call s:spawn(name, cmd, { 'dir': spec.dir })
       else
         let s:jobs[name] = { 'running': 0, 'lines': ['Already installed'], 'error': 0 }
       endif
@@ -1424,12 +1438,14 @@ while 1 " Without TCO, Vim stack is bound to explode
       let s:jobs[name] = { 'running': 0, 'lines': s:lines(error), 'error': 1 }
     endif
   else
-    call s:spawn(name,
-          \ printf('git clone %s %s %s %s',
-          \ has_tag ? '' : s:clone_opt,
-          \ prog,
-          \ plug#shellescape(spec.uri, {'script': 0}),
-          \ plug#shellescape(s:trim(spec.dir), {'script': 0})), { 'new': 1 })
+    let cmd = ['git', 'clone']
+    if !has_tag
+      call extend(cmd, s:clone_opt)
+    endif
+    if !empty(prog)
+      call add(cmd, prog)
+    endif
+    call s:spawn(name, extend(cmd, [spec.uri, s:trim(spec.dir)]), { 'new': 1 })
   endif
 
   if !s:jobs[name].running
@@ -1466,7 +1482,7 @@ G_NVIM = vim.eval("has('nvim')") == '1'
 G_PULL = vim.eval('s:update.pull') == '1'
 G_RETRIES = int(vim.eval('get(g:, "plug_retries", 2)')) + 1
 G_TIMEOUT = int(vim.eval('get(g:, "plug_timeout", 60)'))
-G_CLONE_OPT = vim.eval('s:clone_opt')
+G_CLONE_OPT = ' '.join(vim.eval('s:clone_opt'))
 G_PROGRESS = vim.eval('s:progress_opt(1)')
 G_LOG_PROB = 1.0 / int(vim.eval('s:update.threads'))
 G_STOP = thr.Event()
@@ -2003,7 +2019,7 @@ function! s:update_ruby()
     end
   } if VIM::evaluate('s:mac_gui') == 1
 
-  clone_opt = VIM::evaluate('s:clone_opt')
+  clone_opt = VIM::evaluate('s:clone_opt').join(' ')
   progress = VIM::evaluate('s:progress_opt(1)')
   nthr.times do
     mtx.synchronize do
