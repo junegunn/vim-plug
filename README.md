@@ -56,10 +56,17 @@ $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 
 #### Neovim
 
-###### Unix
+###### Unix, Linux
 
 ```sh
 curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+```
+
+###### Linux (Flatpak)
+
+```sh
+curl -fLo ~/.var/app/io.neovim.nvim/data/nvim/site/autoload/plug.vim \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 ```
 
