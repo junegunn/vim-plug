@@ -97,6 +97,10 @@ Execute (Plug command with dictionary option):
     redir END
     Assert out =~ 'Invalid argument for "'.opt.'" option of :Plug (expected: string or list)'
   endfor
+  redir => out
+  Plug 'foo/bar.vim', {'do': ''}
+  redir END
+  Assert out =~ 'Invalid argument for "do" option of :Plug (expected: string or funcref)'
   Plug 'junegunn/seoul256.vim', { 'branch': 'no-t_co', 'rtp': '././' }
   AssertEqual join([g:temp_plugged, 'seoul256.vim/'], '/'), g:plugs['seoul256.vim'].dir
   AssertEqual '././', g:plugs['seoul256.vim'].rtp
@@ -1057,9 +1061,10 @@ Execute (Post-update hook output; success and failure):
 
 Execute (Post-update hook output; invalid type or funcref):
   call plug#begin()
-  Plug 'junegunn/vim-easy-align', { 'do': 1 }
+  Plug 'junegunn/vim-easy-align', { 'do': ':echo 1' }
   Plug 'junegunn/vim-pseudocl',   { 'do': function('call') }
   call plug#end()
+  let g:plugs['vim-easy-align'].do = 1
 
   silent PlugInstall! 1
   AssertEqual 'x Post-update hook for vim-pseudocl ... Vim(call):E119: Not enough arguments for function: call', getline(5)
