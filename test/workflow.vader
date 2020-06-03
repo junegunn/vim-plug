@@ -49,11 +49,19 @@ Execute (Test Plug command):
   AssertEqual 'no-t_co', g:plugs['seoul256.vim'].branch
 
 ^ Git repo with tag (DEPRECATED. USE TAG OPTION)
+  redir => out
+  Plug 'foo/bar.vim', ''
+  redir END
+  Assert out =~ 'Invalid argument for "tag" option of :Plug (expected: string)'
   Plug 'junegunn/goyo.vim', '1.5.2'
   AssertEqual 'file:///tmp/vim-plug-test/junegunn/goyo.vim', g:plugs['goyo.vim'].uri
   AssertEqual join([g:temp_plugged, 'goyo.vim/'], '/'), g:plugs['goyo.vim'].dir
   AssertEqual '1.5.2', g:plugs['goyo.vim'].tag
 
+  redir => out
+  Plug 'foo/bar.vim', {'tag': ''}
+  redir END
+  Assert out =~ 'Invalid argument for "tag" option of :Plug (expected: string)'
   Plug 'junegunn/goyo.vim', { 'tag': '1.5.3' } " Using tag option
   AssertEqual '1.5.3', g:plugs['goyo.vim'].tag
 
@@ -77,6 +85,22 @@ Execute (Test Plug command):
 
 Execute (Plug command with dictionary option):
   Log string(g:plugs)
+  for opt in ['branch', 'tag', 'commit', 'rtp', 'dir', 'as']
+    redir => out
+    Plug 'foo/bar.vim', {opt: ''}
+    redir END
+    Assert out =~ 'Invalid argument for "'.opt.'" option of :Plug (expected: string)'
+  endfor
+  for opt in ['on', 'for']
+    redir => out
+    Plug 'foo/bar.vim', {opt: ''}
+    redir END
+    Assert out =~ 'Invalid argument for "'.opt.'" option of :Plug (expected: string or list)'
+  endfor
+  redir => out
+  Plug 'foo/bar.vim', {'do': ''}
+  redir END
+  Assert out =~ 'Invalid argument for "do" option of :Plug (expected: string or funcref)'
   Plug 'junegunn/seoul256.vim', { 'branch': 'no-t_co', 'rtp': '././' }
   AssertEqual join([g:temp_plugged, 'seoul256.vim/'], '/'), g:plugs['seoul256.vim'].dir
   AssertEqual '././', g:plugs['seoul256.vim'].rtp
@@ -1037,9 +1061,10 @@ Execute (Post-update hook output; success and failure):
 
 Execute (Post-update hook output; invalid type or funcref):
   call plug#begin()
-  Plug 'junegunn/vim-easy-align', { 'do': 1 }
+  Plug 'junegunn/vim-easy-align', { 'do': ':echo 1' }
   Plug 'junegunn/vim-pseudocl',   { 'do': function('call') }
   call plug#end()
+  let g:plugs['vim-easy-align'].do = 1
 
   silent PlugInstall! 1
   AssertEqual 'x Post-update hook for vim-pseudocl ... Vim(call):E119: Not enough arguments for function: call', getline(5)
