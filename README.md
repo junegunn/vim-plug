@@ -73,7 +73,7 @@ curl -fLo ~/.var/app/io.neovim.nvim/data/nvim/site/autoload/plug.vim \
 ###### Windows (PowerShell)
 
 ```powershell
-md ~\AppData\Local\nvim\autoload
+md ~\AppData\Local\nvim-data\site\autoload
 $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 (New-Object Net.WebClient).DownloadFile(
   $uri,
