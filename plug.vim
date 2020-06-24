@@ -2369,17 +2369,17 @@ function! s:delete(range, force)
         if empty(err)
           call setline(l1, '~'.line[1:])
           let s:clean_count += 1
-          let msg = printf('Removed %d directories.', s:clean_count)
-          if err_count > 0
-            msg .= printf('Failed to remove %d directories.', err_count)
-          endif
-          call setline(4, msg)
         else
           delete
           call append(l1 - 1, s:format_message('x', line[1:], err))
           let l2 += len(s:lines(err))
           let err_count += 1
         endif
+        let msg = printf('Removed %d directories.', s:clean_count)
+        if err_count > 0
+          let msg .= printf(' Failed to remove %d directories.', err_count)
+        endif
+        call setline(4, msg)
         setlocal nomodifiable
       endif
     endif
