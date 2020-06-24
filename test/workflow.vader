@@ -1468,6 +1468,7 @@ Execute (PlugClean should not try to remove unmanaged plugins inside g:plug_home
   Plug '$PLUG_FIXTURES/fzf'
   Plug '$PLUG_FIXTURES/xxx'
   Plug '$PLUG_FIXTURES/yyy'
+  Plug '$PLUG_FIXTURES/cant-delete'
   call plug#end()
 
   " Remove z1, z2
@@ -1721,3 +1722,25 @@ Execute (#766 - Allow cloning into an empty directory):
   AssertExpect! '[=]', 1
   q
   unlet d
+
+Execute (#982 - PlugClean should report when directories cannot be removed):
+  call plug#begin('$PLUG_FIXTURES')
+  Plug '$PLUG_FIXTURES/ftplugin-msg', { 'for': [] }
+  Plug '$PLUG_FIXTURES/fzf'
+  Plug '$PLUG_FIXTURES/xxx'
+  Plug '$PLUG_FIXTURES/yyy'
+  call plug#end()
+
+  " Fail to remove cant-delete
+  PlugClean!
+  AssertEqual 'Removed 0 directories. Failed to remove 1 directories.', getline(4)
+  AssertExpect '^x ', 1
+  q
+
+  " Delete tmp but fail to remove cant-delete
+  call mkdir(expand('$PLUG_FIXTURES/tmp'))
+  PlugClean!
+  AssertEqual 'Removed 1 directories. Failed to remove 1 directories.', getline(4)
+  AssertExpect '^x ', 1
+  AssertExpect '^\~ ', 1
+  q

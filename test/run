@@ -91,6 +91,11 @@ DOC
   echo "echomsg 'ftplugin-c'" > "$PLUG_FIXTURES/ftplugin-msg/ftplugin/c.vim"
   echo "echomsg 'ftplugin-java'" > "$PLUG_FIXTURES/ftplugin-msg/ftplugin/java.vim"
 
+  chmod +w "$PLUG_FIXTURES/cant-delete/autoload" || rm -rf "$PLUG_FIXTURES/cant-delete"
+  mkdir -p "$PLUG_FIXTURES/cant-delete/autoload"
+  touch "$PLUG_FIXTURES/cant-delete/autoload/cant-delete.vim"
+  chmod -w "$PLUG_FIXTURES/cant-delete/autoload"
+
   rm -rf $TEMP/new-branch
   cd $TEMP
   git init new-branch
