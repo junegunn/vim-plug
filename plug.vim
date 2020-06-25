@@ -2271,7 +2271,7 @@ endfunction
 
 function! s:rm_rf(dir)
   if isdirectory(a:dir)
-    call s:system(s:is_win
+    return s:system(s:is_win
     \ ? 'rmdir /S /Q '.plug#shellescape(a:dir)
     \ : ['rm', '-rf', a:dir])
   endif
@@ -2355,6 +2355,7 @@ endfunction
 function! s:delete(range, force)
   let [l1, l2] = a:range
   let force = a:force
+  let err_count = 0
   while l1 <= l2
     let line = getline(l1)
     if line =~ '^- ' && isdirectory(line[2:])
@@ -2363,11 +2364,22 @@ function! s:delete(range, force)
       let answer = force ? 1 : s:ask('Delete '.line[2:].'?', 1)
       let force = force || answer > 1
       if answer
-        call s:rm_rf(line[2:])
+        let err = s:rm_rf(line[2:])
         setlocal modifiable
-        call setline(l1, '~'.line[1:])
-        let s:clean_count += 1
-        call setline(4, printf('Removed %d directories.', s:clean_count))
+        if empty(err)
+          call setline(l1, '~'.line[1:])
+          let s:clean_count += 1
+        else
+          delete _
+          call append(l1 - 1, s:format_message('x', line[1:], err))
+          let l2 += len(s:lines(err))
+          let err_count += 1
+        endif
+        let msg = printf('Removed %d directories.', s:clean_count)
+        if err_count > 0
+          let msg .= printf(' Failed to remove %d directories.', err_count)
+        endif
+        call setline(4, msg)
         setlocal nomodifiable
       endif
     endif
