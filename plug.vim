@@ -2370,7 +2370,7 @@ function! s:delete(range, force)
           call setline(l1, '~'.line[1:])
           let s:clean_count += 1
         else
-          delete
+          delete _
           call append(l1 - 1, s:format_message('x', line[1:], err))
           let l2 += len(s:lines(err))
           let err_count += 1
