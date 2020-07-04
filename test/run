@@ -16,6 +16,7 @@ mkdir -p "$TEMP"
 
 cat > $TEMP/mini-vimrc << VIMRC
 set rtp+=$TEMP/junegunn/vader.vim
+source $TEMP/junegunn/vader.vim/plugin/vader.vim
 set shell=/bin/bash
 VIMRC
 
@@ -127,9 +128,9 @@ git --version
 vim=$(select_vim)
 echo "Selected Vim: $vim"
 if [ "${1:-}" = '!' ]; then
-  $vim -Nu $TEMP/mini-vimrc -c 'Vader! test.vader' > /dev/null &&
+  $vim --noplugin -Nu $TEMP/mini-vimrc -c 'Vader! test.vader' &&
   prepare &&
-  $vim -Nu $TEMP/mini-vimrc -c 'let g:plug_threads = 1 | Vader! test.vader' > /dev/null
+  $vim --noplugin -Nu $TEMP/mini-vimrc -c 'let g:plug_threads = 1 | Vader! test.vader'
 else
-  $vim -Nu $TEMP/mini-vimrc -c 'Vader test.vader'
+  $vim --noplugin -Nu $TEMP/mini-vimrc -c 'Vader test.vader'
 fi

@@ -40,12 +40,6 @@ Execute (Initialize test environment):
   endfunction
   command! -nargs=+ -bang AssertExpect call AssertExpect('<bang>' == '!', <args>)
 
-  function! EnsureLoaded()
-    if has('vim_starting')
-      runtime! plugin/**/*.vim
-    endif
-  endfunction
-
   function! RmRf(file)
     call system(printf('rm -rf "%s"', a:file))
   endfunction
@@ -95,7 +89,6 @@ Execute (Cleanup):
   silent! delf PlugStatusSorted
   silent! delf AssertExpect
   silent! delf PlugUpdated
-  silent! delf EnsureLoaded
   silent! delf ReloadPlug
   silent! delc AssertExpect
   silent! unmap /
