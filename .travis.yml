@@ -3,31 +3,40 @@ env:
   global:
     - DEPS=$HOME/deps
     - PATH=$DEPS/bin:$PATH
-matrix:
+jobs:
   include:
     - env: ENV=vim80-bionic
       dist: bionic
+      stage: vim8
     - env: ENV=vim-nightly
       dist: trusty
+      stage: vim8
     - env: ENV=neovim-stable
       dist: xenial
       addons: {apt: {packages: [neovim], sources: [{sourceline: 'ppa:neovim-ppa/stable'}]}}
+      stage: neovim
     - env: ENV=neovim-nightly
       dist: xenial
       addons: {apt: {packages: [neovim], sources: [{sourceline: 'ppa:neovim-ppa/unstable'}]}}
+      stage: neovim
     - env: ENV=vim74-trusty-python
       dist: trusty
+      stage: vim74
     - env: ENV=vim74-xenial-python3
       dist: xenial
+      stage: vim74
     - env: ENV=vim74-trusty-ruby
       dist: trusty
       addons: {apt: {packages: [vim-nox]}}
+      stage: vim74
     - env: ENV=vim74-xenial-ruby
       dist: xenial
       addons: {apt: {packages: [vim-nox]}}
+      stage: vim74
     - env: ENV=osx-highsierra
       os: osx
       osx_image: xcode9.4
+      stage: vim8
 install: |
   git config --global user.email "you@example.com"
   git config --global user.name "Your Name"
