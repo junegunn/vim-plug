@@ -50,7 +50,7 @@ Execute (Test Plug command):
 
 ^ Git repo with tag (DEPRECATED. USE TAG OPTION)
   redir => out
-  Plug 'foo/bar.vim', ''
+  silent Plug 'foo/bar.vim', ''
   redir END
   Assert out =~ 'Invalid argument for "tag" option of :Plug (expected: string)'
   Plug 'junegunn/goyo.vim', '1.5.2'
@@ -59,7 +59,7 @@ Execute (Test Plug command):
   AssertEqual '1.5.2', g:plugs['goyo.vim'].tag
 
   redir => out
-  Plug 'foo/bar.vim', {'tag': ''}
+  silent Plug 'foo/bar.vim', {'tag': ''}
   redir END
   Assert out =~ 'Invalid argument for "tag" option of :Plug (expected: string)'
   Plug 'junegunn/goyo.vim', { 'tag': '1.5.3' } " Using tag option
@@ -86,19 +86,23 @@ Execute (Test Plug command):
 Execute (Plug command with dictionary option):
   Log string(g:plugs)
   for opt in ['branch', 'tag', 'commit', 'rtp', 'dir', 'as']
+    let opts = {}
+    let opts[opt] = ''
     redir => out
-    Plug 'foo/bar.vim', {opt: ''}
+    silent Plug 'foo/bar.vim', opts
     redir END
     Assert out =~ 'Invalid argument for "'.opt.'" option of :Plug (expected: string)'
   endfor
   for opt in ['on', 'for']
+    let opts = {}
+    let opts[opt] = ''
     redir => out
-    Plug 'foo/bar.vim', {opt: ''}
+    silent Plug 'foo/bar.vim', opts
     redir END
     Assert out =~ 'Invalid argument for "'.opt.'" option of :Plug (expected: string or list)'
   endfor
   redir => out
-  Plug 'foo/bar.vim', {'do': ''}
+  silent Plug 'foo/bar.vim', {'do': ''}
   redir END
   Assert out =~ 'Invalid argument for "do" option of :Plug (expected: string or funcref)'
   Plug 'junegunn/seoul256.vim', { 'branch': 'no-t_co', 'rtp': '././' }

@@ -127,9 +127,11 @@ git --version
 vim=$(select_vim)
 echo "Selected Vim: $vim"
 if [ "${1:-}" = '!' ]; then
-  $vim -Nu $TEMP/mini-vimrc -c 'Vader! test.vader' > /dev/null &&
-  prepare &&
-  $vim -Nu $TEMP/mini-vimrc -c 'let g:plug_threads = 1 | Vader! test.vader' > /dev/null
+  FAIL=0
+  $vim -Nu $TEMP/mini-vimrc -c 'Vader! test.vader' > /dev/null || FAIL=1
+  prepare
+  $vim -Nu $TEMP/mini-vimrc -c 'let g:plug_threads = 1 | Vader! test.vader' > /dev/null || FAIL=1
+  test $FAIL -eq 0
 else
   $vim -Nu $TEMP/mini-vimrc -c 'Vader test.vader'
 fi
