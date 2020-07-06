@@ -86,14 +86,18 @@ Execute (Test Plug command):
 Execute (Plug command with dictionary option):
   Log string(g:plugs)
   for opt in ['branch', 'tag', 'commit', 'rtp', 'dir', 'as']
+    let opts = {}
+    let opts[opt] = ''
     redir => out
-    silent Plug 'foo/bar.vim', {opt: ''}
+    silent Plug 'foo/bar.vim', opts
     redir END
     Assert out =~ 'Invalid argument for "'.opt.'" option of :Plug (expected: string)'
   endfor
   for opt in ['on', 'for']
+    let opts = {}
+    let opts[opt] = ''
     redir => out
-    silent Plug 'foo/bar.vim', {opt: ''}
+    silent Plug 'foo/bar.vim', opts
     redir END
     Assert out =~ 'Invalid argument for "'.opt.'" option of :Plug (expected: string or list)'
   endfor
