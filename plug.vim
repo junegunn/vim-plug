@@ -179,7 +179,7 @@ function! s:define_commands()
   endif
   if has('win32')
   \ && &shellslash
-  \ && (&shell =~# 'cmd\.exe' || &shell =~# 'powershell\.exe')
+  \ && (&shell =~# 'cmd\(\.exe\)\?$' || &shell =~# 'powershell\(\.exe\)\?$')
     return s:err('vim-plug does not support shell, ' . &shell . ', when shellslash is set.')
   endif
   if !has('nvim')
@@ -419,7 +419,7 @@ if s:is_win
     let batchfile = s:plug_tempname().'.bat'
     call writefile(s:wrap_cmds(a:cmd), batchfile)
     let cmd = plug#shellescape(batchfile, {'shell': &shell, 'script': 0})
-    if &shell =~# 'powershell\.exe'
+    if &shell =~# 'powershell\(\.exe\)\?$'
       let cmd = '& ' . cmd
     endif
     return [batchfile, cmd]
@@ -890,9 +890,9 @@ function! s:chsh(swap)
     set shell=sh
   endif
   if a:swap
-    if &shell =~# 'powershell\.exe' || &shell =~# 'pwsh$'
+    if &shell =~# 'powershell\(\.exe\)\?$' || &shell =~# 'pwsh$'
       let &shellredir = '2>&1 | Out-File -Encoding UTF8 %s'
-    elseif &shell =~# 'sh' || &shell =~# 'cmd\.exe'
+    elseif &shell =~# 'sh' || &shell =~# 'cmd\(\.exe\)\?$'
       set shellredir=>%s\ 2>&1
     endif
   endif
@@ -2128,9 +2128,9 @@ function! plug#shellescape(arg, ...)
   let opts = a:0 > 0 && type(a:1) == s:TYPE.dict ? a:1 : {}
   let shell = get(opts, 'shell', s:is_win ? 'cmd.exe' : 'sh')
   let script = get(opts, 'script', 1)
-  if shell =~# 'cmd\.exe'
+  if shell =~# 'cmd\(\.exe\)\?$'
     return s:shellesc_cmd(a:arg, script)
-  elseif shell =~# 'powershell\.exe' || shell =~# 'pwsh$'
+  elseif shell =~# 'powershell\(\.exe\)\?$' || shell =~# 'pwsh$'
     return s:shellesc_ps1(a:arg)
   endif
   return s:shellesc_sh(a:arg)
@@ -2182,7 +2182,7 @@ function! s:system(cmd, ...)
         return system(a:cmd)
       endif
       let cmd = join(map(copy(a:cmd), 'plug#shellescape(v:val, {"shell": &shell, "script": 0})'))
-      if &shell =~# 'powershell\.exe'
+      if &shell =~# 'powershell\(\.exe\)\?$'
         let cmd = '& ' . cmd
       endif
     else
