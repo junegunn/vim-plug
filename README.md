@@ -9,7 +9,8 @@ A minimalist Vim plugin manager.
 
 - Easier to setup: Single file. No boilerplate code required.
 - Easier to use: Concise, intuitive syntax
-- [Super-fast][40/4] parallel installation/update
+- [Super-fast][40/4] parallel installation/
+update
   (with any of `+job`, `+python`, `+python3`, `+ruby`, or [Neovim][nv])
 - Creates shallow clones to minimize disk space usage and download time
 - On-demand loading for [faster startup time][startup-time]
@@ -155,7 +156,7 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 | ----------------------------------- | ------------------------------------------------------------------ |
 | `PlugInstall [name ...] [#threads]` | Install plugins                                                    |
 | `PlugUpdate [name ...] [#threads]`  | Install or update plugins                                          |
-| `PlugClean[!]`                      | Remove unlisted plugins (bang version will clean without prompt) |
+| `PlugClean[!]`                      | Remove (Uninstall) unlisted plugins (bang version will clean without prompt) |
 | `PlugUpgrade`                       | Upgrade vim-plug itself                                            |
 | `PlugStatus`                        | Check the status of plugins                                        |
 | `PlugDiff`                          | Examine changes from the previous update and the pending changes   |
