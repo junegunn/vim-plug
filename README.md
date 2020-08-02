@@ -7,7 +7,7 @@ A minimalist Vim plugin manager.
 
 ### Pros.
 
-- Easier to setup: Single file. No boilerplate code required.
+- Easier to set up: Single file. No boilerplate code required.
 - Easier to use: Concise, intuitive syntax
 - [Super-fast][40/4] parallel installation/update
   (with any of `+job`, `+python`, `+python3`, `+ruby`, or [Neovim][nv])
@@ -230,14 +230,14 @@ Plug 'junegunn/goyo.vim', { 'for': 'markdown' }
 autocmd! User goyo.vim echom 'Goyo is now loaded!'
 ```
 
-`for` option is generally not needed as most plugins for specific file types
-usually don't have too much code in `plugin` directory. You might want to
+The `for` option is generally not needed as most plugins for specific file types
+usually don't have too much code in the `plugin` directory. You might want to
 examine the output of `vim --startuptime` before applying the option.
 
 ### Post-update hooks
 
 There are some plugins that require extra steps after installation or update.
-In that case, use `do` option to describe the task to be performed.
+In that case, use the `do` option to describe the task to be performed.
 
 ```vim
 Plug 'Shougo/vimproc.vim', { 'do': 'make' }
@@ -272,7 +272,7 @@ and only run when the repository has changed, but you can force it to run
 unconditionally with the bang-versions of the commands: `PlugInstall!` and
 `PlugUpdate!`.
 
-Make sure to escape BARs and double-quotes when you write `do` option inline
+Make sure to escape BARs and double-quotes when you write the `do` option inline
 as they are mistakenly recognized as command separator or the start of the
 trailing comment.
 
@@ -298,7 +298,7 @@ The installer takes the following steps when installing/updating a plugin:
     1. Update submodules
     2. Execute post-update hooks
 
-The commands with `!` suffix ensure that all steps are run unconditionally.
+The commands with the `!` suffix ensure that all steps are run unconditionally.
 
 ### Articles
 
