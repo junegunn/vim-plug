@@ -68,7 +68,7 @@ curl -fLo ~/.var/app/io.neovim.nvim/data/nvim/site/autoload/plug.vim \
 
 ```powershell
 iwr -useb https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim |`
-    ni $HOME/AppData/Local/nvim-data/site/autoload/plug.vim -Force
+    ni "$env:LOCALAPPDATA/nvim-data/site/autoload/plug.vim" -Force
 ```
 
 ### Getting Help
