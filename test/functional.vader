@@ -13,6 +13,7 @@ Execute (plug#shellescape() ignores invalid optional argument):
 Execute (plug#shellescape() depends on the shell):
   AssertEqual "'foo'\\'''", plug#shellescape("foo'", {'shell': 'sh'})
   AssertEqual '^"foo''^"', plug#shellescape("foo'", {'shell': 'cmd.exe'})
+  AssertEqual "'foo'''", plug#shellescape("foo'", {'shell': 'powershell'})
   AssertEqual "'foo'''", plug#shellescape("foo'", {'shell': 'powershell.exe'})
   AssertEqual "'foo'''", plug#shellescape("foo'", {'shell': 'pwsh'})
 
@@ -32,6 +33,9 @@ Execute (plug#shellescape() supports non-trivial cmd.exe escaping):
   \ }),
 
 Execute (plug#shellescape() supports non-trivial powershell.exe escaping):
+  AssertEqual '''\"Foo\\''''\\Bar\"''', plug#shellescape('"Foo\''\Bar"', {
+  \ 'shell': 'powershell',
+  \ }),
   AssertEqual '''\"Foo\\''''\\Bar\"''', plug#shellescape('"Foo\''\Bar"', {
   \ 'shell': 'powershell.exe',
   \ }),

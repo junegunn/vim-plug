@@ -49,11 +49,19 @@ Execute (Test Plug command):
   AssertEqual 'no-t_co', g:plugs['seoul256.vim'].branch
 
 ^ Git repo with tag (DEPRECATED. USE TAG OPTION)
+  redir => out
+  silent Plug 'foo/bar.vim', ''
+  redir END
+  Assert out =~ 'Invalid argument for "tag" option of :Plug (expected: string)'
   Plug 'junegunn/goyo.vim', '1.5.2'
   AssertEqual 'file:///tmp/vim-plug-test/junegunn/goyo.vim', g:plugs['goyo.vim'].uri
   AssertEqual join([g:temp_plugged, 'goyo.vim/'], '/'), g:plugs['goyo.vim'].dir
   AssertEqual '1.5.2', g:plugs['goyo.vim'].tag
 
+  redir => out
+  silent Plug 'foo/bar.vim', {'tag': ''}
+  redir END
+  Assert out =~ 'Invalid argument for "tag" option of :Plug (expected: string)'
   Plug 'junegunn/goyo.vim', { 'tag': '1.5.3' } " Using tag option
   AssertEqual '1.5.3', g:plugs['goyo.vim'].tag
 
@@ -77,6 +85,26 @@ Execute (Test Plug command):
 
 Execute (Plug command with dictionary option):
   Log string(g:plugs)
+  for opt in ['branch', 'tag', 'commit', 'rtp', 'dir', 'as']
+    let opts = {}
+    let opts[opt] = ''
+    redir => out
+    silent Plug 'foo/bar.vim', opts
+    redir END
+    Assert out =~ 'Invalid argument for "'.opt.'" option of :Plug (expected: string)'
+  endfor
+  for opt in ['on', 'for']
+    let opts = {}
+    let opts[opt] = ''
+    redir => out
+    silent Plug 'foo/bar.vim', opts
+    redir END
+    Assert out =~ 'Invalid argument for "'.opt.'" option of :Plug (expected: string or list)'
+  endfor
+  redir => out
+  silent Plug 'foo/bar.vim', {'do': ''}
+  redir END
+  Assert out =~ 'Invalid argument for "do" option of :Plug (expected: string or funcref)'
   Plug 'junegunn/seoul256.vim', { 'branch': 'no-t_co', 'rtp': '././' }
   AssertEqual join([g:temp_plugged, 'seoul256.vim/'], '/'), g:plugs['seoul256.vim'].dir
   AssertEqual '././', g:plugs['seoul256.vim'].rtp
@@ -1037,9 +1065,10 @@ Execute (Post-update hook output; success and failure):
 
 Execute (Post-update hook output; invalid type or funcref):
   call plug#begin()
-  Plug 'junegunn/vim-easy-align', { 'do': 1 }
+  Plug 'junegunn/vim-easy-align', { 'do': ':echo 1' }
   Plug 'junegunn/vim-pseudocl',   { 'do': function('call') }
   call plug#end()
+  let g:plugs['vim-easy-align'].do = 1
 
   silent PlugInstall! 1
   AssertEqual 'x Post-update hook for vim-pseudocl ... Vim(call):E119: Not enough arguments for function: call', getline(5)
@@ -1443,6 +1472,7 @@ Execute (PlugClean should not try to remove unmanaged plugins inside g:plug_home
   Plug '$PLUG_FIXTURES/fzf'
   Plug '$PLUG_FIXTURES/xxx'
   Plug '$PLUG_FIXTURES/yyy'
+  Plug '$PLUG_FIXTURES/cant-delete'
   call plug#end()
 
   " Remove z1, z2
@@ -1696,3 +1726,25 @@ Execute (#766 - Allow cloning into an empty directory):
   AssertExpect! '[=]', 1
   q
   unlet d
+
+Execute (#982 - PlugClean should report when directories cannot be removed):
+  call plug#begin('$PLUG_FIXTURES')
+  Plug '$PLUG_FIXTURES/ftplugin-msg', { 'for': [] }
+  Plug '$PLUG_FIXTURES/fzf'
+  Plug '$PLUG_FIXTURES/xxx'
+  Plug '$PLUG_FIXTURES/yyy'
+  call plug#end()
+
+  " Fail to remove cant-delete
+  PlugClean!
+  AssertEqual 'Removed 0 directories. Failed to remove 1 directories.', getline(4)
+  AssertExpect '^x ', 1
+  q
+
+  " Delete tmp but fail to remove cant-delete
+  call mkdir(expand('$PLUG_FIXTURES/tmp'))
+  PlugClean!
+  AssertEqual 'Removed 1 directories. Failed to remove 1 directories.', getline(4)
+  AssertExpect '^x ', 1
+  AssertExpect '^\~ ', 1
+  q

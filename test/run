@@ -91,6 +91,11 @@ DOC
   echo "echomsg 'ftplugin-c'" > "$PLUG_FIXTURES/ftplugin-msg/ftplugin/c.vim"
   echo "echomsg 'ftplugin-java'" > "$PLUG_FIXTURES/ftplugin-msg/ftplugin/java.vim"
 
+  chmod +w "$PLUG_FIXTURES/cant-delete/autoload" || rm -rf "$PLUG_FIXTURES/cant-delete"
+  mkdir -p "$PLUG_FIXTURES/cant-delete/autoload"
+  touch "$PLUG_FIXTURES/cant-delete/autoload/cant-delete.vim"
+  chmod -w "$PLUG_FIXTURES/cant-delete/autoload"
+
   rm -rf $TEMP/new-branch
   cd $TEMP
   git init new-branch
@@ -122,9 +127,11 @@ git --version
 vim=$(select_vim)
 echo "Selected Vim: $vim"
 if [ "${1:-}" = '!' ]; then
-  $vim -Nu $TEMP/mini-vimrc -c 'Vader! test.vader' > /dev/null &&
-  prepare &&
-  $vim -Nu $TEMP/mini-vimrc -c 'let g:plug_threads = 1 | Vader! test.vader' > /dev/null
+  FAIL=0
+  $vim -Nu $TEMP/mini-vimrc -c 'Vader! test.vader' > /dev/null || FAIL=1
+  prepare
+  $vim -Nu $TEMP/mini-vimrc -c 'let g:plug_threads = 1 | Vader! test.vader' > /dev/null || FAIL=1
+  test $FAIL -eq 0
 else
   $vim -Nu $TEMP/mini-vimrc -c 'Vader test.vader'
 fi
