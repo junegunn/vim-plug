@@ -2211,6 +2211,14 @@ function! s:system_chomp(...)
   return v:shell_error ? '' : substitute(ret, '\n$', '', '')
 endfunction
 
+function! s:git_get_branch(dir)
+  let result = s:lines(s:system('git symbolic-ref --short HEAD', a:dir))
+  if v:shell_error
+    return ''
+  endif
+  return result[-1]
+endfunction
+
 function! s:git_validate(spec, check_branch)
   let err = ''
   if isdirectory(a:spec.dir)
@@ -2234,6 +2242,9 @@ function! s:git_validate(spec, check_branch)
       endif
     elseif a:check_branch
       let branch = result[0]
+      if empty(branch)
+        let branch = 'HEAD'
+      endif
       " Check tag
       if has_key(a:spec, 'tag')
         let tag = s:system_chomp('git describe --exact-match --tags HEAD 2>&1', a:spec.dir)
@@ -2242,7 +2253,7 @@ function! s:git_validate(spec, check_branch)
                 \ (empty(tag) ? 'N/A' : tag), a:spec.tag)
         endif
       " Check branch
-      elseif a:spec.branch !=# branch
+      elseif a:spec.branch != '' && a:spec.branch !=# branch
         let err = printf('Invalid branch: %s (expected: %s). Try PlugUpdate.',
               \ branch, a:spec.branch)
       endif
