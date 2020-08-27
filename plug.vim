@@ -106,7 +106,7 @@ if s:is_win && &shellslash
 else
   let s:me = resolve(expand('<sfile>:p'))
 endif
-let s:base_spec = { 'branch': 'master', 'frozen': 0 }
+let s:base_spec = { 'branch': '', 'frozen': 0 }
 let s:TYPE = {
 \   'string':  type(''),
 \   'list':    type([]),
@@ -649,7 +649,7 @@ function! s:parse_options(arg)
     call extend(opts, a:arg)
     for opt in ['branch', 'tag', 'commit', 'rtp', 'dir', 'as']
       if has_key(opts, opt)
-      \ && (type(opts[opt]) != s:TYPE.string || empty(opts[opt]))
+      \ && (type(opts[opt]) != s:TYPE.string || (opt != 'branch' && empty(opts[opt])))
         throw printf(opt_errfmt, opt, 'string')
       endif
     endfor
@@ -1206,7 +1206,10 @@ function! s:update_finish()
         call s:log4(name, 'Checking out '.tag)
         let out = s:system('git checkout -q '.plug#shellescape(tag).' -- 2>&1', spec.dir)
       else
-        let branch = get(spec, 'branch', 'master')
+        let branch = get(spec, 'branch', '')
+        if empty(branch)
+          let branch = s:git_get_branch(spec.dir)
+        endif
         call s:log4(name, 'Merging origin/'.s:esc(branch))
         let out = s:system('git checkout -q '.plug#shellescape(branch).' -- 2>&1'
               \. (has_key(s:update.new, name) ? '' : ('&& git merge --ff-only '.plug#shellescape('origin/'.branch).' 2>&1')), spec.dir)
