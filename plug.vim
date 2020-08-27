@@ -2336,7 +2336,7 @@ function! s:git_validate(spec, check_branch)
                 \ (empty(tag) ? 'N/A' : tag), a:spec.tag)
         endif
       " Check branch
-      elseif a:spec.branch !=# branch
+      elseif a:spec.branch != '' && a:spec.branch !=# branch
         let err = printf('Invalid branch: %s (expected: %s). Try PlugUpdate.',
               \ branch, a:spec.branch)
       endif
