@@ -2343,7 +2343,7 @@ function! s:git_validate(spec, check_branch)
       if empty(err)
         let result = split(s:lastline(s:system(printf(
                 \ 'git rev-list --count --left-right HEAD...origin/%s',
-                \ a:spec.branch), a:spec.dir)), '\t')
+                \ branch), a:spec.dir)), '\t')
         if !v:shell_error && len(result) == 2
           let [ahead, behind] = result
           if ahead
@@ -2352,11 +2352,11 @@ function! s:git_validate(spec, check_branch)
               " pushable (and probably not that messed up).
               let err = printf(
                     \ "Diverged from origin/%s (%d commit(s) ahead and %d commit(s) behind!\n"
-                    \ .'Backup local changes and run PlugClean and PlugUpdate to reinstall it.', a:spec.branch, ahead, behind)
+                    \ .'Backup local changes and run PlugClean and PlugUpdate to reinstall it.', branch, ahead, behind)
             else
               let err = printf("Ahead of origin/%s by %d commit(s).\n"
                     \ .'Cannot update until local changes are pushed.',
-                    \ a:spec.branch, ahead)
+                    \ branch, ahead)
             endif
           endif
         endif
