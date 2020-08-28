@@ -1206,10 +1206,7 @@ function! s:update_finish()
         call s:log4(name, 'Checking out '.tag)
         let out = s:system('git checkout -q '.plug#shellescape(tag).' -- 2>&1', spec.dir)
       else
-        let branch = get(spec, 'branch', '')
-        if empty(branch)
-          let branch = s:git_get_branch(spec.dir)
-        endif
+        let branch = s:git_origin_branch(spec)
         call s:log4(name, 'Merging origin/'.s:esc(branch))
         let out = s:system('git checkout -q '.plug#shellescape(branch).' -- 2>&1'
               \. (has_key(s:update.new, name) ? '' : ('&& git merge --ff-only '.plug#shellescape('origin/'.branch).' 2>&1')), spec.dir)
@@ -2211,12 +2208,20 @@ function! s:system_chomp(...)
   return v:shell_error ? '' : substitute(ret, '\n$', '', '')
 endfunction
 
-function! s:git_get_branch(dir)
-  let result = s:lines(s:system('git symbolic-ref --short HEAD', a:dir))
-  if v:shell_error
-    return ''
+function! s:git_origin_branch(spec)
+  if len(a:spec.branch)
+    return a:spec.branch
   endif
-  return result[-1]
+
+  " The file may not be present if this is a local repository
+  let origin_head = a:spec.dir.'/.git/refs/remotes/origin/HEAD'
+  if filereadable(origin_head)
+    return split(readfile(origin_head)[0], 'refs/remotes/origin/')[-1]
+  endif
+
+  " The command may not return the name of a branch in detached HEAD state
+  let result = s:lines(s:system('git symbolic-ref --short HEAD', a:spec.dir))
+  return v:shell_error ? '' : result[-1]
 endfunction
 
 function! s:git_validate(spec, check_branch)
@@ -2241,11 +2246,9 @@ function! s:git_validate(spec, check_branch)
                       \ 'PlugUpdate required.'], "\n")
       endif
     elseif a:check_branch
-      let branch = result[0]
-      if empty(branch)
-        let branch = 'HEAD'
-      endif
+      let current_branch = result[0]
       " Check tag
+      let origin_branch = s:git_origin_branch(a:spec)
       if has_key(a:spec, 'tag')
         let tag = s:system_chomp('git describe --exact-match --tags HEAD 2>&1', a:spec.dir)
         if a:spec.tag !=# tag && a:spec.tag !~ '\*'
@@ -2253,14 +2256,14 @@ function! s:git_validate(spec, check_branch)
                 \ (empty(tag) ? 'N/A' : tag), a:spec.tag)
         endif
       " Check branch
-      elseif a:spec.branch != '' && a:spec.branch !=# branch
+      elseif origin_branch !=# current_branch
         let err = printf('Invalid branch: %s (expected: %s). Try PlugUpdate.',
-              \ branch, a:spec.branch)
+              \ current_branch, origin_branch)
       endif
       if empty(err)
         let [ahead, behind] = split(s:lastline(s:system([
         \ 'git', 'rev-list', '--count', '--left-right',
-        \ printf('HEAD...origin/%s', branch)
+        \ printf('HEAD...origin/%s', origin_branch)
         \ ], a:spec.dir)), '\t')
         if !v:shell_error && ahead
           if behind
@@ -2268,11 +2271,11 @@ function! s:git_validate(spec, check_branch)
             " pushable (and probably not that messed up).
             let err = printf(
                   \ "Diverged from origin/%s (%d commit(s) ahead and %d commit(s) behind!\n"
-                  \ .'Backup local changes and run PlugClean and PlugUpdate to reinstall it.', branch, ahead, behind)
+                  \ .'Backup local changes and run PlugClean and PlugUpdate to reinstall it.', origin_branch, ahead, behind)
           else
             let err = printf("Ahead of origin/%s by %d commit(s).\n"
                   \ .'Cannot update until local changes are pushed.',
-                  \ branch, ahead)
+                  \ origin_branch, ahead)
           endif
         endif
       endif
@@ -2586,18 +2589,6 @@ endfunction
 
 function! s:append_ul(lnum, text)
   call append(a:lnum, ['', a:text, repeat('-', len(a:text))])
-endfunction
-
-function! s:git_origin_branch(spec)
-  if len(a:spec.branch)
-    return a:spec.branch
-  endif
-
-  let origin_head = a:spec.dir.'/.git/refs/remotes/origin/HEAD'
-  if !filereadable(origin_head)
-    return ''
-  endif
-  return split(readfile(origin_head)[0], '/')[-1]
 endfunction
 
 function! s:diff()
