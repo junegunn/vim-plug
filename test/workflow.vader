@@ -68,13 +68,13 @@ Execute (Test Plug command):
   " Git URI
   Plug 'file:///tmp/vim-plug-test/jg/vim-emoji'
   AssertEqual 'file:///tmp/vim-plug-test/jg/vim-emoji', g:plugs['vim-emoji'].uri
-  AssertEqual 'master', g:plugs['vim-emoji'].branch
+  AssertEqual '', g:plugs['vim-emoji'].branch
   AssertEqual join([g:temp_plugged, 'vim-emoji/'], '/'), g:plugs['vim-emoji'].dir
 
   " vim-scripts/
   Plug 'vim-scripts/beauty256'
   AssertEqual 'file:///tmp/vim-plug-test/vim-scripts/beauty256', g:plugs.beauty256.uri
-  AssertEqual 'master', g:plugs.beauty256.branch
+  AssertEqual '', g:plugs.beauty256.branch
 
   AssertEqual 4, len(g:plugs)
 
