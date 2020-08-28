@@ -646,25 +646,25 @@ function! s:parse_options(arg)
     endif
     let opts.tag = a:arg
   elseif type == s:TYPE.dict
-    call extend(opts, a:arg)
     for opt in ['branch', 'tag', 'commit', 'rtp', 'dir', 'as']
-      if has_key(opts, opt)
-      \ && (type(opts[opt]) != s:TYPE.string || (opt != 'branch' && empty(opts[opt])))
+      if has_key(a:arg, opt)
+      \ && (type(a:arg[opt]) != s:TYPE.string || empty(a:arg[opt]))
         throw printf(opt_errfmt, opt, 'string')
       endif
     endfor
     for opt in ['on', 'for']
-      if has_key(opts, opt)
-      \ && type(opts[opt]) != s:TYPE.list
-      \ && (type(opts[opt]) != s:TYPE.string || empty(opts[opt]))
+      if has_key(a:arg, opt)
+      \ && type(a:arg[opt]) != s:TYPE.list
+      \ && (type(a:arg[opt]) != s:TYPE.string || empty(a:arg[opt]))
         throw printf(opt_errfmt, opt, 'string or list')
       endif
     endfor
-    if has_key(opts, 'do')
-      \ && type(opts.do) != s:TYPE.funcref
-      \ && (type(opts.do) != s:TYPE.string || empty(opts.do))
+    if has_key(a:arg, 'do')
+      \ && type(a:arg.do) != s:TYPE.funcref
+      \ && (type(a:arg.do) != s:TYPE.string || empty(a:arg.do))
         throw printf(opt_errfmt, 'do', 'string or funcref')
     endif
+    call extend(opts, a:arg)
     if has_key(opts, 'dir')
       let opts.dir = s:dirpath(s:plug_expand(opts.dir))
     endif
