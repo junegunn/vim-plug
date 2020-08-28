@@ -2588,6 +2588,18 @@ function! s:append_ul(lnum, text)
   call append(a:lnum, ['', a:text, repeat('-', len(a:text))])
 endfunction
 
+function! s:git_origin_branch(spec)
+  if len(a:spec.branch)
+    return a:spec.branch
+  endif
+
+  let origin_head = a:spec.dir.'/.git/refs/remotes/origin/HEAD'
+  if !filereadable(origin_head)
+    return ''
+  endif
+  return split(readfile(origin_head)[0], '/')[-1]
+endfunction
+
 function! s:diff()
   call s:prepare()
   call append(0, ['Collecting changes ...', ''])
@@ -2602,20 +2614,23 @@ function! s:diff()
     endif
     call s:append_ul(2, origin ? 'Pending updates:' : 'Last update:')
     for [k, v] in plugs
-      let range = origin ? '..origin/'.v.branch : 'HEAD@{1}..'
-      let cmd = ['git', 'log', '--graph', '--color=never']
-      if s:git_version_requirement(2, 10, 0)
-        call add(cmd, '--no-show-signature')
-      endif
-      call extend(cmd, ['--pretty=format:%x01%h%x01%d%x01%s%x01%cr', range])
-      if has_key(v, 'rtp')
-        call extend(cmd, ['--', v.rtp])
-      endif
-      let diff = s:system_chomp(cmd, v.dir)
-      if !empty(diff)
-        let ref = has_key(v, 'tag') ? (' (tag: '.v.tag.')') : has_key(v, 'commit') ? (' '.v.commit) : ''
-        call append(5, extend(['', '- '.k.':'.ref], map(s:lines(diff), 's:format_git_log(v:val)')))
-        let cnts[origin] += 1
+      let branch = s:git_origin_branch(v)
+      if len(branch)
+        let range = origin ? '..origin/'.branch : 'HEAD@{1}..'
+        let cmd = ['git', 'log', '--graph', '--color=never']
+        if s:git_version_requirement(2, 10, 0)
+          call add(cmd, '--no-show-signature')
+        endif
+        call extend(cmd, ['--pretty=format:%x01%h%x01%d%x01%s%x01%cr', range])
+        if has_key(v, 'rtp')
+          call extend(cmd, ['--', v.rtp])
+        endif
+        let diff = s:system_chomp(cmd, v.dir)
+        if !empty(diff)
+          let ref = has_key(v, 'tag') ? (' (tag: '.v.tag.')') : has_key(v, 'commit') ? (' '.v.commit) : ''
+          call append(5, extend(['', '- '.k.':'.ref], map(s:lines(diff), 's:format_git_log(v:val)')))
+          let cnts[origin] += 1
+        endif
       endif
       let bar .= '='
       call s:progress_bar(2, bar, len(total))
