@@ -25,7 +25,7 @@
 "   Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
 "   Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 "
-"   " Using a non-master branch
+"   " Using a non-default branch
 "   Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
 "
 "   " Using a tagged release; wildcard allowed (requires git 1.9.2 or above)
@@ -106,7 +106,7 @@ if s:is_win && &shellslash
 else
   let s:me = resolve(expand('<sfile>:p'))
 endif
-let s:base_spec = { 'branch': 'master', 'frozen': 0 }
+let s:base_spec = { 'branch': '', 'frozen': 0 }
 let s:TYPE = {
 \   'string':  type(''),
 \   'list':    type([]),
@@ -744,25 +744,25 @@ function! s:parse_options(arg)
     endif
     let opts.tag = a:arg
   elseif type == s:TYPE.dict
-    call extend(opts, a:arg)
     for opt in ['branch', 'tag', 'commit', 'rtp', 'dir', 'as']
-      if has_key(opts, opt)
-      \ && (type(opts[opt]) != s:TYPE.string || empty(opts[opt]))
+      if has_key(a:arg, opt)
+      \ && (type(a:arg[opt]) != s:TYPE.string || empty(a:arg[opt]))
         throw printf(opt_errfmt, opt, 'string')
       endif
     endfor
     for opt in ['on', 'for']
-      if has_key(opts, opt)
-      \ && type(opts[opt]) != s:TYPE.list
-      \ && (type(opts[opt]) != s:TYPE.string || empty(opts[opt]))
+      if has_key(a:arg, opt)
+      \ && type(a:arg[opt]) != s:TYPE.list
+      \ && (type(a:arg[opt]) != s:TYPE.string || empty(a:arg[opt]))
         throw printf(opt_errfmt, opt, 'string or list')
       endif
     endfor
-    if has_key(opts, 'do')
-      \ && type(opts.do) != s:TYPE.funcref
-      \ && (type(opts.do) != s:TYPE.string || empty(opts.do))
+    if has_key(a:arg, 'do')
+      \ && type(a:arg.do) != s:TYPE.funcref
+      \ && (type(a:arg.do) != s:TYPE.string || empty(a:arg.do))
         throw printf(opt_errfmt, 'do', 'string or funcref')
     endif
+    call extend(opts, a:arg)
     if has_key(opts, 'dir')
       let opts.dir = s:dirpath(s:plug_expand(opts.dir))
     endif
@@ -1304,7 +1304,7 @@ function! s:update_finish()
         call s:log4(name, 'Checking out '.tag)
         let out = s:system('git checkout -q '.plug#shellescape(tag).' -- 2>&1', spec.dir)
       else
-        let branch = get(spec, 'branch', 'master')
+        let branch = s:git_origin_branch(spec)
         call s:log4(name, 'Merging origin/'.s:esc(branch))
         let out = s:system('git checkout -q '.plug#shellescape(branch).' -- 2>&1'
               \. (has_key(s:update.new, name) ? '' : ('&& git merge --ff-only '.plug#shellescape('origin/'.branch).' 2>&1')), spec.dir)
@@ -2306,6 +2306,22 @@ function! s:system_chomp(...)
   return v:shell_error ? '' : substitute(ret, '\n$', '', '')
 endfunction
 
+function! s:git_origin_branch(spec)
+  if len(a:spec.branch)
+    return a:spec.branch
+  endif
+
+  " The file may not be present if this is a local repository
+  let origin_head = a:spec.dir.'/.git/refs/remotes/origin/HEAD'
+  if filereadable(origin_head)
+    return split(readfile(origin_head)[0], 'refs/remotes/origin/')[-1]
+  endif
+
+  " The command may not return the name of a branch in detached HEAD state
+  let result = s:lines(s:system('git symbolic-ref --short HEAD', a:spec.dir))
+  return v:shell_error ? '' : result[-1]
+endfunction
+
 function! s:git_validate(spec, check_branch)
   let err = ''
   if isdirectory(a:spec.dir)
@@ -2327,8 +2343,9 @@ function! s:git_validate(spec, check_branch)
                       \ 'PlugUpdate required.'], "\n")
       endif
     elseif a:check_branch
-      let branch = result[0]
+      let current_branch = result[0]
       " Check tag
+      let origin_branch = s:git_origin_branch(a:spec)
       if has_key(a:spec, 'tag')
         let tag = s:system_chomp('git describe --exact-match --tags HEAD 2>&1', a:spec.dir)
         if a:spec.tag !=# tag && a:spec.tag !~ '\*'
@@ -2336,28 +2353,26 @@ function! s:git_validate(spec, check_branch)
                 \ (empty(tag) ? 'N/A' : tag), a:spec.tag)
         endif
       " Check branch
-      elseif a:spec.branch != '' && a:spec.branch !=# branch
+      elseif origin_branch !=# current_branch
         let err = printf('Invalid branch: %s (expected: %s). Try PlugUpdate.',
-              \ branch, a:spec.branch)
+              \ current_branch, origin_branch)
       endif
       if empty(err)
-        let result = split(s:lastline(s:system(printf(
-                \ 'git rev-list --count --left-right HEAD...origin/%s',
-                \ branch), a:spec.dir)), '\t')
-        if !v:shell_error && len(result) == 2
-          let [ahead, behind] = result
-          if ahead
-            if behind
-              " Only mention PlugClean if diverged, otherwise it's likely to be
-              " pushable (and probably not that messed up).
-              let err = printf(
-                    \ "Diverged from origin/%s (%d commit(s) ahead and %d commit(s) behind!\n"
-                    \ .'Backup local changes and run PlugClean and PlugUpdate to reinstall it.', branch, ahead, behind)
-            else
-              let err = printf("Ahead of origin/%s by %d commit(s).\n"
-                    \ .'Cannot update until local changes are pushed.',
-                    \ branch, ahead)
-            endif
+        let [ahead, behind] = split(s:lastline(s:system([
+        \ 'git', 'rev-list', '--count', '--left-right',
+        \ printf('HEAD...origin/%s', origin_branch)
+        \ ], a:spec.dir)), '\t')
+        if !v:shell_error && ahead
+          if behind
+            " Only mention PlugClean if diverged, otherwise it's likely to be
+            " pushable (and probably not that messed up).
+            let err = printf(
+                  \ "Diverged from origin/%s (%d commit(s) ahead and %d commit(s) behind!\n"
+                  \ .'Backup local changes and run PlugClean and PlugUpdate to reinstall it.', origin_branch, ahead, behind)
+          else
+            let err = printf("Ahead of origin/%s by %d commit(s).\n"
+                  \ .'Cannot update until local changes are pushed.',
+                  \ origin_branch, ahead)
           endif
         endif
       endif
@@ -2687,20 +2702,23 @@ function! s:diff()
     endif
     call s:append_ul(2, origin ? 'Pending updates:' : 'Last update:')
     for [k, v] in plugs
-      let range = origin ? '..origin/'.v.branch : 'HEAD@{1}..'
-      let cmd = ['git', 'log', '--graph', '--color=never']
-      if s:git_version_requirement(2, 10, 0)
-        call add(cmd, '--no-show-signature')
-      endif
-      call extend(cmd, ['--pretty=format:%x01%h%x01%d%x01%s%x01%cr', range])
-      if has_key(v, 'rtp')
-        call extend(cmd, ['--', v.rtp])
-      endif
-      let diff = s:system_chomp(cmd, v.dir)
-      if !empty(diff)
-        let ref = has_key(v, 'tag') ? (' (tag: '.v.tag.')') : has_key(v, 'commit') ? (' '.v.commit) : ''
-        call append(5, extend(['', '- '.k.':'.ref], map(s:lines(diff), 's:format_git_log(v:val)')))
-        let cnts[origin] += 1
+      let branch = s:git_origin_branch(v)
+      if len(branch)
+        let range = origin ? '..origin/'.branch : 'HEAD@{1}..'
+        let cmd = ['git', 'log', '--graph', '--color=never']
+        if s:git_version_requirement(2, 10, 0)
+          call add(cmd, '--no-show-signature')
+        endif
+        call extend(cmd, ['--pretty=format:%x01%h%x01%d%x01%s%x01%cr', range])
+        if has_key(v, 'rtp')
+          call extend(cmd, ['--', v.rtp])
+        endif
+        let diff = s:system_chomp(cmd, v.dir)
+        if !empty(diff)
+          let ref = has_key(v, 'tag') ? (' (tag: '.v.tag.')') : has_key(v, 'commit') ? (' '.v.commit) : ''
+          call append(5, extend(['', '- '.k.':'.ref], map(s:lines(diff), 's:format_git_log(v:val)')))
+          let cnts[origin] += 1
+        endif
       endif
       let bar .= '='
       call s:progress_bar(2, bar, len(total))
