@@ -204,6 +204,7 @@ Reload .vimrc and `:PlugInstall` to install plugins.
 
 < Plug options >______________________________________________________________~
                                                                   *plug-options*
+                                                                         *:Plug*
 
  ------------------------+-----------------------------------------------
  Option                  | Description                                   ~
