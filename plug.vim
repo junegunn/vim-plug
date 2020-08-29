@@ -25,7 +25,7 @@
 "   Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
 "   Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 "
-"   " Using a non-master branch
+"   " Using a non-default branch
 "   Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
 "
 "   " Using a tagged release; wildcard allowed (requires git 1.9.2 or above)
