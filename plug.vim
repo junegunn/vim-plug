@@ -193,6 +193,7 @@ function! s:git_get_revision(dir) abort
         endif
       endfor
     endif
+    return l:line
   catch
   endtry
   return ''
@@ -208,7 +209,7 @@ function! s:git_get_branch(dir) abort
     if l:line =~# '^ref: refs/heads/'
       return l:line[16:]
     endif
-    return ''
+    return 'HEAD'
   catch
     return ''
   endtry
