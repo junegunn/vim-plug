@@ -12,11 +12,11 @@ jobs:
       dist: trusty
       stage: vim8
     - env: ENV=neovim-stable
-      dist: xenial
+      dist: bionic
       addons: {apt: {packages: [neovim], sources: [{sourceline: 'ppa:neovim-ppa/stable'}]}}
       stage: neovim
     - env: ENV=neovim-nightly
-      dist: xenial
+      dist: bionic
       addons: {apt: {packages: [neovim], sources: [{sourceline: 'ppa:neovim-ppa/unstable'}]}}
       stage: neovim
     - env: ENV=vim74-trusty-python
