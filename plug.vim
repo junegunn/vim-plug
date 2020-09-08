@@ -116,6 +116,80 @@ let s:TYPE = {
 let s:loaded = get(s:, 'loaded', {})
 let s:triggers = get(s:, 'triggers', {})
 
+function! s:isabsolute(dir) abort
+  return a:dir =~# '^/' || (has('win32') && a:dir =~? '^\%(\\\|[A-Z]:\)')
+endfunction
+
+function! s:get_gitdir(dir) abort
+  let gitdir = a:dir . '/.git'
+  if isdirectory(gitdir)
+    return gitdir
+  endif
+  try
+    let line = readfile(gitdir)[0]
+    if line =~# '^gitdir: '
+      let gitdir = line[8:]
+      if !s:isabsolute(gitdir)
+        let gitdir = a:dir . '/' . gitdir
+      endif
+      if isdirectory(gitdir)
+        return gitdir
+      endif
+    endif
+  catch
+  endtry
+  return ''
+endfunction
+
+function! s:git_get_remote_origin_url(dir) abort
+  let gitdir = s:get_gitdir(a:dir)
+  let config = gitdir . '/config'
+  if empty(gitdir) || !filereadable(config)
+    return ''
+  endif
+  return matchstr(join(readfile(config)), '\[remote "origin"\].\{-}url\s*=\s*\zs\S*\ze')
+endfunction
+
+function! s:git_get_revision(dir) abort
+  let gitdir = s:get_gitdir(a:dir)
+  if gitdir ==# ''
+    return ''
+  endif
+  try
+    let line = readfile(gitdir . '/HEAD')[0]
+    if line =~# '^ref: '
+      let ref = line[5:]
+      if filereadable(gitdir . '/' . ref)
+        return readfile(gitdir . '/' . ref)[0]
+      endif
+      for line in readfile(gitdir . '/packed-refs')
+        if line =~# ' ' . ref
+          return substitute(line, '^\([0-9a-f]*\) ', '\1', '')
+        endif
+      endfor
+    endif
+    return l:line
+  catch
+  endtry
+  return ''
+endfunction
+
+function! s:git_get_branch(dir) abort
+  let gitdir = s:get_gitdir(a:dir)
+  if gitdir ==# ''
+    return ''
+  endif
+  try
+    let line = readfile(gitdir . '/HEAD')[0]
+    if line =~# '^ref: refs/heads/'
+      return line[16:]
+    endif
+    return 'HEAD'
+  catch
+    return ''
+  endtry
+endfunction
+
 if s:is_win
   function! s:plug_call(fn, ...)
     let shellslash = &shellslash
@@ -991,8 +1065,8 @@ endfunction
 
 function! s:checkout(spec)
   let sha = a:spec.commit
-  let output = s:system(['git', 'rev-parse', 'HEAD'], a:spec.dir)
-  if !v:shell_error && !s:hash_match(sha, s:lines(output)[0])
+  let output = s:git_get_revision(a:spec.dir)
+  if !empty(output) && !s:hash_match(sha, s:lines(output)[0])
     let output = s:system(
           \ 'git fetch --depth 999999 && git checkout '.plug#shellescape(sha).' --', a:spec.dir)
   endif
@@ -2227,18 +2301,17 @@ endfunction
 function! s:git_validate(spec, check_branch)
   let err = ''
   if isdirectory(a:spec.dir)
-    let result = s:lines(s:system('git rev-parse --abbrev-ref HEAD 2>&1 && git config -f .git/config remote.origin.url', a:spec.dir))
+    let result = [s:git_get_branch(a:spec.dir), s:git_get_remote_origin_url(a:spec.dir)]
     let remote = result[-1]
-    if v:shell_error
+    if empty(remote)
       let err = join([remote, 'PlugClean required.'], "\n")
     elseif !s:compare_git_uri(remote, a:spec.uri)
       let err = join(['Invalid URI: '.remote,
                     \ 'Expected:    '.a:spec.uri,
                     \ 'PlugClean required.'], "\n")
     elseif a:check_branch && has_key(a:spec, 'commit')
-      let result = s:lines(s:system('git rev-parse HEAD 2>&1', a:spec.dir))
-      let sha = result[-1]
-      if v:shell_error
+      let sha = s:git_get_revision(a:spec.dir)
+      if empty(sha)
         let err = join(add(result, 'PlugClean required.'), "\n")
       elseif !s:hash_match(sha, a:spec.commit)
         let err = join([printf('Invalid HEAD (expected: %s, actual: %s)',
@@ -2683,7 +2756,7 @@ function! s:snapshot(force, ...) abort
   let names = sort(keys(filter(copy(g:plugs),
         \'has_key(v:val, "uri") && !has_key(v:val, "commit") && isdirectory(v:val.dir)')))
   for name in reverse(names)
-    let sha = s:system_chomp(['git', 'rev-parse', '--short', 'HEAD'], g:plugs[name].dir)
+    let sha = s:git_get_revision(g:plugs[name].dir)
     if !empty(sha)
       call append(anchor, printf("silent! let g:plugs['%s'].commit = '%s'", name, sha))
       redraw
