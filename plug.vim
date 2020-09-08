@@ -120,29 +120,23 @@ function! s:isabsolute(dir) abort
   return a:dir =~# '^/' || (has('win32') && a:dir =~? '^\%(\\\|[A-Z]:\)')
 endfunction
 
-function! s:get_gitdir(dir) abort
-  let gitdir = a:dir . '/.git'
+function! s:git_dir(dir) abort
+  let gitdir = s:trim(a:dir) . '/.git'
   if isdirectory(gitdir)
     return gitdir
   endif
-  try
-    let line = readfile(gitdir)[0]
-    if line =~# '^gitdir: '
-      let gitdir = line[8:]
-      if !s:isabsolute(gitdir)
-        let gitdir = a:dir . '/' . gitdir
-      endif
-      if isdirectory(gitdir)
-        return gitdir
-      endif
-    endif
-  catch
-  endtry
-  return ''
+  if !filereadable(gitdir)
+    return ''
+  endif
+  let gitdir = matchstr(get(readfile(gitdir), 0, ''), '^gitdir: \zs.*')
+  if len(gitdir) && !s:isabsolute(gitdir)
+    let gitdir = a:dir . '/' . gitdir
+  endif
+  return isdirectory(gitdir) ? gitdir : ''
 endfunction
 
-function! s:git_get_remote_origin_url(dir) abort
-  let gitdir = s:get_gitdir(a:dir)
+function! s:git_origin_url(dir) abort
+  let gitdir = s:git_dir(a:dir)
   let config = gitdir . '/config'
   if empty(gitdir) || !filereadable(config)
     return ''
@@ -150,44 +144,60 @@ function! s:git_get_remote_origin_url(dir) abort
   return matchstr(join(readfile(config)), '\[remote "origin"\].\{-}url\s*=\s*\zs\S*\ze')
 endfunction
 
-function! s:git_get_revision(dir) abort
-  let gitdir = s:get_gitdir(a:dir)
-  if gitdir ==# ''
+function! s:git_revision(dir) abort
+  let gitdir = s:git_dir(a:dir)
+  let head = gitdir . '/HEAD'
+  if empty(gitdir) || !filereadable(head)
     return ''
   endif
-  try
-    let line = readfile(gitdir . '/HEAD')[0]
-    if line =~# '^ref: '
-      let ref = line[5:]
-      if filereadable(gitdir . '/' . ref)
-        return readfile(gitdir . '/' . ref)[0]
+
+  let line = get(readfile(head), 0, '')
+  let ref = matchstr(line, '^ref: \zs.*')
+  if empty(ref)
+    return line
+  endif
+
+  if filereadable(gitdir . '/' . ref)
+    return get(readfile(gitdir . '/' . ref), 0, '')
+  endif
+
+  if filereadable(gitdir . '/packed-refs')
+    for line in readfile(gitdir . '/packed-refs')
+      if line =~# ' ' . ref
+        return matchstr(line, '^[0-9a-f]*')
       endif
-      for line in readfile(gitdir . '/packed-refs')
-        if line =~# ' ' . ref
-          return substitute(line, '^\([0-9a-f]*\) ', '\1', '')
-        endif
-      endfor
-    endif
-    return l:line
-  catch
-  endtry
+    endfor
+  endif
+
   return ''
 endfunction
 
-function! s:git_get_branch(dir) abort
-  let gitdir = s:get_gitdir(a:dir)
-  if gitdir ==# ''
+function! s:git_local_branch(dir) abort
+  let gitdir = s:git_dir(a:dir)
+  let head = gitdir . '/HEAD'
+  if empty(gitdir) || !filereadable(head)
     return ''
   endif
-  try
-    let line = readfile(gitdir . '/HEAD')[0]
-    if line =~# '^ref: refs/heads/'
-      return line[16:]
-    endif
-    return 'HEAD'
-  catch
-    return ''
-  endtry
+  let branch = matchstr(get(readfile(head), 0, ''), '^ref: refs/heads/\zs.*')
+  return len(branch) ? branch : 'HEAD'
+endfunction
+
+function! s:git_origin_branch(spec)
+  if len(a:spec.branch)
+    return a:spec.branch
+  endif
+
+  " The file may not be present if this is a local repository
+  let gitdir = s:git_dir(a:spec.dir)
+  let origin_head = gitdir.'/refs/remotes/origin/HEAD'
+  if len(gitdir) && filereadable(origin_head)
+    return matchstr(get(readfile(origin_head), 0, ''),
+                  \ '^ref: refs/remotes/origin/\zs.*')
+  endif
+
+  " The command may not return the name of a branch in detached HEAD state
+  let result = s:lines(s:system('git symbolic-ref --short HEAD', a:spec.dir))
+  return v:shell_error ? '' : result[-1]
 endfunction
 
 if s:is_win
@@ -1065,7 +1075,7 @@ endfunction
 
 function! s:checkout(spec)
   let sha = a:spec.commit
-  let output = s:git_get_revision(a:spec.dir)
+  let output = s:git_revision(a:spec.dir)
   if !empty(output) && !s:hash_match(sha, s:lines(output)[0])
     let output = s:system(
           \ 'git fetch --depth 999999 && git checkout '.plug#shellescape(sha).' --', a:spec.dir)
@@ -2282,26 +2292,10 @@ function! s:system_chomp(...)
   return v:shell_error ? '' : substitute(ret, '\n$', '', '')
 endfunction
 
-function! s:git_origin_branch(spec)
-  if len(a:spec.branch)
-    return a:spec.branch
-  endif
-
-  " The file may not be present if this is a local repository
-  let origin_head = a:spec.dir.'/.git/refs/remotes/origin/HEAD'
-  if filereadable(origin_head)
-    return split(readfile(origin_head)[0], 'refs/remotes/origin/')[-1]
-  endif
-
-  " The command may not return the name of a branch in detached HEAD state
-  let result = s:lines(s:system('git symbolic-ref --short HEAD', a:spec.dir))
-  return v:shell_error ? '' : result[-1]
-endfunction
-
 function! s:git_validate(spec, check_branch)
   let err = ''
   if isdirectory(a:spec.dir)
-    let result = [s:git_get_branch(a:spec.dir), s:git_get_remote_origin_url(a:spec.dir)]
+    let result = [s:git_local_branch(a:spec.dir), s:git_origin_url(a:spec.dir)]
     let remote = result[-1]
     if empty(remote)
       let err = join([remote, 'PlugClean required.'], "\n")
@@ -2310,7 +2304,7 @@ function! s:git_validate(spec, check_branch)
                     \ 'Expected:    '.a:spec.uri,
                     \ 'PlugClean required.'], "\n")
     elseif a:check_branch && has_key(a:spec, 'commit')
-      let sha = s:git_get_revision(a:spec.dir)
+      let sha = s:git_revision(a:spec.dir)
       if empty(sha)
         let err = join(add(result, 'PlugClean required.'), "\n")
       elseif !s:hash_match(sha, a:spec.commit)
@@ -2756,7 +2750,7 @@ function! s:snapshot(force, ...) abort
   let names = sort(keys(filter(copy(g:plugs),
         \'has_key(v:val, "uri") && !has_key(v:val, "commit") && isdirectory(v:val.dir)')))
   for name in reverse(names)
-    let sha = s:git_get_revision(g:plugs[name].dir)
+    let sha = s:git_revision(g:plugs[name].dir)
     if !empty(sha)
       call append(anchor, printf("silent! let g:plugs['%s'].commit = '%s'", name, sha))
       redraw
