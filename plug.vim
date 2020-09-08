@@ -143,36 +143,11 @@ endfunction
 
 function! s:git_get_remote_origin_url(dir) abort
   let gitdir = s:get_gitdir(a:dir)
-  if gitdir ==# ''
+  let config = gitdir . '/config'
+  if empty(gitdir) || !filereadable(config)
     return ''
   endif
-  try
-    let lines = readfile(gitdir . '/config')
-    let [n, ll, url] = [0, len(lines), '']
-    while n < ll
-      let line = s:trim(lines[n])
-      if stridx(line, '[remote "origin"]') != 0
-        let n += 1
-        continue
-      endif
-      let n += 1
-      while n < ll
-        let line = s:trim(lines[n])
-        if line ==# '['
-          break
-        endif
-        let url = matchstr(line, '^url\s*=\s*\zs[^ #]\+')
-        if !empty(url)
-          break
-        endif
-        let n += 1
-      endwhile
-      let n += 1
-    endwhile
-    return url
-  catch
-    return ''
-  endtry
+  return matchstr(join(readfile(config)), '\[remote "origin"\].\{-}url\s*=\s*\zs\S*\ze')
 endfunction
 
 function! s:git_get_revision(dir) abort
