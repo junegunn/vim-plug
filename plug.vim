@@ -1078,7 +1078,7 @@ function! s:checkout(spec)
   let output = s:git_revision(a:spec.dir)
   if !empty(output) && !s:hash_match(sha, s:lines(output)[0])
     let output = s:system(
-          \ 'git fetch --depth 999999 && git checkout '.plug#shellescape(sha).' --', a:spec.dir)
+          \ 'git -c credential.helper= fetch --depth 999999 && git checkout '.plug#shellescape(sha).' --', a:spec.dir)
   endif
   return output
 endfunction
@@ -1846,7 +1846,7 @@ class Plugin(object):
       self.write(Action.UPDATE, self.name, ['Updating ...'])
       callback = functools.partial(self.write, Action.UPDATE, self.name)
       fetch_opt = '--depth 99999999' if self.tag and os.path.isfile(os.path.join(self.args['dir'], '.git/shallow')) else ''
-      cmd = 'git fetch {0} {1} 2>&1'.format(fetch_opt, G_PROGRESS)
+      cmd = 'git -c credential.helper= fetch {0} {1} 2>&1'.format(fetch_opt, G_PROGRESS)
       com = Command(cmd, self.args['dir'], G_TIMEOUT, callback)
       result = com.execute(G_RETRIES)
       self.write(Action.DONE, self.name, result[-1:])
@@ -2154,7 +2154,7 @@ function! s:update_ruby()
                 if pull
                   log.call name, 'Updating ...', :update
                   fetch_opt = (tag && File.exist?(File.join(dir, '.git/shallow'))) ? '--depth 99999999' : ''
-                  bt.call "#{chdir} && git fetch #{fetch_opt} #{progress} 2>&1", name, :update, nil
+                  bt.call "#{chdir} && git -c credential.helper= fetch #{fetch_opt} #{progress} 2>&1", name, :update, nil
                 else
                   [true, skip]
                 end
