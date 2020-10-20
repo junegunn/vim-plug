@@ -1078,7 +1078,7 @@ function! s:checkout(spec)
   let output = s:git_revision(a:spec.dir)
   if !empty(output) && !s:hash_match(sha, s:lines(output)[0])
     let output = s:system(
-          \ 'git -c credential.helper="" fetch --depth 999999 && git checkout '.plug#shellescape(sha).' --', a:spec.dir)
+          \ 'git -c credential.helper= fetch --depth 999999 && git checkout '.plug#shellescape(sha).' --', a:spec.dir)
   endif
   return output
 endfunction
