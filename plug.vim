@@ -804,7 +804,7 @@ function! s:syntax()
   syn match plugNumber /[0-9]\+[0-9.]*/ contained
   syn match plugBracket /[[\]]/ contained
   syn match plugX /x/ contained
-  syn match plugDash /^-/
+  syn match plugDash /^-\{1}\ /
   syn match plugPlus /^+/
   syn match plugStar /^*/
   syn match plugMessage /\(^- \)\@<=.*/
@@ -822,6 +822,7 @@ function! s:syntax()
   syn match plugError /^x.*/
   syn region plugDeleted start=/^\~ .*/ end=/^\ze\S/
   syn match plugH2 /^.*:\n-\+$/
+  syn match plugH2 /^-\{2,}/
   syn keyword Function PlugInstall PlugStatus PlugUpdate PlugClean
   hi def link plug1       Title
   hi def link plug2       Repeat
