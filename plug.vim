@@ -750,7 +750,9 @@ function! s:parse_options(arg)
     endif
     call extend(opts, a:arg)
     if has_key(opts, 'dir')
-      let opts.dir = s:dirpath(s:plug_expand(opts.dir))
+      exe 'cd' fnameescape(g:plug_home)
+      let opts.dir = s:dirpath(fnamemodify(s:plug_expand(opts.dir), ':p'))
+      cd -
     endif
   else
     throw 'Invalid argument type (expected: string or dictionary)'
