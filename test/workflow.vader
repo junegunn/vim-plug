@@ -428,12 +428,16 @@ Execute (New commits on remote, PlugUpdate, then PlugDiff):
   execute "normal Xy\<cr>"
   AssertExpect '^- ', 1
 
-  " q will close preview window as well
+  " q will only close preview window
   normal q
 
   " We no longer have preview window
   silent! wincmd P
   AssertEqual 0, &previewwindow
+
+  " And we're still on main vim-plug window
+  AssertEqual 'vim-plug', &filetype
+  normal q
 
   " q should not close preview window if it's already open
   pedit
@@ -459,6 +463,11 @@ Execute (Test g:plug_pwindow):
   AssertEqual 2, winnr()
   AssertEqual 5, winheight('.')
   wincmd p
+
+  " Close preview window
+  normal q
+
+  " Close main window
   normal q
   unlet g:plug_pwindow
 
