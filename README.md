@@ -32,7 +32,7 @@ and put it in the "autoload" directory.
 ###### Unix
 
 ```sh
-curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
+curl -kfLo ~/.vim/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 ```
 
@@ -53,14 +53,14 @@ iwr -useb https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim |`
 ###### Unix, Linux
 
 ```sh
-sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
+sh -c 'curl -kfLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 ```
 
 ###### Linux (Flatpak)
 
 ```sh
-curl -fLo ~/.var/app/io.neovim.nvim/data/nvim/site/autoload/plug.vim \
+curl -kfLo ~/.var/app/io.neovim.nvim/data/nvim/site/autoload/plug.vim \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 ```
 
