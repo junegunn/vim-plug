@@ -399,7 +399,7 @@ function! plug#end()
 
   for [cmd, names] in items(lod.cmd)
     execute printf(
-    \ 'command! -nargs=* -range -bang -complete=file %s call s:lod_cmd(%s, "<bang>", <line1>, <line2>, <q-args>, %s)',
+    \ 'command! -nargs=* -range -bang -complete=file %s call s:lod_cmd(%s, "<bang>", <line1>, <line2>, <q-args>, <q-mods> ,%s)',
     \ cmd, string(cmd), string(names))
   endfor
 
@@ -672,10 +672,10 @@ function! s:lod_ft(pat, names)
   call s:doautocmd('filetypeindent', 'FileType')
 endfunction
 
-function! s:lod_cmd(cmd, bang, l1, l2, args, names)
+function! s:lod_cmd(cmd, bang, l1, l2, args, mods, names)
   call s:lod(a:names, ['ftdetect', 'after/ftdetect', 'plugin', 'after/plugin'])
   call s:dobufread(a:names)
-  execute printf('%s%s%s %s', (a:l1 == a:l2 ? '' : (a:l1.','.a:l2)), a:cmd, a:bang, a:args)
+  execute printf('%s %s%s%s %s', a:mods, (a:l1 == a:l2 ? '' : (a:l1.','.a:l2)), a:cmd, a:bang, a:args)
 endfunction
 
 function! s:lod_map(map, names, with_prefix, prefix)
