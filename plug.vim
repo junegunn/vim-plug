@@ -1211,7 +1211,8 @@ function! s:update_impl(pull, force, args) abort
   let s:clone_opt = []
   if get(g:, 'plug_shallow', 1)
     call extend(s:clone_opt, ['--depth', '1'])
-    if s:git_version_requirement(1, 7, 10)
+    if s:git_version_requirement(2, 32)
+    elseif s:git_version_requirement(1, 7, 10)
       call add(s:clone_opt, '--no-single-branch')
     endif
   endif
