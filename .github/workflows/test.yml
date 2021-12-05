@@ -1,0 +1,52 @@
+---
+name: Test vim-plug
+
+on:
+  push:
+    branches: [master, devel]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        vim:
+          - vim
+          # FIXME: (core dumped) https://github.com/junegunn/vim-plug/runs/4422576984?check_suite_focus=true#step:3:238
+          # - neovim-stable
+          # - neovim-unstable
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install packages and test
+        env:
+          ENV: ${{ matrix.vim }}
+        run: |
+          export DEPS=~/deps
+          export PATH=~/deps/bin:$PATH
+
+          git config --global user.email "you@example.com"
+          git config --global user.name "Your Name"
+
+          case "$ENV" in
+            vim)
+              sudo apt-get install vim
+              ;;
+            neovim-*)
+              sudo add-apt-repository ppa:neovim-ppa/${ENV/neovim-/}
+              sudo apt-get update
+              sudo apt-get install neovim
+
+              mkdir -p $DEPS/bin
+              echo 'nvim "$@"' > $DEPS/bin/vim
+              chmod +x $DEPS/bin/vim
+              export VADER_OUTPUT_FILE=/dev/stderr
+              ;;
+          esac
+
+          test/run !
