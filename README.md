@@ -97,8 +97,9 @@ Add a vim-plug section to your `~/.vimrc` (or `stdpath('config') . '/init.vim'` 
 
 ```vim
 " Specify a directory for plugins
-" - For Windows: '~/vimfiles/plugged'
-" - For Neovim: stdpath('data') . '/plugged'
+" - For Vim (Linux/macOS): '~/.vim/plugged'
+" - For Vim (Windows): '~/vimfiles/plugged'
+" - For Neovim (Linux/macOS/Windows): stdpath('data') . '/plugged'
 " - Avoid using standard Vim directory names like 'plugin'
 call plug#begin('~/.vim/plugged')
 
