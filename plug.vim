@@ -242,6 +242,8 @@ function! plug#begin(...)
     let home = s:path(s:plug_fnamemodify(s:plug_expand(a:1), ':p'))
   elseif exists('g:plug_home')
     let home = s:path(g:plug_home)
+  elseif has('nvim')
+    let home = stdpath('data') . '/plugged'
   elseif !empty(&rtp)
     let home = s:path(split(&rtp, ',')[0]) . '/plugged'
   else

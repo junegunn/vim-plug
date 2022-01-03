@@ -87,7 +87,7 @@ iwr -useb https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim |`
 
 Add a vim-plug section to your `~/.vimrc` (or `stdpath('config') . '/init.vim'` for Neovim)
 
-1. Begin the section with `call plug#begin()`
+1. Begin the section with `call plug#begin([PLUGIN_DIR])`
 1. List the plugins with `Plug` commands
 1. `call plug#end()` to update `&runtimepath` and initialize plugin system
     - Automatically executes `filetype plugin indent on` and `syntax enable`.
@@ -96,12 +96,14 @@ Add a vim-plug section to your `~/.vimrc` (or `stdpath('config') . '/init.vim'` 
 #### Example
 
 ```vim
-" Specify a directory for plugins
-" - For Vim (Linux/macOS): '~/.vim/plugged'
-" - For Vim (Windows): '~/vimfiles/plugged'
-" - For Neovim (Linux/macOS/Windows): stdpath('data') . '/plugged'
-" - Avoid using standard Vim directory names like 'plugin'
-call plug#begin('~/.vim/plugged')
+call plug#begin()
+" The default plugin directory will be as follows:
+"   - Vim (Linux/macOS): '~/.vim/plugged'
+"   - Vim (Windows): '~/vimfiles/plugged'
+"   - Neovim (Linux/macOS/Windows): stdpath('data') . '/plugged'
+" You can specify a custom plugin directory by passing it as the argument
+"   - e.g. `call plug#begin('~/.vim/plugged')`
+"   - Avoid using standard Vim directory names like 'plugin'
 
 " Make sure you use single quotes
 

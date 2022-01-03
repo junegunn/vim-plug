@@ -1,4 +1,4 @@
-plug.txt	plug	Last change: November 27 2017
+plug.txt	plug	Last change: January 3 2022
 PLUG - TABLE OF CONTENTS                                         *plug* *plug-toc*
 ==============================================================================
 
@@ -23,6 +23,7 @@ PLUG - TABLE OF CONTENTS                                         *plug* *plug-to
     Post-update hooks
     PlugInstall! and PlugUpdate!
     Articles
+    Collaborators
     License
 
 VIM-PLUG                                                              *vim-plug*
@@ -36,8 +37,8 @@ https://raw.githubusercontent.com/junegunn/i/master/vim-plug/installer.gif
 < Pros. >_____________________________________________________________________~
                                                                      *plug-pros*
 
- - Easier to setup: Single file. No boilerplate code required.
- - Easier to use: Concise, intuitive syntax
+ - Easy to set up: Single file. No boilerplate code required.
+ - Easy to use: Concise, intuitive syntax
  - {Super-fast}{1} parallel installation/update (with any of `+job`, `+python`,
    `+python3`, `+ruby`, or {Neovim}{2})
  - Creates shallow clones to minimize disk space usage and download time
@@ -77,14 +78,8 @@ file as suggested {here}{5}.
 
 >> Windows (PowerShell)~
 >
-    md ~\vimfiles\autoload
-    $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
-    (New-Object Net.WebClient).DownloadFile(
-      $uri,
-      $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath(
-        "~\vimfiles\autoload\plug.vim"
-      )
-    )
+    iwr -useb https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim |`
+        ni $HOME/vimfiles/autoload/plug.vim -Force
 <
 
 Neovim~
@@ -93,20 +88,14 @@ Neovim~
 
 >> Unix~
 >
-    curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
-        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+    sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
+           https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 <
 
 >> Windows (PowerShell)~
 >
-    md ~\AppData\Local\nvim\autoload
-    $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
-    (New-Object Net.WebClient).DownloadFile(
-      $uri,
-      $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath(
-        "~\AppData\Local\nvim\autoload\plug.vim"
-      )
-    )
+    iwr -useb https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim |`
+        ni "$(@($env:XDG_DATA_HOME, $env:LOCALAPPDATA)[$null -eq $env:XDG_DATA_HOME])/nvim-data/site/autoload/plug.vim" -Force
 <
 
 < Getting Help >______________________________________________________________~
@@ -127,12 +116,12 @@ Neovim~
 < Usage >_____________________________________________________________________~
                                                                     *plug-usage*
 
-Add a vim-plug section to your `~/.vimrc` (or `~/.config/nvim/init.vim` for
-Neovim):
+Add a vim-plug section to your `~/.vimrc` (or `stdpath('config') . '/init.vim'` for
+Neovim)
 
                                                            *plug#begin* *plug#end*
 
- 1. Begin the section with `call plug#begin()`
+ 1. Begin the section with `call plug#begin([PLUGIN_DIR])`
  2. List the plugins with `Plug` commands
  3. `call plug#end()` to update 'runtimepath' and initialize plugin system
    - Automatically executes `filetype plugin indent on` and `syntax enable`.
@@ -143,10 +132,14 @@ Neovim):
 Example~
                                                                   *plug-example*
 >
-    " Specify a directory for plugins
-    " - For Neovim: ~/.local/share/nvim/plugged
-    " - Avoid using standard Vim directory names like 'plugin'
-    call plug#begin('~/.vim/plugged')
+    call plug#begin()
+    " The default plugin directory will be as follows:
+    "   - Vim (Linux/macOS): '~/.vim/plugged'
+    "   - Vim (Windows): '~/vimfiles/plugged'
+    "   - Neovim (Linux/macOS/Windows): stdpath('data') . '/plugged'
+    " You can specify a custom plugin directory by passing it as the argument
+    "   - e.g. `call plug#begin('~/.vim/plugged')`
+    "   - Avoid using standard Vim directory names like 'plugin'
 
     " Make sure you use single quotes
 
@@ -285,16 +278,16 @@ Reload .vimrc and `:PlugInstall` to install plugins.
     Plug 'junegunn/goyo.vim', { 'for': 'markdown' }
     autocmd! User goyo.vim echom 'Goyo is now loaded!'
 <
-`for` option is generally not needed as most plugins for specific file types
-usually don't have too much code in `plugin` directory. You might want to
-examine the output of `vim --startuptime` before applying the option.
+The `for` option is generally not needed as most plugins for specific file
+types usually don't have too much code in the `plugin` directory. You might
+want to examine the output of `vim --startuptime` before applying the option.
 
 
 < Post-update hooks >_________________________________________________________~
                                                         *plug-post-update-hooks*
 
 There are some plugins that require extra steps after installation or update.
-In that case, use `do` option to describe the task to be performed.
+In that case, use the `do` option to describe the task to be performed.
 >
     Plug 'Shougo/vimproc.vim', { 'do': 'make' }
     Plug 'ycm-core/YouCompleteMe', { 'do': './install.py' }
@@ -325,9 +318,9 @@ and only run when the repository has changed, but you can force it to run
 unconditionally with the bang-versions of the commands: `PlugInstall!` and
 `PlugUpdate!`.
 
-Make sure to escape BARs and double-quotes when you write `do` option inline
-as they are mistakenly recognized as command separator or the start of the
-trailing comment.
+Make sure to escape BARs and double-quotes when you write the `do` option
+inline as they are mistakenly recognized as command separator or the start of
+the trailing comment.
 >
     Plug 'junegunn/fzf', { 'do': 'yes \| ./install' }
 <
@@ -351,7 +344,8 @@ The installer takes the following steps when installing/updating a plugin:
    1. Update submodules
    2. Execute post-update hooks
 
-The commands with `!` suffix ensure that all steps are run unconditionally.
+The commands with the `!` suffix ensure that all steps are run
+unconditionally.
 
 
 < Articles >__________________________________________________________________~
@@ -365,6 +359,16 @@ The commands with `!` suffix ensure that all steps are run unconditionally.
              {11} http://junegunn.kr/2013/09/writing-my-own-vim-plugin-manager
              {12} http://junegunn.kr/2014/07/vim-plugins-and-startup-time
              {13} http://junegunn.kr/2013/09/thoughts-on-vim-plugin-dependency
+
+
+< Collaborators >_____________________________________________________________~
+                                                            *plug-collaborators*
+
+ - {Jan Edmund Lazo}{14} - Windows support
+ - {Jeremy Pallats}{15} - Python installer
+
+                                          {14} https://github.com/janlazo
+                                          {15} https://github.com/starcraftman
 
 
 < License >___________________________________________________________________~
