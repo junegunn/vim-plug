@@ -391,6 +391,9 @@ function! plug#end()
       if !empty(types)
         augroup filetypedetect
         call s:source(s:rtp(plug), 'ftdetect/**/*.vim', 'after/ftdetect/**/*.vim')
+        if has('nvim-0.5.0')
+            call s:source(s:rtp(plug), 'ftdetect/**/*.lua', 'after/ftdetect/**/*.lua')
+        endif
         augroup END
       endif
       for type in types
@@ -438,6 +441,9 @@ endfunction
 
 function! s:load_plugin(spec)
   call s:source(s:rtp(a:spec), 'plugin/**/*.vim', 'after/plugin/**/*.vim')
+  if has('nvim-0.5.0')
+    call s:source(s:rtp(a:spec), 'plugin/**/*.lua', 'after/plugin/**/*.lua')
+  endif
 endfunction
 
 function! s:reload_plugins()
@@ -655,6 +661,9 @@ function! s:lod(names, types, ...)
     let rtp = s:rtp(g:plugs[name])
     for dir in a:types
       call s:source(rtp, dir.'/**/*.vim')
+      if has('nvim-0.5.0')  " see neovim#14686
+        call s:source(rtp, dir.'/**/*.lua')
+      endif
     endfor
     if a:0
       if !s:source(rtp, a:1) && !empty(s:glob(rtp, a:2))
