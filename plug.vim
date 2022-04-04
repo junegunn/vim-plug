@@ -2766,9 +2766,9 @@ function! s:snapshot(force, ...) abort
   1
   let anchor = line('$') - 3
   let names = sort(keys(filter(copy(g:plugs),
-        \'has_key(v:val, "uri") && !has_key(v:val, "commit") && isdirectory(v:val.dir)')))
+        \'has_key(v:val, "uri") && isdirectory(v:val.dir)')))
   for name in reverse(names)
-    let sha = s:git_revision(g:plugs[name].dir)
+    let sha = has_key(g:plugs[name], 'commit') ? g:plugs[name].commit : s:git_revision(g:plugs[name].dir)
     if !empty(sha)
       call append(anchor, printf("silent! let g:plugs['%s'].commit = '%s'", name, sha))
       redraw

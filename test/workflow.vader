@@ -1620,10 +1620,12 @@ Execute (Commit hash support):
   Assert empty(mapcheck('X'))
   Assert !empty(mapcheck("\<cr>"))
 
-  " Nor in PlugSnapshot output
+  " The exact hash values in PlugSnapshot output
   PlugSnapshot
   Log getline(1, '$')
-  AssertEqual 8, line('$')
+  AssertEqual "silent! let g:plugs['goyo.vim'].commit = 'ffffffff'", getline(6)
+  AssertEqual "silent! let g:plugs['vim-emoji'].commit = '9db7fcfee0d90dafdbcb7a32090c0a9085eb054a'", getline(7)
+  AssertEqual 10, line('$')
   q
 
 Execute (Commit hash support - cleared):
