@@ -352,7 +352,7 @@ function! plug#end()
   endif
   let lod = { 'ft': {}, 'map': {}, 'cmd': {} }
 
-  if exists('g:did_load_filetypes')
+  if get(g:, 'did_load_filetypes', 0)
     filetype off
   endif
   for name in g:plugs_order
