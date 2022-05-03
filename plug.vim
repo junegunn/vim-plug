@@ -2621,26 +2621,34 @@ function! s:preview_commit()
 
   let sha = matchstr(getline('.'), '^  \X*\zs[0-9a-f]\{7,9}')
   if empty(sha)
-    return
+    let name = matchstr(getline('.'), '^- \zs[^:]*\ze:$')
+    if empty(name)
+      return
+    endif
+    let title = 'HEAD@{1}..'
+    let command = 'git diff --no-color HEAD@{1}'
+  else
+    let title = sha
+    let command = 'git show --no-color --pretty=medium '.sha
+    let name = s:find_name(line('.'))
   endif
 
-  let name = s:find_name(line('.'))
   if empty(name) || !has_key(g:plugs, name) || !isdirectory(g:plugs[name].dir)
     return
   endif
 
   if exists('g:plug_pwindow') && !s:is_preview_window_open()
     execute g:plug_pwindow
-    execute 'e' sha
+    execute 'e' title
   else
-    execute 'pedit' sha
+    execute 'pedit' title
     wincmd P
   endif
-  setlocal previewwindow filetype=git buftype=nofile nobuflisted modifiable
+  setlocal previewwindow filetype=git buftype=nofile bufhidden=wipe nobuflisted modifiable
   let batchfile = ''
   try
     let [sh, shellcmdflag, shrd] = s:chsh(1)
-    let cmd = 'cd '.plug#shellescape(g:plugs[name].dir).' && git show --no-color --pretty=medium '.sha
+    let cmd = 'cd '.plug#shellescape(g:plugs[name].dir).' && '.command
     if s:is_win
       let [batchfile, cmd] = s:batchfile(cmd)
     endif

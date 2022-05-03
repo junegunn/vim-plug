@@ -393,6 +393,14 @@ Execute (New commits on remote, PlugUpdate, then PlugDiff):
   let lnum = line('.')
   AssertEqual 3, col('.')
 
+  " Open full diff (empty)
+  execute "normal \<cr>"
+  wincmd P
+  AssertEqual 1, &previewwindow
+  AssertEqual 'git', &filetype
+  AssertEqual [''], getline(1, '$')
+  pclose
+
   " Open commit preview
   execute "normal j\<cr>"
   wincmd P
