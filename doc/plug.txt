@@ -171,6 +171,9 @@ Example~
     " Unmanaged plugin (manually installed and updated)
     Plug '~/my-prototype-plugin'
 
+    " Prevent plugin to be updated unless explicitly specified
+    Plug 'junegunn/vim-easy-align', {'frozen': '1'}
+
     " Initialize plugin system
     call plug#end()
 <

@@ -135,6 +135,9 @@ Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 " Unmanaged plugin (manually installed and updated)
 Plug '~/my-prototype-plugin'
 
+" Prevent plugin to be updated unless specified
+Plug 'junegunn/vim-easy-align', {'frozen': '1'}
+
 " Initialize plugin system
 call plug#end()
 ```
