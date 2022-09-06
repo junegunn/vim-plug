@@ -10,7 +10,12 @@ Explain the problem here ...
 
 ------------------------------
 
-<!-- Put the contents of `:version` below -->
+<!-- Paste your Plug block (from `call plug#begin()` to `call plug#end()`) -->
+```
+
+```
+
+<!-- Paste the contents of `:version` below -->
 ```
 
 ```
@@ -24,7 +29,7 @@ Explain the problem here ...
 - OS:
     - [ ] All/Other
     - [ ] Linux
-    - [ ] OS X
+    - [ ] macOS
     - [ ] Windows
 - Vim:
     - [ ] Terminal Vim
