@@ -1338,7 +1338,12 @@ function! s:update_finish()
       return
     endtry
     call s:finish(s:update.pull)
-    call setline(1, 'Updated. Elapsed time: ' . split(reltimestr(reltime(s:update.start)))[0] . ' sec.')
+    let s:succ_line = 'Updated. Elapsed time: ' . split(reltimestr(reltime(s:update.start)))[0] . ' sec.'
+    if s:nvim
+      call s:warn('echo', s:succ_line)
+    else
+      call setline(1, s:succ_line)
+    endif
     call s:switch_out('normal! gg')
   endif
 endfunction
@@ -1397,7 +1402,7 @@ function! s:job_cb(fn, job, ch, data)
   if !s:plug_window_exists() " plug window closed
     return s:job_abort()
   endif
-  call call(a:fn, [a:job, a:data])
+  call(a:fn, [a:job, a:data])
 endfunction
 
 function! s:nvim_cb(job_id, data, event) dict abort
