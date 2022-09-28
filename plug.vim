@@ -1402,7 +1402,7 @@ function! s:job_cb(fn, job, ch, data)
   if !s:plug_window_exists() " plug window closed
     return s:job_abort()
   endif
-  call(a:fn, [a:job, a:data])
+  call call(a:fn, [a:job, a:data])
 endfunction
 
 function! s:nvim_cb(job_id, data, event) dict abort
