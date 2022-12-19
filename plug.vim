@@ -2808,5 +2808,17 @@ if exists('g:plugs')
   call s:define_commands()
 endif
 
+function! plug#plugin_info(name) abort
+    return get(s:loaded, a:name, {})
+endfunction
+
+function! plug#loaded() abort
+    return keys(filter(copy(s:loaded), { k, v -> v }))
+endfunction
+
+function! plug#not_loaded() abort
+    return keys(filter(copy(s:loaded), { k, v -> !v }))
+endfunction
+
 let &cpo = s:cpo_save
 unlet s:cpo_save
