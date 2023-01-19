@@ -153,7 +153,7 @@ Example~
     Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
 
     " On-demand loading
-    Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
+    Plug 'preservim/nerdtree', { 'on': 'NERDTreeToggle' }
     Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 
     " Using a non-default branch
@@ -264,7 +264,7 @@ Reload .vimrc and `:PlugInstall` to install plugins.
                                              *plug-on-demand-loading-of-plugins*
 >
     " NERD tree will be loaded on the first invocation of NERDTreeToggle command
-    Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
+    Plug 'preservim/nerdtree', { 'on': 'NERDTreeToggle' }
 
     " Multiple commands
     Plug 'junegunn/vim-github-dashboard', { 'on': ['GHDashboard', 'GHActivity'] }
