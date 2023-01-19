@@ -1,4 +1,4 @@
-plug.txt	plug	Last change: January 3 2022
+plug.txt	plug	Last change: January 19 2023
 PLUG - TABLE OF CONTENTS                                         *plug* *plug-toc*
 ==============================================================================
 
