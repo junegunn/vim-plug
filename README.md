@@ -92,6 +92,7 @@ Add a vim-plug section to your `~/.vimrc` (or `stdpath('config') . '/init.vim'` 
 1. `call plug#end()` to update `&runtimepath` and initialize plugin system
     - Automatically executes `filetype plugin indent on` and `syntax enable`.
       You can revert the settings after the call. e.g. `filetype indent off`, `syntax off`, etc.
+1.  Reload .vimrc (`:source ~/.vimrc`) and `:PlugInstall` to install plugins.
 
 #### Example
 
@@ -142,8 +143,6 @@ call plug#end()
 "   filetype indent off   " Disable file-type-specific indentation
 "   syntax off            " Disable syntax highlighting
 ```
-
-Reload .vimrc and `:PlugInstall` to install plugins.
 
 ### Commands
 
