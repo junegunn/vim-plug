@@ -145,7 +145,7 @@ call plug#end()
 
 Reload .vimrc and `:PlugInstall` to install plugins.
 
-#### Example (Lua configuration file for Neovim)
+#### Example (Lua configuration for Neovim)
 
 In Neovim, you can write your configuration in a Lua script file named
 `init.lua`. The following code is the Lua script equivalent to the VimScript
