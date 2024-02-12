@@ -1,3 +1,21 @@
+<div align="center">
+<sup>Special thanks to:</sup>
+<br>
+<br>
+<a href="https://warp.dev/?utm_source=github&utm_medium=referral&utm_camapign=vimplug_20240209">
+  <div>
+    <img src="https://raw.githubusercontent.com/junegunn/i/master/warp.png" width="300" alt="Warp">
+  </div>
+  <b>Warp is a modern, Rust-based terminal with AI built in so you and your team can build great software, faster.</b>
+  <div>
+    <sup>Visit warp.dev to learn more.</sup>
+  </div>
+</a>
+<br>
+<hr>
+</div>
+<br>
+
 <img src="https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.png" height="75" alt="vim-plug">[![build](https://img.shields.io/github/actions/workflow/status/junegunn/vim-plug/test.yml?branch=master)](https://github.com/junegunn/vim-plug/actions/workflows/test.yml?query=branch%3Amaster)
 ===
 
