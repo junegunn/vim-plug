@@ -311,8 +311,14 @@ If the value starts with `:`, it will be recognized as a Vim command.
 Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
 ```
 
+To call a Vim function, you can pass a lambda expression like so:
+
+```vim
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+```
+
 If you need more control, you can pass a reference to a Vim function that
-takes a single argument.
+takes a dictionary argument.
 
 ```vim
 function! BuildYCM(info)
@@ -328,14 +334,13 @@ endfunction
 Plug 'ycm-core/YouCompleteMe', { 'do': function('BuildYCM') }
 ```
 
-Both forms of post-update hook are executed inside the directory of the plugin
-and only run when the repository has changed, but you can force it to run
-unconditionally with the bang-versions of the commands: `PlugInstall!` and
-`PlugUpdate!`.
+A post-update hook is executed inside the directory of the plugin and only run
+when the repository has changed, but you can force it to run unconditionally
+with the bang-versions of the commands: `PlugInstall!` and `PlugUpdate!`.
 
-Make sure to escape BARs and double-quotes when you write the `do` option inline
-as they are mistakenly recognized as command separator or the start of the
-trailing comment.
+Make sure to escape BARs and double-quotes when you write the `do` option
+inline as they are mistakenly recognized as command separator or the start of
+the trailing comment.
 
 ```vim
 Plug 'junegunn/fzf', { 'do': 'yes \| ./install' }
