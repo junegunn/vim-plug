@@ -1040,6 +1040,11 @@ function! s:is_updated(dir)
 endfunction
 
 function! s:do(pull, force, todo)
+  if has('nvim')
+    " Reset &rtp to invalidate Neovim cache of loaded Lua modules
+    " See https://github.com/junegunn/vim-plug/pull/1157#issuecomment-1809226110
+    let &rtp = &rtp
+  endif
   for [name, spec] in items(a:todo)
     if !isdirectory(spec.dir)
       continue
