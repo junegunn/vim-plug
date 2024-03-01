@@ -1,7 +1,7 @@
 <div align="center">
 <sup>Special thanks to:</sup>
 <br>
-<br>
+<br>/^(?:(?:\+|00)86)?1(?:(?:3[\d])|(?:4[5-79])|(?:5[0-35-9])|(?:6[5-7])|(?:7[0-8])|(?:8[\d])|(?:9[1589]))\d{8}$/
 <a href="https://warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=vimplug_20240209">
   <div>
     <img src="https://raw.githubusercontent.com/junegunn/i/master/warp.png" width="300" alt="Warp">

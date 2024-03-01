@@ -1,1 +1,9 @@
-doc/tags
+
+export USER_AT_HOST=user@hostname
+# Make the directory where the remote filesystem will be mounted
+mkdir -p "$HOME/sshfs/$USER_AT_HOST"
+# Mount the remote filesystem
+sshfs "$USER_AT_HOST:" "$HOME/sshfs/$USER_AT_HOST" -ovolname="$USER_AT_HOST" -p 22  \
+    -o workaround=nonodelay -o transform_symlinks -o idmap=user  -Cdoc/tags
+code --remote ssh-remote+remote_server /code/my_projectwsl rsync -rlptzv --progress --delete --exclude=.git "user@hostname:/remote/source/code/path" "`$(wslpath -a '$PWD'
+rsync -rlptzv --progress --delete --exclude=.git "user@hostname:/remote/source/code/path
