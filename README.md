@@ -16,7 +16,14 @@
 </div>
 <br>
 
-<img src="https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.png" height="75" alt="vim-plug">[![build](https://img.shields.io/github/actions/workflow/status/junegunn/vim-plug/test.yml?branch=master)](https://github.com/junegunn/vim-plug/actions/workflows/test.yml?query=branch%3Amaster)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./plug-dark.png">
+  <img src="./plug.png" height="75" alt="vim-plug">
+</picture>
+<a href="https://github.com/junegunn/vim-plug/actions/workflows/test.yml?query=branch%3Amaster">
+  <img src="https://img.shields.io/github/actions/workflow/status/junegunn/vim-plug/test.yml?branch=master">
+</a>
+
 ===
 
 A minimalist Vim plugin manager.
