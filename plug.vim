@@ -2360,18 +2360,21 @@ function! s:git_validate(spec, check_branch)
               \ current_branch, origin_branch)
       endif
       if empty(err)
-        let [ahead, behind] = split(s:lastline(s:system([
-        \ 'git', 'rev-list', '--count', '--left-right',
-        \ printf('HEAD...origin/%s', origin_branch)
-        \ ], a:spec.dir)), '\t')
-        if !v:shell_error && ahead
-          if behind
+        let ahead_behind = split(s:lastline(s:system([
+          \ 'git', 'rev-list', '--count', '--left-right',
+          \ printf('HEAD...origin/%s', origin_branch)
+          \ ], a:spec.dir)), '\t')
+        if v:shell_error || len(ahead_behind) != 2
+          let err = "Failed to compare with the origin. The default branch might have changed.\nPlugClean required."
+        else
+          let [ahead, behind] = ahead_behind
+          if ahead && behind
             " Only mention PlugClean if diverged, otherwise it's likely to be
             " pushable (and probably not that messed up).
             let err = printf(
                   \ "Diverged from origin/%s (%d commit(s) ahead and %d commit(s) behind!\n"
                   \ .'Backup local changes and run PlugClean and PlugUpdate to reinstall it.', origin_branch, ahead, behind)
-          else
+          elseif ahead
             let err = printf("Ahead of origin/%s by %d commit(s).\n"
                   \ .'Cannot update until local changes are pushed.',
                   \ origin_branch, ahead)
