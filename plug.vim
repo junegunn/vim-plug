@@ -878,7 +878,7 @@ function! s:lastline(msg)
 endfunction
 
 function! s:new_window()
-  execute get(g:, 'plug_window', 'vertical topleft new')
+  execute get(g:, 'plug_window', '-tabnew')
 endfunction
 
 function! s:plug_window_exists()
@@ -2684,8 +2684,8 @@ function! s:preview_commit()
     return
   endif
 
-  if exists('g:plug_pwindow') && !s:is_preview_window_open()
-    execute g:plug_pwindow
+  if !s:is_preview_window_open()
+    execute get(g:, 'plug_pwindow', 'vertical rightbelow new')
     execute 'e' title
   else
     execute 'pedit' title
