@@ -23,7 +23,6 @@
 <a href="https://github.com/junegunn/vim-plug/actions/workflows/test.yml?query=branch%3Amaster">
   <img src="https://img.shields.io/github/actions/workflow/status/junegunn/vim-plug/test.yml?branch=master">
 </a>
-===
 
 A minimalist Vim plugin manager.
 
