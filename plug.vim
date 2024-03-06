@@ -1106,12 +1106,14 @@ endfunction
 function! s:checkout(spec)
   let sha = a:spec.commit
   let output = s:git_revision(a:spec.dir)
+  let error = 0
   if !empty(output) && !s:hash_match(sha, s:lines(output)[0])
     let credential_helper = s:git_version_requirement(2) ? '-c credential.helper= ' : ''
     let output = s:system(
           \ 'git '.credential_helper.'fetch --depth 999999 && git checkout '.plug#shellescape(sha).' --', a:spec.dir)
+    let error = v:shell_error
   endif
-  return output
+  return [output, error]
 endfunction
 
 function! s:finish(pull)
@@ -1172,7 +1174,7 @@ function! s:update_impl(pull, force, args) abort
   let threads = (len(args) > 0 && args[-1] =~ '^[1-9][0-9]*$') ?
                   \ remove(args, -1) : get(g:, 'plug_threads', 16)
 
-  let managed = filter(copy(g:plugs), 's:is_managed(v:key)')
+  let managed = filter(deepcopy(g:plugs), 's:is_managed(v:key)')
   let todo = empty(args) ? filter(managed, '!v:val.frozen || !isdirectory(v:val.dir)') :
                          \ filter(managed, 'index(args, v:key) >= 0')
 
@@ -1306,9 +1308,11 @@ function! s:update_finish()
       if !pos
         continue
       endif
+      let out = ''
+      let error = 0
       if has_key(spec, 'commit')
         call s:log4(name, 'Checking out '.spec.commit)
-        let out = s:checkout(spec)
+        let [out, error] = s:checkout(spec)
       elseif has_key(spec, 'tag')
         let tag = spec.tag
         if tag =~ '\*'
@@ -1321,19 +1325,16 @@ function! s:update_finish()
         endif
         call s:log4(name, 'Checking out '.tag)
         let out = s:system('git checkout -q '.plug#shellescape(tag).' -- 2>&1', spec.dir)
-      else
-        let branch = s:git_origin_branch(spec)
-        call s:log4(name, 'Merging origin/'.s:esc(branch))
-        let out = s:system('git checkout -q '.plug#shellescape(branch).' -- 2>&1'
-              \. (has_key(s:update.new, name) ? '' : ('&& git merge --ff-only '.plug#shellescape('origin/'.branch).' 2>&1')), spec.dir)
+        let error = v:shell_error
       endif
-      if !v:shell_error && filereadable(spec.dir.'/.gitmodules') &&
+      if !error && filereadable(spec.dir.'/.gitmodules') &&
             \ (s:update.force || has_key(s:update.new, name) || s:is_updated(spec.dir))
         call s:log4(name, 'Updating submodules. This may take a while.')
         let out .= s:bang('git submodule update --init --recursive'.s:submodule_opt.' 2>&1', spec.dir)
+        let error = v:shell_error
       endif
       let msg = s:format_message(v:shell_error ? 'x': '-', name, out)
-      if v:shell_error
+      if error
         call add(s:update.errors, name)
         call s:regress_bar()
         silent execute pos 'd _'
@@ -1396,7 +1397,9 @@ function! s:job_out_cb(self, data) abort
   if !self.running || self.tick % len(s:jobs) == 0
     let bullet = self.running ? (self.new ? '+' : '*') : (self.error ? 'x' : '-')
     let result = self.error ? join(self.lines, "\n") : s:last_non_empty_line(self.lines)
-    call s:log(bullet, self.name, result)
+    if len(result)
+      call s:log(bullet, self.name, result)
+    endif
   endif
 endfunction
 
@@ -1420,16 +1423,17 @@ function! s:nvim_cb(job_id, data, event) dict abort
     \ s:job_cb('s:job_exit_cb', self, 0, a:data)
 endfunction
 
-function! s:spawn(name, cmd, opts)
-  let job = { 'name': a:name, 'running': 1, 'error': 0, 'lines': [''],
-            \ 'new': get(a:opts, 'new', 0) }
+function! s:spawn(name, spec, queue, opts)
+  let job = { 'name': a:name, 'spec': a:spec, 'running': 1, 'error': 0, 'lines': [''],
+            \ 'new': get(a:opts, 'new', 0), 'queue': copy(a:queue) }
+  let Item = remove(job.queue, 0)
+  let argv = type(Item) == s:TYPE.funcref ? call(Item, [a:spec]) : Item
   let s:jobs[a:name] = job
 
   if s:nvim
     if has_key(a:opts, 'dir')
       let job.cwd = a:opts.dir
     endif
-    let argv = a:cmd
     call extend(job, {
     \ 'on_stdout': function('s:nvim_cb'),
     \ 'on_stderr': function('s:nvim_cb'),
@@ -1445,7 +1449,7 @@ function! s:spawn(name, cmd, opts)
             \ 'Invalid arguments (or job table is full)']
     endif
   elseif s:vim8
-    let cmd = join(map(copy(a:cmd), 'plug#shellescape(v:val, {"script": 0})'))
+    let cmd = join(map(copy(argv), 'plug#shellescape(v:val, {"script": 0})'))
     if has_key(a:opts, 'dir')
       let cmd = s:with_cd(cmd, a:opts.dir, 0)
     endif
@@ -1465,27 +1469,34 @@ function! s:spawn(name, cmd, opts)
       let job.lines   = ['Failed to start job']
     endif
   else
-    let job.lines = s:lines(call('s:system', has_key(a:opts, 'dir') ? [a:cmd, a:opts.dir] : [a:cmd]))
+    let job.lines = s:lines(call('s:system', has_key(a:opts, 'dir') ? [argv, a:opts.dir] : [argv]))
     let job.error = v:shell_error != 0
     let job.running = 0
   endif
 endfunction
 
 function! s:reap(name)
-  let job = s:jobs[a:name]
+  let job = remove(s:jobs, a:name)
   if job.error
     call add(s:update.errors, a:name)
   elseif get(job, 'new', 0)
     let s:update.new[a:name] = 1
   endif
-  let s:update.bar .= job.error ? 'x' : '='
 
-  let bullet = job.error ? 'x' : '-'
+  let more = len(get(job, 'queue', []))
+  let bullet = job.error ? 'x' : more ? (job.new ? '+' : '*') : '-'
   let result = job.error ? join(job.lines, "\n") : s:last_non_empty_line(job.lines)
-  call s:log(bullet, a:name, empty(result) ? 'OK' : result)
-  call s:bar()
+  if len(result)
+    call s:log(bullet, a:name, result)
+  endif
 
-  call remove(s:jobs, a:name)
+  if !job.error && more
+    let job.spec.queue = job.queue
+    let s:update.todo[a:name] = job.spec
+  else
+    let s:update.bar .= job.error ? 'x' : '='
+    call s:bar()
+  endif
 endfunction
 
 function! s:bar()
@@ -1538,6 +1549,16 @@ function! s:update_vim()
   call s:tick()
 endfunction
 
+function! s:checkout_command(spec)
+  let a:spec.branch = s:git_origin_branch(a:spec)
+  return ['git', 'checkout', '-q', a:spec.branch, '--']
+endfunction
+
+function! s:merge_command(spec)
+  let a:spec.branch = s:git_origin_branch(a:spec)
+  return ['git', 'merge', '--ff-only', 'origin/'.a:spec.branch]
+endfunction
+
 function! s:tick()
   let pull = s:update.pull
   let prog = s:progress_opt(s:nvim || s:vim8)
@@ -1552,13 +1573,18 @@ while 1 " Without TCO, Vim stack is bound to explode
 
   let name = keys(s:update.todo)[0]
   let spec = remove(s:update.todo, name)
-  let new  = empty(globpath(spec.dir, '.git', 1))
+  let queue = get(spec, 'queue', [])
+  let new = empty(globpath(spec.dir, '.git', 1))
 
-  call s:log(new ? '+' : '*', name, pull ? 'Updating ...' : 'Installing ...')
-  redraw
+  if empty(queue)
+    call s:log(new ? '+' : '*', name, pull ? 'Updating ...' : 'Installing ...')
+    redraw
+  endif
 
   let has_tag = has_key(spec, 'tag')
-  if !new
+  if len(queue)
+    call s:spawn(name, spec, queue, { 'dir': spec.dir })
+  elseif !new
     let [error, _] = s:git_validate(spec, 0)
     if empty(error)
       if pull
@@ -1569,7 +1595,11 @@ while 1 " Without TCO, Vim stack is bound to explode
         if !empty(prog)
           call add(cmd, prog)
         endif
-        call s:spawn(name, cmd, { 'dir': spec.dir })
+        let queue = [cmd, split('git remote set-head origin -a')]
+        if !has_tag && !has_key(spec, 'commit')
+          call extend(queue, [function('s:checkout_command'), function('s:merge_command')])
+        endif
+        call s:spawn(name, spec, queue, { 'dir': spec.dir })
       else
         let s:jobs[name] = { 'running': 0, 'lines': ['Already installed'], 'error': 0 }
       endif
@@ -1584,7 +1614,7 @@ while 1 " Without TCO, Vim stack is bound to explode
     if !empty(prog)
       call add(cmd, prog)
     endif
-    call s:spawn(name, extend(cmd, [spec.uri, s:trim(spec.dir)]), { 'new': 1 })
+    call s:spawn(name, spec, [extend(cmd, [spec.uri, s:trim(spec.dir)]), function('s:checkout_command'), function('s:merge_command')], { 'new': 1 })
   endif
 
   if !s:jobs[name].running
