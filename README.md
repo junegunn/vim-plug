@@ -372,13 +372,6 @@ The installer takes the following steps when installing/updating a plugin:
 
 The commands with the `!` suffix ensure that all steps are run unconditionally.
 
-### Articles
-
-- [Writing my own Vim plugin manager](http://junegunn.kr/2013/09/writing-my-own-vim-plugin-manager)
-- [Vim plugins and startup time](http://junegunn.kr/2014/07/vim-plugins-and-startup-time)
-- ~~[Thoughts on Vim plugin dependency](http://junegunn.kr/2013/09/thoughts-on-vim-plugin-dependency)~~
-    - *Support for Plugfile has been removed since 0.5.0*
-
 ### Collaborators
 
 - [Jan Edmund Lazo](https://github.com/janlazo) - Windows support
