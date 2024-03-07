@@ -1,5 +1,30 @@
-<img src="https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.png" height="75" alt="vim-plug">[![build](https://img.shields.io/github/actions/workflow/status/junegunn/vim-plug/test.yml?branch=master)](https://github.com/junegunn/vim-plug/actions/workflows/test.yml?query=branch%3Amaster)
-===
+<div align="center">
+<sup>Special thanks to:</sup>
+<br>
+<br>
+<a href="https://warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=vimplug_20240209">
+  <div>
+    <img src="https://raw.githubusercontent.com/junegunn/i/master/warp.png" width="300" alt="Warp">
+  </div>
+  <b>Warp is a modern, Rust-based terminal with AI built in so you and your team can build great software, faster.</b>
+  <div>
+    <sup>Visit warp.dev to learn more.</sup>
+  </div>
+</a>
+<br>
+<hr>
+</div>
+<br>
+
+<h1 title="vim-plug">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./plug-dark.png">
+    <img src="./plug.png" height="75" alt="vim-plug">
+  </picture>
+  <a href="https://github.com/junegunn/vim-plug/actions/workflows/test.yml?query=branch%3Amaster">
+    <img src="https://img.shields.io/github/actions/workflow/status/junegunn/vim-plug/test.yml?branch=master">
+  </a>
+</h1>
 
 A minimalist Vim plugin manager.
 
@@ -92,7 +117,7 @@ Add a vim-plug section to your `~/.vimrc` (or `stdpath('config') . '/init.vim'` 
 1. `call plug#end()` to update `&runtimepath` and initialize plugin system
     - Automatically executes `filetype plugin indent on` and `syntax enable`.
       You can revert the settings after the call. e.g. `filetype indent off`, `syntax off`, etc.
-1.  Reload .vimrc (`:source ~/.vimrc`) and `:PlugInstall` to install plugins.
+1. Reload .vimrc (`:source ~/.vimrc`) and `:PlugInstall` to install plugins.
 
 #### Example
 
@@ -144,6 +169,53 @@ call plug#end()
 "   syntax off            " Disable syntax highlighting
 ```
 
+#### Example (Lua configuration for Neovim)
+
+In Neovim, you can write your configuration in a Lua script file named
+`init.lua`. The following code is the Lua script equivalent to the VimScript
+example above.
+
+```lua
+local vim = vim
+local Plug = vim.fn['plug#']
+
+vim.call('plug#begin')
+
+-- Shorthand notation; fetches https://github.com/junegunn/vim-easy-align
+Plug('junegunn/vim-easy-align')
+
+-- Any valid git URL is allowed
+Plug('https://github.com/junegunn/vim-github-dashboard.git')
+
+-- Multiple Plug commands can be written in a single line using ; separators
+Plug('SirVer/ultisnips'); Plug('honza/vim-snippets')
+
+-- On-demand loading
+Plug('preservim/nerdtree', { ['on'] = 'NERDTreeToggle' })
+Plug('tpope/vim-fireplace', { ['for'] = 'clojure' })
+
+-- Using a non-default branch
+Plug('rdnetto/YCM-Generator', { ['branch'] = 'stable' })
+
+-- Using a tagged release; wildcard allowed (requires git 1.9.2 or above)
+Plug('fatih/vim-go', { ['tag'] = '*' })
+
+-- Plugin options
+Plug('nsf/gocode', { ['tag'] = 'v.20150303', ['rtp'] = 'vim' })
+
+-- Plugin outside ~/.vim/plugged with post-update hook
+Plug('junegunn/fzf', { ['dir'] = '~/.fzf', ['do'] = './install --all' })
+
+-- Unmanaged plugin (manually installed and updated)
+Plug('~/my-prototype-plugin')
+
+vim.call('plug#end')
+```
+
+More examples can be found in:
+
+* https://gitlab.com/sultanahamer/dotfiles/-/blob/master/nvim/lua/plugins.lua?ref_type=heads
+
 ### Commands
 
 | Command                             | Description                                                        |
@@ -177,8 +249,8 @@ call plug#end()
 | `g:plug_timeout`    | 60                                | Time limit of each task in seconds (*Ruby & Python*)   |
 | `g:plug_retries`    | 2                                 | Number of retries in case of timeout (*Ruby & Python*) |
 | `g:plug_shallow`    | 1                                 | Use shallow clone                                      |
-| `g:plug_window`     | `vertical topleft new`            | Command to open plug window                            |
-| `g:plug_pwindow`    | `above 12new`                     | Command to open preview window in `PlugDiff`           |
+| `g:plug_window`     | `-tabnew`                         | Command to open plug window                            |
+| `g:plug_pwindow`    | `vertical rightbelow new`         | Command to open preview window in `PlugDiff`           |
 | `g:plug_url_format` | `https://git::@github.com/%s.git` | `printf` format to build repo URL (Only applies to the subsequent `Plug` commands) |
 
 
@@ -245,8 +317,14 @@ If the value starts with `:`, it will be recognized as a Vim command.
 Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
 ```
 
+To call a Vim function, you can pass a lambda expression like so:
+
+```vim
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+```
+
 If you need more control, you can pass a reference to a Vim function that
-takes a single argument.
+takes a dictionary argument.
 
 ```vim
 function! BuildYCM(info)
@@ -262,14 +340,13 @@ endfunction
 Plug 'ycm-core/YouCompleteMe', { 'do': function('BuildYCM') }
 ```
 
-Both forms of post-update hook are executed inside the directory of the plugin
-and only run when the repository has changed, but you can force it to run
-unconditionally with the bang-versions of the commands: `PlugInstall!` and
-`PlugUpdate!`.
+A post-update hook is executed inside the directory of the plugin and only run
+when the repository has changed, but you can force it to run unconditionally
+with the bang-versions of the commands: `PlugInstall!` and `PlugUpdate!`.
 
-Make sure to escape BARs and double-quotes when you write the `do` option inline
-as they are mistakenly recognized as command separator or the start of the
-trailing comment.
+Make sure to escape BARs and double-quotes when you write the `do` option
+inline as they are mistakenly recognized as command separator or the start of
+the trailing comment.
 
 ```vim
 Plug 'junegunn/fzf', { 'do': 'yes \| ./install' }

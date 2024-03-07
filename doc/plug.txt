@@ -1,4 +1,4 @@
-plug.txt	plug	Last change: January 19 2023
+plug.txt	plug	Last change: March 7 2024
 PLUG - TABLE OF CONTENTS                                         *plug* *plug-toc*
 ==============================================================================
 
@@ -230,8 +230,8 @@ Reload .vimrc and `:PlugInstall` to install plugins.
   `g:plug_timeout`     | 60                                | Time limit of each task in seconds (Ruby & Python)
   `g:plug_retries`     | 2                                 | Number of retries in case of timeout (Ruby & Python)
   `g:plug_shallow`     | 1                                 | Use shallow clone
-  `g:plug_window`      |  `vertical topleft new`             | Command to open plug window
-  `g:plug_pwindow`     |  `above 12new`                      | Command to open preview window in  `PlugDiff`
+  `g:plug_window`      |  `-tabnew`                          | Command to open plug window
+  `g:plug_pwindow`     |  `vertical rightbelow new`          | Command to open preview window in  `PlugDiff`
   `g:plug_url_format`  |  `https://git::@github.com/%s.git`  |  `printf`  format to build repo URL (Only applies to the subsequent  `Plug`  commands)
  --------------------+-----------------------------------+-----------------------------------------------------------------------------------
 
@@ -297,13 +297,15 @@ In that case, use the `do` option to describe the task to be performed.
     Plug 'ycm-core/YouCompleteMe', { 'do': './install.py' }
 <
 If the value starts with `:`, it will be recognized as a Vim command.
-
-                                                            *:GoInstallBinaries*
 >
     Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
 <
+To call a Vim function, you can pass a lambda expression like so:
+>
+    Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+<
 If you need more control, you can pass a reference to a Vim function that
-takes a single argument.
+takes a dictionary argument.
 >
     function! BuildYCM(info)
       " info is a dictionary with 3 fields
@@ -317,10 +319,9 @@ takes a single argument.
 
     Plug 'ycm-core/YouCompleteMe', { 'do': function('BuildYCM') }
 <
-Both forms of post-update hook are executed inside the directory of the plugin
-and only run when the repository has changed, but you can force it to run
-unconditionally with the bang-versions of the commands: `PlugInstall!` and
-`PlugUpdate!`.
+A post-update hook is executed inside the directory of the plugin and only run
+when the repository has changed, but you can force it to run unconditionally
+with the bang-versions of the commands: `PlugInstall!` and `PlugUpdate!`.
 
 Make sure to escape BARs and double-quotes when you write the `do` option
 inline as they are mistakenly recognized as command separator or the start of

@@ -371,6 +371,9 @@ Execute (PlugDiff - 'No updates.'):
   q
 
 Execute (New commits on remote, PlugUpdate, then PlugDiff):
+  let g:plug_window = 'vertical topleft new'
+  let g:plug_pwindow = 'above 12new'
+
   for repo in ['seoul256.vim', 'vim-emoji']
     for _ in range(2)
       call system(printf('cd /tmp/vim-plug-test/junegunn/%s && git commit --allow-empty -m "update"', repo))
@@ -457,6 +460,8 @@ Execute (New commits on remote, PlugUpdate, then PlugDiff):
   silent! wincmd P
   AssertEqual 1, &previewwindow
   pclose
+
+  unlet g:plug_window g:plug_pwindow
 
 Execute (Test g:plug_pwindow):
   let g:plug_pwindow = 'below 5new'
@@ -983,7 +988,8 @@ Execute (PlugInstall!):
   Assert filereadable(g:plugs['vim-easy-align'].dir.'/installed2'),
     \ 'vim-easy-align/installed2 should exist'
   AssertEqual '7f8cd78cb1fe52185b98b16a3749811f0cc508af', GitCommit('vim-pseudocl')
-  AssertEqual 'no-t_co', GitBranch('seoul256.vim')
+  " Was updated to the default branch of origin by previous PlugUpdate
+  AssertEqual 'master', GitBranch('seoul256.vim')
   AssertEqual '1.5.3', GitTag('goyo.vim')
 
 Execute (When submodules are not initialized):
@@ -1708,6 +1714,8 @@ Execute (#530 - Comparison of incompatible git URIs):
   Assert !CompareURI('https://github.com/junegunn/vim-plug.git', 'https://github.com:12345/junegunn/vim-plug.git')
 
 Execute (#532 - Reuse plug window):
+  let g:plug_window = 'vertical topleft new'
+  let g:plug_pwindow = 'above 12new'
   call plug#begin()
   Plug 'junegunn/goyo.vim'
   call plug#end()
@@ -1733,6 +1741,8 @@ Execute (#532 - Reuse plug window):
   AssertEqual 2, winnr(), 'Current window is #2 after PlugStatus (but is '.winnr().')'
   AssertEqual 2, winnr('$'), 'Three windows after PlugStatus (but got '.winnr('$').')'
   q
+
+  unlet g:plug_window g:plug_pwindow
 
 Execute (#766 - Allow cloning into an empty directory):
   let d = '/tmp/vim-plug-test/goyo-already'
