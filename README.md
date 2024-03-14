@@ -133,30 +133,35 @@ call plug#begin()
 
 " Make sure you use single quotes
 
-" Shorthand notation; fetches https://github.com/junegunn/vim-easy-align
+" Shorthand notation for GitHub; translates to https://github.com/junegunn/vim-easy-align
 Plug 'junegunn/vim-easy-align'
 
 " Any valid git URL is allowed
-Plug 'https://github.com/junegunn/vim-github-dashboard.git'
-
-" Multiple Plug commands can be written in a single line using | separators
-Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
-
-" On-demand loading
-Plug 'preservim/nerdtree', { 'on': 'NERDTreeToggle' }
-Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
-
-" Using a non-default branch
-Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
+Plug 'https://github.com/junegunn/seoul256.vim.git'
 
 " Using a tagged release; wildcard allowed (requires git 1.9.2 or above)
 Plug 'fatih/vim-go', { 'tag': '*' }
 
-" Plugin options
-Plug 'nsf/gocode', { 'tag': 'v.20150303', 'rtp': 'vim' }
+" Using a non-default branch
+Plug 'neoclide/coc.nvim', { 'branch': 'release' }
 
-" Plugin outside ~/.vim/plugged with post-update hook
+" Use 'dir' option to install plugin in a non-default directory
+Plug 'junegunn/fzf', { 'dir': '~/.fzf' }
+
+" Post-update hook: run a shell command after installing or updating the plugin
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+
+" Post-update hook can be a lambda expression
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+
+" If the vim plugin is in a subdirectory, use 'rtp' option to specify its path
+Plug 'nsf/gocode', { 'rtp': 'vim' }
+
+" On-demand loading: loaded when the specified command is executed
+Plug 'preservim/nerdtree', { 'on': 'NERDTreeToggle' }
+
+" On-demand loading: loaded when a file with a specific file type is opened
+Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 
 " Unmanaged plugin (manually installed and updated)
 Plug '~/my-prototype-plugin'
@@ -181,30 +186,37 @@ local Plug = vim.fn['plug#']
 
 vim.call('plug#begin')
 
--- Shorthand notation; fetches https://github.com/junegunn/vim-easy-align
+-- Shorthand notation for GitHub; translates to https://github.com/junegunn/vim-easy-align
 Plug('junegunn/vim-easy-align')
 
 -- Any valid git URL is allowed
-Plug('https://github.com/junegunn/vim-github-dashboard.git')
-
--- Multiple Plug commands can be written in a single line using ; separators
-Plug('SirVer/ultisnips'); Plug('honza/vim-snippets')
-
--- On-demand loading
-Plug('preservim/nerdtree', { ['on'] = 'NERDTreeToggle' })
-Plug('tpope/vim-fireplace', { ['for'] = 'clojure' })
-
--- Using a non-default branch
-Plug('rdnetto/YCM-Generator', { ['branch'] = 'stable' })
+Plug('https://github.com/junegunn/seoul256.vim.git')
 
 -- Using a tagged release; wildcard allowed (requires git 1.9.2 or above)
 Plug('fatih/vim-go', { ['tag'] = '*' })
 
--- Plugin options
-Plug('nsf/gocode', { ['tag'] = 'v.20150303', ['rtp'] = 'vim' })
+-- Using a non-default branch
+Plug('neoclide/coc.nvim', { ['branch'] = 'release' })
 
--- Plugin outside ~/.vim/plugged with post-update hook
+-- Use 'dir' option to install plugin in a non-default directory
+Plug('junegunn/fzf', { ['dir'] = '~/.fzf' })
+
+-- Post-update hook: run a shell command after installing or updating the plugin
 Plug('junegunn/fzf', { ['dir'] = '~/.fzf', ['do'] = './install --all' })
+
+-- Post-update hook can be a lambda expression
+Plug('junegunn/fzf', { ['do'] = function()
+  vim.fn['fzf#install']()
+end })
+
+-- If the vim plugin is in a subdirectory, use 'rtp' option to specify its path
+Plug('nsf/gocode', { ['rtp'] = 'vim' })
+
+-- On-demand loading: loaded when the specified command is executed
+Plug('preservim/nerdtree', { ['on'] = 'NERDTreeToggle' })
+
+-- On-demand loading: loaded when a file with a specific file type is opened
+Plug('tpope/vim-fireplace', { ['for'] = 'clojure' })
 
 -- Unmanaged plugin (manually installed and updated)
 Plug('~/my-prototype-plugin')
