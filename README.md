@@ -309,9 +309,42 @@ Plug 'junegunn/goyo.vim', { 'for': 'markdown' }
 autocmd! User goyo.vim echom 'Goyo is now loaded!'
 ```
 
-The `for` option is generally not needed as most plugins for specific file types
-usually don't have too much code in the `plugin` directory. You might want to
-examine the output of `vim --startuptime` before applying the option.
+> [!NOTE]
+> #### Should I set up on-demand loading?
+>
+> You probably don't need to.
+>
+> A properly implemented Vim plugin should already load lazily without any
+> help from a plugin manager (`:help autoload`). So there are few cases where
+> these options actually make much sense. Making a plugin load faster is
+> the responsibility of the plugin developer, not the user. If you find
+> a plugin that takes too long to load, consider opening an issue on the
+> plugin's issue tracker.
+>
+> Let me give you a perspective. The time it takes to load a plugin is usually
+> less than 2 or 3ms on modern computers. So unless you use a very large
+> number of plugins, you are unlikely to save more than 50ms. If you have
+> spent an hour carefully setting up the options to shave off 50ms, you
+> will have to start Vim 72,000 times just to break even. You should ask
+> yourself if that's a good investment of your time.
+>
+> Make sure that you're tackling the right problem by breaking down the
+> startup of time of Vim using `--startuptime`.
+>
+> ```sh
+> vim --startuptime /tmp/log
+> ```
+>
+> On-demand loading should only be used as a last resort. It is basically
+> a hacky workaround and is not always guaranteed to work.
+
+> [!TIP]
+> You can pass an empty list to `on` or `for` option to disable the loading
+> of the plugin. You can manually load the plugin using `plug#load(NAMES...)`
+> function.
+>
+> See https://github.com/junegunn/vim-plug/wiki/tips#loading-plugins-manually
+
 
 ### Post-update hooks
 
@@ -356,21 +389,22 @@ A post-update hook is executed inside the directory of the plugin and only run
 when the repository has changed, but you can force it to run unconditionally
 with the bang-versions of the commands: `PlugInstall!` and `PlugUpdate!`.
 
-Make sure to escape BARs and double-quotes when you write the `do` option
-inline as they are mistakenly recognized as command separator or the start of
-the trailing comment.
-
-```vim
-Plug 'junegunn/fzf', { 'do': 'yes \| ./install' }
-```
-
-But you can avoid the escaping if you extract the inline specification using a
-variable (or any Vimscript expression) as follows:
-
-```vim
-let g:fzf_install = 'yes | ./install'
-Plug 'junegunn/fzf', { 'do': g:fzf_install }
-```
+> [!TIP]
+> Make sure to escape BARs and double-quotes when you write the `do` option
+> inline as they are mistakenly recognized as command separator or the start of
+> the trailing comment.
+>
+> ```vim
+> Plug 'junegunn/fzf', { 'do': 'yes \| ./install' }
+> ```
+>
+> But you can avoid the escaping if you extract the inline specification using a
+> variable (or any Vimscript expression) as follows:
+>
+> ```vim
+> let g:fzf_install = 'yes | ./install'
+> Plug 'junegunn/fzf', { 'do': g:fzf_install }
+> ```
 
 ### `PlugInstall!` and `PlugUpdate!`
 
