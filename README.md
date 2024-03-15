@@ -329,7 +329,7 @@ autocmd! User goyo.vim echom 'Goyo is now loaded!'
 > yourself if that's a good investment of your time.
 >
 > Make sure that you're tackling the right problem by breaking down the
-> startup of time of Vim using `--startuptime`.
+> startup time of Vim using `--startuptime`.
 >
 > ```sh
 > vim --startuptime /tmp/log
