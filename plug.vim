@@ -2435,7 +2435,7 @@ function! s:clean(force)
   let errs = {}
   let [cnt, total] = [0, len(g:plugs)]
   for [name, spec] in items(g:plugs)
-    if !s:is_managed(name)
+    if !s:is_managed(name) || get(spec, 'frozen', 0)
       call add(dirs, spec.dir)
     else
       let [err, clean] = s:git_validate(spec, 1)

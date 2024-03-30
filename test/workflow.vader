@@ -804,6 +804,14 @@ Execute (Check &rtp after SomeCommand):
   AssertEqual g:first_rtp, split(&rtp, ',')[0]
   AssertEqual g:last_rtp, split(&rtp, ',')[-1]
 
+Execute (PlugClean should not care about frozen plugins):
+  call plug#begin()
+  Plug 'xxx/vim-easy-align', { 'frozen': 1 }
+  call plug#end()
+  PlugClean
+  AssertExpect 'Already clean', 1
+  q
+
 Execute (Common parent):
   call plug#begin()
   Plug 'junegunn/vim-pseudocl'

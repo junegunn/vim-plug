@@ -1,4 +1,4 @@
-plug.txt	plug	Last change: March 14 2024
+plug.txt	plug	Last change: March 31 2024
 PLUG - TABLE OF CONTENTS                                         *plug* *plug-toc*
 ==============================================================================
 
@@ -188,9 +188,9 @@ More examples can be found in:
 
                                                                *<Plug>-mappings*
 
- ------------------------+-----------------------------------------------
+ ------------------------+------------------------------------------------------------
  Option                  | Description                                   ~
- ------------------------+-----------------------------------------------
+ ------------------------+------------------------------------------------------------
   `branch` / `tag` / `commit`  | Branch/tag/commit of the repository to use
   `rtp`                    | Subdirectory that contains Vim plugin
   `dir`                    | Custom directory for the plugin
@@ -198,8 +198,8 @@ More examples can be found in:
   `do`                     | Post-update hook (string or funcref)
   `on`                     | On-demand loading: Commands or <Plug>-mappings
   `for`                    | On-demand loading: File types
-  `frozen`                 | Do not update unless explicitly specified
- ------------------------+-----------------------------------------------
+  `frozen`                 | Do not remove and do not update unless explicitly specified
+ ------------------------+------------------------------------------------------------
 
 
 < Global options >____________________________________________________________~

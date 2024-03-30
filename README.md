@@ -234,7 +234,7 @@ More examples can be found in:
 | ----------------------------------- | ------------------------------------------------------------------ |
 | `PlugInstall [name ...] [#threads]` | Install plugins                                                    |
 | `PlugUpdate [name ...] [#threads]`  | Install or update plugins                                          |
-| `PlugClean[!]`                      | Remove unlisted plugins (bang version will clean without prompt) |
+| `PlugClean[!]`                      | Remove unlisted plugins (bang version will clean without prompt)   |
 | `PlugUpgrade`                       | Upgrade vim-plug itself                                            |
 | `PlugStatus`                        | Check the status of plugins                                        |
 | `PlugDiff`                          | Examine changes from the previous update and the pending changes   |
@@ -242,16 +242,16 @@ More examples can be found in:
 
 ### `Plug` options
 
-| Option                  | Description                                      |
-| ----------------------- | ------------------------------------------------ |
-| `branch`/`tag`/`commit` | Branch/tag/commit of the repository to use       |
-| `rtp`                   | Subdirectory that contains Vim plugin            |
-| `dir`                   | Custom directory for the plugin                  |
-| `as`                    | Use different name for the plugin                |
-| `do`                    | Post-update hook (string or funcref)             |
-| `on`                    | On-demand loading: Commands or `<Plug>`-mappings |
-| `for`                   | On-demand loading: File types                    |
-| `frozen`                | Do not update unless explicitly specified        |
+| Option                  | Description                                                 |
+| ----------------------- | ----------------------------------------------------------- |
+| `branch`/`tag`/`commit` | Branch/tag/commit of the repository to use                  |
+| `rtp`                   | Subdirectory that contains Vim plugin                       |
+| `dir`                   | Custom directory for the plugin                             |
+| `as`                    | Use different name for the plugin                           |
+| `do`                    | Post-update hook (string or funcref)                        |
+| `on`                    | On-demand loading: Commands or `<Plug>`-mappings            |
+| `for`                   | On-demand loading: File types                               |
+| `frozen`                | Do not remove and do not update unless explicitly specified |
 
 ### Global options
 
