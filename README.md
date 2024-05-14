@@ -300,66 +300,6 @@ More examples can be found in:
 - `:PlugDiff`
     - `X` - Revert the update
 
-### On-demand loading of plugins
-
-```vim
-" NERD tree will be loaded on the first invocation of NERDTreeToggle command
-Plug 'preservim/nerdtree', { 'on': 'NERDTreeToggle' }
-
-" Multiple commands
-Plug 'junegunn/vim-github-dashboard', { 'on': ['GHDashboard', 'GHActivity'] }
-
-" Loaded when clojure file is opened
-Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
-
-" Multiple file types
-Plug 'kovisoft/paredit', { 'for': ['clojure', 'scheme'] }
-
-" On-demand loading on both conditions
-Plug 'junegunn/vader.vim',  { 'on': 'Vader', 'for': 'vader' }
-
-" Code to execute when the plugin is lazily loaded on demand
-Plug 'junegunn/goyo.vim', { 'for': 'markdown' }
-autocmd! User goyo.vim echom 'Goyo is now loaded!'
-```
-
-> [!NOTE]
-> #### Should I set up on-demand loading?
->
-> You probably don't need to.
->
-> A properly implemented Vim plugin should already load lazily without any
-> help from a plugin manager (`:help autoload`). So there are few cases where
-> these options actually make much sense. Making a plugin load faster is
-> the responsibility of the plugin developer, not the user. If you find
-> a plugin that takes too long to load, consider opening an issue on the
-> plugin's issue tracker.
->
-> Let me give you a perspective. The time it takes to load a plugin is usually
-> less than 2 or 3ms on modern computers. So unless you use a very large
-> number of plugins, you are unlikely to save more than 50ms. If you have
-> spent an hour carefully setting up the options to shave off 50ms, you
-> will have to start Vim 72,000 times just to break even. You should ask
-> yourself if that's a good investment of your time.
->
-> Make sure that you're tackling the right problem by breaking down the
-> startup time of Vim using `--startuptime`.
->
-> ```sh
-> vim --startuptime /tmp/log
-> ```
->
-> On-demand loading should only be used as a last resort. It is basically
-> a hacky workaround and is not always guaranteed to work.
-
-> [!TIP]
-> You can pass an empty list to `on` or `for` option to disable the loading
-> of the plugin. You can manually load the plugin using `plug#load(NAMES...)`
-> function.
->
-> See https://github.com/junegunn/vim-plug/wiki/tips#loading-plugins-manually
-
-
 ### Post-update hooks
 
 There are some plugins that require extra steps after installation or update.
@@ -431,6 +371,66 @@ The installer takes the following steps when installing/updating a plugin:
     2. Execute post-update hooks
 
 The commands with the `!` suffix ensure that all steps are run unconditionally.
+
+### On-demand loading of plugins
+
+```vim
+" NERD tree will be loaded on the first invocation of NERDTreeToggle command
+Plug 'preservim/nerdtree', { 'on': 'NERDTreeToggle' }
+
+" Multiple commands
+Plug 'junegunn/vim-github-dashboard', { 'on': ['GHDashboard', 'GHActivity'] }
+
+" Loaded when clojure file is opened
+Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
+
+" Multiple file types
+Plug 'kovisoft/paredit', { 'for': ['clojure', 'scheme'] }
+
+" On-demand loading on both conditions
+Plug 'junegunn/vader.vim',  { 'on': 'Vader', 'for': 'vader' }
+
+" Code to execute when the plugin is lazily loaded on demand
+Plug 'junegunn/goyo.vim', { 'for': 'markdown' }
+autocmd! User goyo.vim echom 'Goyo is now loaded!'
+```
+
+> [!NOTE]
+> #### Should I set up on-demand loading?
+>
+> You probably don't need to.
+>
+> A properly implemented Vim plugin should already load lazily without any
+> help from a plugin manager (`:help autoload`). So there are few cases where
+> these options actually make much sense. Making a plugin load faster is
+> the responsibility of the plugin developer, not the user. If you find
+> a plugin that takes too long to load, consider opening an issue on the
+> plugin's issue tracker.
+>
+> Let me give you a perspective. The time it takes to load a plugin is usually
+> less than 2 or 3ms on modern computers. So unless you use a very large
+> number of plugins, you are unlikely to save more than 50ms. If you have
+> spent an hour carefully setting up the options to shave off 50ms, you
+> will have to start Vim 72,000 times just to break even. You should ask
+> yourself if that's a good investment of your time.
+>
+> Make sure that you're tackling the right problem by breaking down the
+> startup time of Vim using `--startuptime`.
+>
+> ```sh
+> vim --startuptime /tmp/log
+> ```
+>
+> On-demand loading should only be used as a last resort. It is basically
+> a hacky workaround and is not always guaranteed to work.
+
+> [!TIP]
+> You can pass an empty list to `on` or `for` option to disable the loading
+> of the plugin. You can manually load the plugin using `plug#load(NAMES...)`
+> function.
+>
+> See https://github.com/junegunn/vim-plug/wiki/tips#loading-plugins-manually
+
 
 ### Collaborators
 
