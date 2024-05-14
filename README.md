@@ -34,8 +34,10 @@ A minimalist Vim plugin manager.
 
 - Easy to set up: Single file. No boilerplate code required.
 - Easy to use: Concise, intuitive syntax
+- Minimalist: No feature bloat
+- Extremely stable with flawless backward compatibility
+    - Runs perfectly with Vim 7.0+ from 2006 and with any versions of Neovim from 2014
 - [Super-fast][40/4] parallel installation/update
-  (with any of `+job`, `+python`, `+python3`, `+ruby`, or [Neovim][nv])
 - Creates shallow clones to minimize disk space usage and download time
 - On-demand loading for [faster startup time][startup-time]
 - Can review and rollback updates
@@ -44,7 +46,6 @@ A minimalist Vim plugin manager.
 - Support for externally managed plugins
 
 [40/4]: https://raw.githubusercontent.com/junegunn/i/master/vim-plug/40-in-4.gif
-[nv]: http://neovim.org/
 [startup-time]: https://github.com/junegunn/vim-startuptime-benchmark#result
 
 ### Installation
