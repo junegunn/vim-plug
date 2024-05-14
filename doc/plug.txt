@@ -1,24 +1,24 @@
-plug.txt	plug	Last change: May 14 2024
+plug.txt	plug	Last change: May 15 2024
 PLUG - TABLE OF CONTENTS                                         *plug* *plug-toc*
 ==============================================================================
 
-  vim-plug                                    |vim-plug|
-      Pros.                                   |plug-pros|
-      Installation                            |plug-installation|
-      Usage                                   |plug-usage|
-        Getting Help                          |plug-getting-help|
-      More examples                           |plug-more-examples|
-        Vim script example                    |plug-vim-script-example|
-        Lua configuration example for Neovim  |plug-lua-configuration-example-for-neovim|
-      Commands                                |plug-commands|
-      Plug options                            |plug-options|
-      Global options                          |plug-global-options|
-      Keybindings                             |plug-keybindings|
-      Post-update hooks                       |plug-post-update-hooks|
-        PlugInstall! and PlugUpdate!          |pluginstall-and-plugupdate|
-      On-demand loading of plugins            |plug-on-demand-loading-of-plugins|
-      Collaborators                           |plug-collaborators|
-      License                                 |plug-license|
+  vim-plug                          |vim-plug|
+    Pros.                           |plug-pros|
+    Installation                    |plug-installation|
+    Usage                           |plug-usage|
+      Getting Help                  |plug-getting-help|
+    Examples                        |plug-examples|
+      Vim script example            |plug-vim-script-example|
+      Lua example for Neovim        |plug-lua-example-for-neovim|
+    Commands                        |plug-commands|
+    Plug options                    |plug-options|
+    Global options                  |plug-global-options|
+    Keybindings                     |plug-keybindings|
+    Post-update hooks               |plug-post-update-hooks|
+      PlugInstall! and PlugUpdate!  |pluginstall-and-plugupdate|
+    On-demand loading of plugins    |plug-on-demand-loading-of-plugins|
+    Collaborators                   |plug-collaborators|
+    License                         |plug-license|
 
 VIM-PLUG                                                              *vim-plug*
 ==============================================================================
@@ -26,8 +26,8 @@ VIM-PLUG                                                              *vim-plug*
 A minimalist Vim plugin manager.
 
 
-< Pros. >_____________________________________________________________________~
-                                                                     *plug-pros*
+PROS.                                                                *plug-pros*
+==============================================================================
 
  - Minimalist design
    - Just one file with no dependencies. Super easy to set up.
@@ -35,8 +35,8 @@ A minimalist Vim plugin manager.
      boilerplate code required.
    - No feature bloat
  - Extremely stable with flawless backward compatibility
-   - Works perfectly with Vim 7.0+ since 2006 and with all versions of Neovim
-     since 2014
+   - Works perfectly with all versions of Vim since 2006 and all versions of
+     Neovim ever released
  - {Super-fast}{1} parallel installation/update
  - Creates shallow clones to minimize disk space usage and download time
  - On-demand loading for {faster startup time}{2}
@@ -49,16 +49,16 @@ A minimalist Vim plugin manager.
   {2} https://github.com/junegunn/vim-startuptime-benchmark#result
 
 
-< Installation >______________________________________________________________~
-                                                             *plug-installation*
+INSTALLATION                                                 *plug-installation*
+==============================================================================
 
 {Download plug.vim}{3} and put it in the "autoload" directory.
 
        {3} https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
 
-< Usage >_____________________________________________________________________~
-                                                                    *plug-usage*
+USAGE                                                               *plug-usage*
+==============================================================================
 
 Add a vim-plug section to your `~/.vimrc` (or `init.vim` for Neovim)
 
@@ -90,7 +90,7 @@ document is for advanced users who want to know more about the features and
 options.
 
 
-Getting Help~
+< Getting Help >______________________________________________________________~
                                                              *plug-getting-help*
 
  - See {tutorial}{4} page to learn more about the basics of vim-plug
@@ -101,13 +101,13 @@ Getting Help~
                         {6} https://github.com/junegunn/vim-plug/wiki/faq
 
 
-< More examples >_____________________________________________________________~
-                                                            *plug-more-examples*
+EXAMPLES                                                         *plug-examples*
+==============================================================================
 
 The following examples demonstrate the additional features of vim-plug.
 
 
-Vim script example~
+< Vim script example >________________________________________________________~
                                                        *plug-vim-script-example*
 >
     call plug#begin()
@@ -162,8 +162,8 @@ Vim script example~
     "   syntax off            " Disable syntax highlighting
 <
 
-Lua configuration example for Neovim~
-                                     *plug-lua-configuration-example-for-neovim*
+< Lua example for Neovim >____________________________________________________~
+                                                   *plug-lua-example-for-neovim*
 
 In Neovim, you can write your configuration in a Lua script file named
 `init.lua`. The following code is the Lua script equivalent to the Vim script
@@ -211,16 +211,9 @@ example above.
 
     vim.call('plug#end')
 <
-More examples can be found in:
 
- - https://gitlab.com/sultanahamer/dotfiles/-/blob/master/nvim/lua/plugins.lua?ref_type=heads
-
-
-< Commands >__________________________________________________________________~
-                                                                 *plug-commands*
-
-        *:PlugInstall* *:PlugUpdate* *:PlugClean* *:PlugUpgrade* *:PlugStatus* *:PlugDiff*
-                                                                 *:PlugSnapshot*
+COMMANDS                                                         *plug-commands*
+==============================================================================
 
  -------------------------------------+------------------------------------------------------------------
  Command                              | Description                                                      ~
@@ -235,8 +228,8 @@ More examples can be found in:
  -------------------------------------+------------------------------------------------------------------
 
 
-< Plug options >______________________________________________________________~
-                                                                  *plug-options*
+PLUG OPTIONS                                                      *plug-options*
+==============================================================================
 
                                                                *<Plug>-mappings*
 
@@ -254,8 +247,8 @@ More examples can be found in:
  ------------------------+------------------------------------------------------------
 
 
-< Global options >____________________________________________________________~
-                                                           *plug-global-options*
+GLOBAL OPTIONS                                             *plug-global-options*
+==============================================================================
 
      *g:plug_threads* *g:plug_timeout* *g:plug_retries* *g:plug_shallow* *g:plug_window*
                                               *g:plug_pwindow* *g:plug_url_format*
@@ -273,8 +266,8 @@ More examples can be found in:
  --------------------+-----------------------------------+-----------------------------------------------------------------------------------
 
 
-< Keybindings >_______________________________________________________________~
-                                                              *plug-keybindings*
+KEYBINDINGS                                                   *plug-keybindings*
+==============================================================================
 
  - `D` - `PlugDiff`
  - `S` - `PlugStatus`
@@ -287,8 +280,8 @@ More examples can be found in:
    - `X` - Revert the update
 
 
-< Post-update hooks >_________________________________________________________~
-                                                        *plug-post-update-hooks*
+POST-UPDATE HOOKS                                       *plug-post-update-hooks*
+==============================================================================
 
 There are some plugins that require extra steps after installation or update.
 In that case, use the `do` option to describe the task to be performed.
@@ -323,9 +316,9 @@ A post-update hook is executed inside the directory of the plugin and only run
 when the repository has changed, but you can force it to run unconditionally
 with the bang-versions of the commands: `PlugInstall!` and `PlugUpdate!`.
 
-Make sure to escape BARs and double-quotes when you write the `do` option
-inline as they are mistakenly recognized as command separator or the start of
-the trailing comment.
+[!TIP] Make sure to escape BARs and double-quotes when you write the `do`
+option inline as they are mistakenly recognized as command separator or the
+start of the trailing comment.
 >
     Plug 'junegunn/fzf', { 'do': 'yes \| ./install' }
 <
@@ -336,7 +329,7 @@ variable (or any Vim script expression) as follows:
     Plug 'junegunn/fzf', { 'do': g:fzf_install }
 <
 
-PlugInstall! and PlugUpdate!~
+< PlugInstall! and PlugUpdate! >______________________________________________~
                                                     *pluginstall-and-plugupdate*
 
 The installer takes the following steps when installing/updating a plugin:
@@ -351,8 +344,8 @@ The commands with the `!` suffix ensure that all steps are run
 unconditionally.
 
 
-< On-demand loading of plugins >______________________________________________~
-                                             *plug-on-demand-loading-of-plugins*
+ON-DEMAND LOADING OF PLUGINS                 *plug-on-demand-loading-of-plugins*
+==============================================================================
 >
     " NERD tree will be loaded on the first invocation of NERDTreeToggle command
     Plug 'preservim/nerdtree', { 'on': 'NERDTreeToggle' }
@@ -408,8 +401,8 @@ loading of the plugin. You can manually load the plugin using
 See https://github.com/junegunn/vim-plug/wiki/tips#loading-plugins-manually
 
 
-< Collaborators >_____________________________________________________________~
-                                                            *plug-collaborators*
+COLLABORATORS                                               *plug-collaborators*
+==============================================================================
 
  - {Jan Edmund Lazo}{7} - Windows support
  - {Jeremy Pallats}{8} - Python installer
@@ -418,8 +411,8 @@ See https://github.com/junegunn/vim-plug/wiki/tips#loading-plugins-manually
                                            {8} https://github.com/starcraftman
 
 
-< License >___________________________________________________________________~
-                                                                  *plug-license*
+LICENSE                                                           *plug-license*
+==============================================================================
 
 MIT
 

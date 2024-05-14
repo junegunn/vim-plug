@@ -30,7 +30,7 @@ A minimalist Vim plugin manager.
 
 <img src="https://raw.githubusercontent.com/junegunn/i/master/vim-plug/installer.gif" height="450">
 
-### Pros.
+## Pros.
 
 - Minimalist design
     - Just one file with no dependencies. Super easy to set up.
@@ -49,7 +49,7 @@ A minimalist Vim plugin manager.
 [40/4]: https://raw.githubusercontent.com/junegunn/i/master/vim-plug/40-in-4.gif
 [startup-time]: https://github.com/junegunn/vim-startuptime-benchmark#result
 
-### Installation
+## Installation
 
 [Download plug.vim](https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim)
 and put it in the "autoload" directory.
@@ -57,9 +57,9 @@ and put it in the "autoload" directory.
 <details>
 <summary>Click to see the instructions</summary>
 
-#### Vim
+### Vim
 
-###### Unix
+#### Unix
 
 ```sh
 curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
@@ -71,30 +71,30 @@ file as suggested [here][auto].
 
 [auto]: https://github.com/junegunn/vim-plug/wiki/tips#automatic-installation
 
-###### Windows (PowerShell)
+#### Windows (PowerShell)
 
 ```powershell
 iwr -useb https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim |`
     ni $HOME/vimfiles/autoload/plug.vim -Force
 ```
 
-#### Neovim
+### Neovim
 
-###### Unix, Linux
+#### Unix, Linux
 
 ```sh
 sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 ```
 
-###### Linux (Flatpak)
+#### Linux (Flatpak)
 
 ```sh
 curl -fLo ~/.var/app/io.neovim.nvim/data/nvim/site/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 ```
 
-###### Windows (PowerShell)
+#### Windows (PowerShell)
 
 ```powershell
 iwr -useb https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim |`
@@ -103,7 +103,7 @@ iwr -useb https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim |`
 
 </details>
 
-### Usage
+## Usage
 
 Add a vim-plug section to your `~/.vimrc` (or `init.vim` for Neovim)
 
@@ -133,7 +133,7 @@ Reload the file or restart Vim, then you can,
 > document is for advanced users who want to know more about the features and
 > options.
 
-#### Getting Help
+### Getting Help
 
 - See [tutorial] page to learn more about the basics of vim-plug
 - See [tips] and [FAQ] pages for common problems and questions
@@ -142,11 +142,11 @@ Reload the file or restart Vim, then you can,
 [tips]: https://github.com/junegunn/vim-plug/wiki/tips
 [FAQ]: https://github.com/junegunn/vim-plug/wiki/faq
 
-### More examples
+## Examples
 
 The following examples demonstrate the additional features of vim-plug.
 
-#### Vim script example
+### Vim script example
 
 ```vim
 call plug#begin()
@@ -201,7 +201,7 @@ call plug#end()
 "   syntax off            " Disable syntax highlighting
 ```
 
-#### Lua configuration example for Neovim
+### Lua example for Neovim
 
 In Neovim, you can write your configuration in a Lua script file named
 `init.lua`. The following code is the Lua script equivalent to the Vim script
@@ -251,11 +251,7 @@ Plug('~/my-prototype-plugin')
 vim.call('plug#end')
 ```
 
-More examples can be found in:
-
-* https://gitlab.com/sultanahamer/dotfiles/-/blob/master/nvim/lua/plugins.lua?ref_type=heads
-
-### Commands
+## Commands
 
 | Command                             | Description                                                        |
 | ----------------------------------- | ------------------------------------------------------------------ |
@@ -267,7 +263,7 @@ More examples can be found in:
 | `PlugDiff`                          | Examine changes from the previous update and the pending changes   |
 | `PlugSnapshot[!] [output path]`     | Generate script for restoring the current snapshot of the plugins  |
 
-### `Plug` options
+## `Plug` options
 
 | Option                  | Description                                                 |
 | ----------------------- | ----------------------------------------------------------- |
@@ -280,7 +276,7 @@ More examples can be found in:
 | `for`                   | On-demand loading: File types                               |
 | `frozen`                | Do not remove and do not update unless explicitly specified |
 
-### Global options
+## Global options
 
 | Flag                | Default                           | Description                                            |
 | ------------------- | --------------------------------- | ------------------------------------------------------ |
@@ -293,7 +289,7 @@ More examples can be found in:
 | `g:plug_url_format` | `https://git::@github.com/%s.git` | `printf` format to build repo URL (Only applies to the subsequent `Plug` commands) |
 
 
-### Keybindings
+## Keybindings
 
 - `D` - `PlugDiff`
 - `S` - `PlugStatus`
@@ -305,7 +301,7 @@ More examples can be found in:
 - `:PlugDiff`
     - `X` - Revert the update
 
-### Post-update hooks
+## Post-update hooks
 
 There are some plugins that require extra steps after installation or update.
 In that case, use the `do` option to describe the task to be performed.
@@ -365,7 +361,7 @@ with the bang-versions of the commands: `PlugInstall!` and `PlugUpdate!`.
 > Plug 'junegunn/fzf', { 'do': g:fzf_install }
 > ```
 
-#### `PlugInstall!` and `PlugUpdate!`
+### `PlugInstall!` and `PlugUpdate!`
 
 The installer takes the following steps when installing/updating a plugin:
 
@@ -377,7 +373,7 @@ The installer takes the following steps when installing/updating a plugin:
 
 The commands with the `!` suffix ensure that all steps are run unconditionally.
 
-### On-demand loading of plugins
+## On-demand loading of plugins
 
 ```vim
 " NERD tree will be loaded on the first invocation of NERDTreeToggle command
@@ -437,11 +433,11 @@ autocmd! User goyo.vim echom 'Goyo is now loaded!'
 > See https://github.com/junegunn/vim-plug/wiki/tips#loading-plugins-manually
 
 
-### Collaborators
+## Collaborators
 
 - [Jan Edmund Lazo](https://github.com/janlazo) - Windows support
 - [Jeremy Pallats](https://github.com/starcraftman) - Python installer
 
-### License
+## License
 
 MIT
