@@ -54,6 +54,9 @@ A minimalist Vim plugin manager.
 [Download plug.vim](https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim)
 and put it in the "autoload" directory.
 
+<details>
+<summary>Click to see the instructions</summary>
+
 #### Vim
 
 ###### Unix
@@ -97,6 +100,8 @@ curl -fLo ~/.var/app/io.neovim.nvim/data/nvim/site/autoload/plug.vim --create-di
 iwr -useb https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim |`
     ni "$(@($env:XDG_DATA_HOME, $env:LOCALAPPDATA)[$null -eq $env:XDG_DATA_HOME])/nvim-data/site/autoload/plug.vim" -Force
 ```
+
+</details>
 
 ### Usage
 
