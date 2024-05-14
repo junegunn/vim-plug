@@ -37,7 +37,7 @@ A minimalist Vim plugin manager.
     - Concise, intuitive syntax that you can learn within minutes. No boilerplate code required.
     - No feature bloat
 - Extremely stable with flawless backward compatibility
-    - Works perfectly with Vim 7.0+ since 2006 and with all versions of Neovim since 2014
+    - Works perfectly with all versions of Vim since 2006 and all versions of Neovim ever released
 - [Super-fast][40/4] parallel installation/update
 - Creates shallow clones to minimize disk space usage and download time
 - On-demand loading for [faster startup time][startup-time]
