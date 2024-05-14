@@ -1,21 +1,24 @@
-plug.txt	plug	Last change: March 31 2024
+plug.txt	plug	Last change: May 14 2024
 PLUG - TABLE OF CONTENTS                                         *plug* *plug-toc*
 ==============================================================================
 
-  vim-plug                                         |vim-plug|
-      Getting Help                                 |plug-getting-help|
-      Usage                                        |plug-usage|
-        Example                                    |plug-example|
-        Example (Lua configuration for Neovim)     |plug-examplelua-configuration-for-neovim|
-      Commands                                     |plug-commands|
-      Plug options                                 |plug-options|
-      Global options                               |plug-global-options|
-      Keybindings                                  |plug-keybindings|
-      Example: A small sensible Vim configuration  |plug-example-a-small-sensible-vim-configuration|
-      On-demand loading of plugins                 |plug-on-demand-loading-of-plugins|
-      Post-update hooks                            |plug-post-update-hooks|
-      PlugInstall! and PlugUpdate!                 |pluginstall-and-plugupdate|
-      License                                      |plug-license|
+  vim-plug                                    |vim-plug|
+      Pros.                                   |plug-pros|
+      Installation                            |plug-installation|
+      Usage                                   |plug-usage|
+        Getting Help                          |plug-getting-help|
+      More examples                           |plug-more-examples|
+        Vim script example                    |plug-vim-script-example|
+        Lua configuration example for Neovim  |plug-lua-configuration-example-for-neovim|
+      Commands                                |plug-commands|
+      Plug options                            |plug-options|
+      Global options                          |plug-global-options|
+      Keybindings                             |plug-keybindings|
+      On-demand loading of plugins            |plug-on-demand-loading-of-plugins|
+      Post-update hooks                       |plug-post-update-hooks|
+      PlugInstall! and PlugUpdate!            |pluginstall-and-plugupdate|
+      Collaborators                           |plug-collaborators|
+      License                                 |plug-license|
 
 VIM-PLUG                                                              *vim-plug*
 ==============================================================================
@@ -23,40 +26,89 @@ VIM-PLUG                                                              *vim-plug*
 A minimalist Vim plugin manager.
 
 
-< Getting Help >______________________________________________________________~
-                                                             *plug-getting-help*
+< Pros. >_____________________________________________________________________~
+                                                                     *plug-pros*
 
- - See {tutorial}{1} page to learn the basics of vim-plug
- - See {tips}{2} and {FAQ}{3} pages for common problems and questions
- - See {requirements}{4} page for debugging information & tested configurations
- - Create an {issue}{5}
+ - Minimalist design
+   - Just one file with no dependencies. Super easy to set up.
+   - Concise, intuitive syntax that you can learn within minutes. No
+     boilerplate code required.
+   - No feature bloat
+ - Extremely stable with flawless backward compatibility
+   - Works perfectly with Vim 7.0+ since 2006 and with all versions of Neovim
+     since 2014
+ - {Super-fast}{1} parallel installation/update
+ - Creates shallow clones to minimize disk space usage and download time
+ - On-demand loading for {faster startup time}{2}
+ - Can review and rollback updates
+ - Branch/tag/commit support
+ - Post-update hooks
+ - Support for externally managed plugins
 
-                    {1} https://github.com/junegunn/vim-plug/wiki/tutorial
-                    {2} https://github.com/junegunn/vim-plug/wiki/tips
-                    {3} https://github.com/junegunn/vim-plug/wiki/faq
-                    {4} https://github.com/junegunn/vim-plug/wiki/requirements
-                    {5} https://github.com/junegunn/vim-plug/issues/new
+  {1} https://raw.githubusercontent.com/junegunn/i/master/vim-plug/40-in-4.gif
+  {2} https://github.com/junegunn/vim-startuptime-benchmark#result
+
+
+< Installation >______________________________________________________________~
+                                                             *plug-installation*
+
+{Download plug.vim}{3} and put it in the "autoload" directory.
+
+       {3} https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
 
 < Usage >_____________________________________________________________________~
                                                                     *plug-usage*
 
-Add a vim-plug section to your `~/.vimrc` (or
-`stdpath('config') . '/init.vim'` for Neovim)
+Add a vim-plug section to your `~/.vimrc` (or `init.vim` for Neovim)
 
                                                            *plug#begin* *plug#end*
 
- 1. Begin the section with `call plug#begin([PLUGIN_DIR])`
+ 1. Begin the section with `call plug#begin()`
  2. List the plugins with `Plug` commands
- 3. `call plug#end()` to update 'runtimepath' and initialize plugin system
-   - Automatically executes `filetype plugin indent on` and `syntax enable`.
-     You can revert the settings after the call. e.g. `filetype indent off`,
-     `syntax off`, etc.
- 4. Reload the file or restart Vim and run `:PlugInstall` to install plugins.
+ 3. End the section with `call plug#end()`
+
+For example,
+>
+    call plug#begin()
+
+    " List your plugins here
+    Plug 'tpope/vim-sensible'
+
+    call plug#end()
+<
+Reload the file or restart Vim, then you can,
+
+                                            *:PlugInstall* *:PlugUpdate* *:PlugDiff*
+
+ - `:PlugInstall` to install the plugins
+ - `:PlugUpdate` to install or update the plugins
+ - `:PlugDiff` to review the changes from the last update
+
+[!NOTE] That's basically all you need to know to get started. The rest of the
+document is for advanced users who want to know more about the features and
+options.
 
 
-Example~
-                                                                  *plug-example*
+Getting Help~
+                                                             *plug-getting-help*
+
+ - See {tutorial}{4} page to learn more about the basics of vim-plug
+ - See {tips}{5} and {FAQ}{6} pages for common problems and questions
+
+                        {4} https://github.com/junegunn/vim-plug/wiki/tutorial
+                        {5} https://github.com/junegunn/vim-plug/wiki/tips
+                        {6} https://github.com/junegunn/vim-plug/wiki/faq
+
+
+< More examples >_____________________________________________________________~
+                                                            *plug-more-examples*
+
+The following examples demonstrate the additional features of vim-plug.
+
+
+Vim script example~
+                                                       *plug-vim-script-example*
 >
     call plug#begin()
     " The default plugin directory will be as follows:
@@ -102,19 +154,19 @@ Example~
     " Unmanaged plugin (manually installed and updated)
     Plug '~/my-prototype-plugin'
 
-    " Initialize plugin system
-    " - Automatically executes `filetype plugin indent on` and `syntax enable`.
+    " Call plug#end to update &runtimepath and initialize the plugin system.
+    " - It automatically executes `filetype plugin indent on` and `syntax enable`
     call plug#end()
     " You can revert the settings after the call like so:
     "   filetype indent off   " Disable file-type-specific indentation
     "   syntax off            " Disable syntax highlighting
 <
 
-Example (Lua configuration for Neovim)~
-                                     *plug-example-lua-configuration-for-neovim*
+Lua configuration example for Neovim~
+                                     *plug-lua-configuration-example-for-neovim*
 
 In Neovim, you can write your configuration in a Lua script file named
-`init.lua`. The following code is the Lua script equivalent to the VimScript
+`init.lua`. The following code is the Lua script equivalent to the Vim script
 example above.
 >
     local vim = vim
@@ -189,7 +241,7 @@ More examples can be found in:
                                                                *<Plug>-mappings*
 
  ------------------------+------------------------------------------------------------
- Option                  | Description                                   ~
+ Option                  | Description                                                ~
  ------------------------+------------------------------------------------------------
   `branch` / `tag` / `commit`  | Branch/tag/commit of the repository to use
   `rtp`                    | Subdirectory that contains Vim plugin
@@ -235,14 +287,6 @@ More examples can be found in:
    - `X` - Revert the update
 
 
-< Example: A small sensible Vim configuration >_______________________________~
-                               *plug-example-a-small-sensible-vim-configuration*
->
-    call plug#begin()
-    Plug 'tpope/vim-sensible'
-    call plug#end()
-<
-
 < On-demand loading of plugins >______________________________________________~
                                              *plug-on-demand-loading-of-plugins*
 >
@@ -265,9 +309,39 @@ More examples can be found in:
     Plug 'junegunn/goyo.vim', { 'for': 'markdown' }
     autocmd! User goyo.vim echom 'Goyo is now loaded!'
 <
-The `for` option is generally not needed as most plugins for specific file
-types usually don't have too much code in the `plugin` directory. You might
-want to examine the output of `vim --startuptime` before applying the option.
+[!NOTE] #### Should I set up on-demand loading?
+
+You probably don't need to.
+
+A properly implemented Vim plugin should already load lazily without any help
+from a plugin manager (`:help autoload`). So there are few cases where these
+options actually make much sense. Making a plugin load faster is the
+responsibility of the plugin developer, not the user. If you find a plugin
+that takes too long to load, consider opening an issue on the plugin's issue
+tracker.
+
+Let me give you a perspective. The time it takes to load a plugin is usually
+less than 2 or 3ms on modern computers. So unless you use a very large number
+of plugins, you are unlikely to save more than 50ms. If you have spent an hour
+carefully setting up the options to shave off 50ms, you will have to start Vim
+72,000 times just to break even. You should ask yourself if that's a good
+investment of your time.
+
+Make sure that you're tackling the right problem by breaking down the startup
+time of Vim using `--startuptime`.
+>
+    vim --startuptime /tmp/log
+<
+On-demand loading should only be used as a last resort. It is basically a
+hacky workaround and is not always guaranteed to work.
+
+                                                                     *plug#load*
+
+[!TIP] You can pass an empty list to `on` or `for` option to disable the
+loading of the plugin. You can manually load the plugin using
+`plug#load(NAMES...)` function.
+
+See https://github.com/junegunn/vim-plug/wiki/tips#loading-plugins-manually
 
 
 < Post-update hooks >_________________________________________________________~
@@ -313,9 +387,7 @@ the trailing comment.
     Plug 'junegunn/fzf', { 'do': 'yes \| ./install' }
 <
 But you can avoid the escaping if you extract the inline specification using a
-variable (or any Vimscript expression) as follows:
-
-                                                                 *g:fzf_install*
+variable (or any Vim script expression) as follows:
 >
     let g:fzf_install = 'yes | ./install'
     Plug 'junegunn/fzf', { 'do': g:fzf_install }
@@ -334,6 +406,16 @@ The installer takes the following steps when installing/updating a plugin:
 
 The commands with the `!` suffix ensure that all steps are run
 unconditionally.
+
+
+< Collaborators >_____________________________________________________________~
+                                                            *plug-collaborators*
+
+ - {Jan Edmund Lazo}{7} - Windows support
+ - {Jeremy Pallats}{8} - Python installer
+
+                                           {7} https://github.com/janlazo
+                                           {8} https://github.com/starcraftman
 
 
 < License >___________________________________________________________________~

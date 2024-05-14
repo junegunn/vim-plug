@@ -32,9 +32,10 @@ A minimalist Vim plugin manager.
 
 ### Pros.
 
-- Easy to set up: Single file. No boilerplate code required.
-- Easy to use: Concise, intuitive syntax
-- Minimalist: No feature bloat
+- Minimalist design
+    - Just one file with no dependencies. Super easy to set up.
+    - Concise, intuitive syntax that you can learn within minutes. No boilerplate code required.
+    - No feature bloat
 - Extremely stable with flawless backward compatibility
     - Works perfectly with Vim 7.0+ since 2006 and with all versions of Neovim since 2014
 - [Super-fast][40/4] parallel installation/update
@@ -97,30 +98,50 @@ iwr -useb https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim |`
     ni "$(@($env:XDG_DATA_HOME, $env:LOCALAPPDATA)[$null -eq $env:XDG_DATA_HOME])/nvim-data/site/autoload/plug.vim" -Force
 ```
 
-### Getting Help
+### Usage
 
-- See [tutorial] page to learn the basics of vim-plug
+Add a vim-plug section to your `~/.vimrc` (or `init.vim` for Neovim)
+
+1. Begin the section with `call plug#begin()`
+1. List the plugins with `Plug` commands
+1. End the section with `call plug#end()`
+
+For example,
+
+```vim
+call plug#begin()
+
+" List your plugins here
+Plug 'tpope/vim-sensible'
+
+call plug#end()
+```
+
+Reload the file or restart Vim, then you can,
+
+* `:PlugInstall` to install the plugins
+* `:PlugUpdate` to install or update the plugins
+* `:PlugDiff` to review the changes from the last update
+
+> [!NOTE]
+> That's basically all you need to know to get started. The rest of the
+> document is for advanced users who want to know more about the features and
+> options.
+
+#### Getting Help
+
+- See [tutorial] page to learn more about the basics of vim-plug
 - See [tips] and [FAQ] pages for common problems and questions
-- See [requirements] page for debugging information & tested configurations
-- Create an [issue](https://github.com/junegunn/vim-plug/issues/new)
 
 [tutorial]: https://github.com/junegunn/vim-plug/wiki/tutorial
 [tips]: https://github.com/junegunn/vim-plug/wiki/tips
 [FAQ]: https://github.com/junegunn/vim-plug/wiki/faq
-[requirements]: https://github.com/junegunn/vim-plug/wiki/requirements
 
-### Usage
+### More examples
 
-Add a vim-plug section to your `~/.vimrc` (or `stdpath('config') . '/init.vim'` for Neovim)
+The following examples demonstrate the additional features of vim-plug.
 
-1. Begin the section with `call plug#begin([PLUGIN_DIR])`
-1. List the plugins with `Plug` commands
-1. `call plug#end()` to update `&runtimepath` and initialize plugin system
-    - Automatically executes `filetype plugin indent on` and `syntax enable`.
-      You can revert the settings after the call. e.g. `filetype indent off`, `syntax off`, etc.
-1. Reload the file or restart Vim and run `:PlugInstall` to install plugins.
-
-#### Example
+#### Vim script example
 
 ```vim
 call plug#begin()
@@ -167,18 +188,18 @@ Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 " Unmanaged plugin (manually installed and updated)
 Plug '~/my-prototype-plugin'
 
-" Initialize plugin system
-" - Automatically executes `filetype plugin indent on` and `syntax enable`.
+" Call plug#end to update &runtimepath and initialize the plugin system.
+" - It automatically executes `filetype plugin indent on` and `syntax enable`
 call plug#end()
 " You can revert the settings after the call like so:
 "   filetype indent off   " Disable file-type-specific indentation
 "   syntax off            " Disable syntax highlighting
 ```
 
-#### Example (Lua configuration for Neovim)
+#### Lua configuration example for Neovim
 
 In Neovim, you can write your configuration in a Lua script file named
-`init.lua`. The following code is the Lua script equivalent to the VimScript
+`init.lua`. The following code is the Lua script equivalent to the Vim script
 example above.
 
 ```lua
@@ -278,14 +299,6 @@ More examples can be found in:
     - `L` - Load plugin
 - `:PlugDiff`
     - `X` - Revert the update
-
-### Example: A small [sensible](https://github.com/tpope/vim-sensible) Vim configuration
-
-```vim
-call plug#begin()
-Plug 'tpope/vim-sensible'
-call plug#end()
-```
 
 ### On-demand loading of plugins
 
@@ -400,7 +413,7 @@ with the bang-versions of the commands: `PlugInstall!` and `PlugUpdate!`.
 > ```
 >
 > But you can avoid the escaping if you extract the inline specification using a
-> variable (or any Vimscript expression) as follows:
+> variable (or any Vim script expression) as follows:
 >
 > ```vim
 > let g:fzf_install = 'yes | ./install'
