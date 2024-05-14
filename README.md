@@ -32,11 +32,12 @@ A minimalist Vim plugin manager.
 
 ### Pros.
 
-- Easy to set up: Single file. No boilerplate code required.
-- Easy to use: Concise, intuitive syntax
-- Minimalist: No feature bloat
+- Minimalist design
+    - Just one file with no dependencies. Super easy to set up.
+    - Concise, intuitive syntax that you can learn within minutes. No boilerplate code required.
+    - No feature bloat
 - Extremely stable with flawless backward compatibility
-    - Works perfectly with Vim 7.0+ since 2006 and with all versions of Neovim since 2014
+    - Works perfectly with all versions of Vim since 2006 and all versions of Neovim ever released
 - [Super-fast][40/4] parallel installation/update
 - Creates shallow clones to minimize disk space usage and download time
 - On-demand loading for [faster startup time][startup-time]
@@ -52,6 +53,9 @@ A minimalist Vim plugin manager.
 
 [Download plug.vim](https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim)
 and put it in the "autoload" directory.
+
+<details>
+<summary>Click to see the instructions</summary>
 
 #### Vim
 
@@ -97,30 +101,52 @@ iwr -useb https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim |`
     ni "$(@($env:XDG_DATA_HOME, $env:LOCALAPPDATA)[$null -eq $env:XDG_DATA_HOME])/nvim-data/site/autoload/plug.vim" -Force
 ```
 
-### Getting Help
+</details>
 
-- See [tutorial] page to learn the basics of vim-plug
+### Usage
+
+Add a vim-plug section to your `~/.vimrc` (or `init.vim` for Neovim)
+
+1. Begin the section with `call plug#begin()`
+1. List the plugins with `Plug` commands
+1. End the section with `call plug#end()`
+
+For example,
+
+```vim
+call plug#begin()
+
+" List your plugins here
+Plug 'tpope/vim-sensible'
+
+call plug#end()
+```
+
+Reload the file or restart Vim, then you can,
+
+* `:PlugInstall` to install the plugins
+* `:PlugUpdate` to install or update the plugins
+* `:PlugDiff` to review the changes from the last update
+
+> [!NOTE]
+> That's basically all you need to know to get started. The rest of the
+> document is for advanced users who want to know more about the features and
+> options.
+
+#### Getting Help
+
+- See [tutorial] page to learn more about the basics of vim-plug
 - See [tips] and [FAQ] pages for common problems and questions
-- See [requirements] page for debugging information & tested configurations
-- Create an [issue](https://github.com/junegunn/vim-plug/issues/new)
 
 [tutorial]: https://github.com/junegunn/vim-plug/wiki/tutorial
 [tips]: https://github.com/junegunn/vim-plug/wiki/tips
 [FAQ]: https://github.com/junegunn/vim-plug/wiki/faq
-[requirements]: https://github.com/junegunn/vim-plug/wiki/requirements
 
-### Usage
+### More examples
 
-Add a vim-plug section to your `~/.vimrc` (or `stdpath('config') . '/init.vim'` for Neovim)
+The following examples demonstrate the additional features of vim-plug.
 
-1. Begin the section with `call plug#begin([PLUGIN_DIR])`
-1. List the plugins with `Plug` commands
-1. `call plug#end()` to update `&runtimepath` and initialize plugin system
-    - Automatically executes `filetype plugin indent on` and `syntax enable`.
-      You can revert the settings after the call. e.g. `filetype indent off`, `syntax off`, etc.
-1. Reload the file or restart Vim and run `:PlugInstall` to install plugins.
-
-#### Example
+#### Vim script example
 
 ```vim
 call plug#begin()
@@ -167,18 +193,18 @@ Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 " Unmanaged plugin (manually installed and updated)
 Plug '~/my-prototype-plugin'
 
-" Initialize plugin system
-" - Automatically executes `filetype plugin indent on` and `syntax enable`.
+" Call plug#end to update &runtimepath and initialize the plugin system.
+" - It automatically executes `filetype plugin indent on` and `syntax enable`
 call plug#end()
 " You can revert the settings after the call like so:
 "   filetype indent off   " Disable file-type-specific indentation
 "   syntax off            " Disable syntax highlighting
 ```
 
-#### Example (Lua configuration for Neovim)
+#### Lua configuration example for Neovim
 
 In Neovim, you can write your configuration in a Lua script file named
-`init.lua`. The following code is the Lua script equivalent to the VimScript
+`init.lua`. The following code is the Lua script equivalent to the Vim script
 example above.
 
 ```lua
@@ -279,13 +305,77 @@ More examples can be found in:
 - `:PlugDiff`
     - `X` - Revert the update
 
-### Example: A small [sensible](https://github.com/tpope/vim-sensible) Vim configuration
+### Post-update hooks
+
+There are some plugins that require extra steps after installation or update.
+In that case, use the `do` option to describe the task to be performed.
 
 ```vim
-call plug#begin()
-Plug 'tpope/vim-sensible'
-call plug#end()
+Plug 'Shougo/vimproc.vim', { 'do': 'make' }
+Plug 'ycm-core/YouCompleteMe', { 'do': './install.py' }
 ```
+
+If the value starts with `:`, it will be recognized as a Vim command.
+
+```vim
+Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
+```
+
+To call a Vim function, you can pass a lambda expression like so:
+
+```vim
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+```
+
+If you need more control, you can pass a reference to a Vim function that
+takes a dictionary argument.
+
+```vim
+function! BuildYCM(info)
+  " info is a dictionary with 3 fields
+  " - name:   name of the plugin
+  " - status: 'installed', 'updated', or 'unchanged'
+  " - force:  set on PlugInstall! or PlugUpdate!
+  if a:info.status == 'installed' || a:info.force
+    !./install.py
+  endif
+endfunction
+
+Plug 'ycm-core/YouCompleteMe', { 'do': function('BuildYCM') }
+```
+
+A post-update hook is executed inside the directory of the plugin and only run
+when the repository has changed, but you can force it to run unconditionally
+with the bang-versions of the commands: `PlugInstall!` and `PlugUpdate!`.
+
+> [!TIP]
+> Make sure to escape BARs and double-quotes when you write the `do` option
+> inline as they are mistakenly recognized as command separator or the start of
+> the trailing comment.
+>
+> ```vim
+> Plug 'junegunn/fzf', { 'do': 'yes \| ./install' }
+> ```
+>
+> But you can avoid the escaping if you extract the inline specification using a
+> variable (or any Vim script expression) as follows:
+>
+> ```vim
+> let g:fzf_install = 'yes | ./install'
+> Plug 'junegunn/fzf', { 'do': g:fzf_install }
+> ```
+
+#### `PlugInstall!` and `PlugUpdate!`
+
+The installer takes the following steps when installing/updating a plugin:
+
+1. `git clone` or `git fetch` from its origin
+2. Check out branch, tag, or commit and optionally `git merge` remote branch
+3. If the plugin was updated (or installed for the first time)
+    1. Update submodules
+    2. Execute post-update hooks
+
+The commands with the `!` suffix ensure that all steps are run unconditionally.
 
 ### On-demand loading of plugins
 
@@ -346,78 +436,6 @@ autocmd! User goyo.vim echom 'Goyo is now loaded!'
 >
 > See https://github.com/junegunn/vim-plug/wiki/tips#loading-plugins-manually
 
-
-### Post-update hooks
-
-There are some plugins that require extra steps after installation or update.
-In that case, use the `do` option to describe the task to be performed.
-
-```vim
-Plug 'Shougo/vimproc.vim', { 'do': 'make' }
-Plug 'ycm-core/YouCompleteMe', { 'do': './install.py' }
-```
-
-If the value starts with `:`, it will be recognized as a Vim command.
-
-```vim
-Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
-```
-
-To call a Vim function, you can pass a lambda expression like so:
-
-```vim
-Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
-```
-
-If you need more control, you can pass a reference to a Vim function that
-takes a dictionary argument.
-
-```vim
-function! BuildYCM(info)
-  " info is a dictionary with 3 fields
-  " - name:   name of the plugin
-  " - status: 'installed', 'updated', or 'unchanged'
-  " - force:  set on PlugInstall! or PlugUpdate!
-  if a:info.status == 'installed' || a:info.force
-    !./install.py
-  endif
-endfunction
-
-Plug 'ycm-core/YouCompleteMe', { 'do': function('BuildYCM') }
-```
-
-A post-update hook is executed inside the directory of the plugin and only run
-when the repository has changed, but you can force it to run unconditionally
-with the bang-versions of the commands: `PlugInstall!` and `PlugUpdate!`.
-
-> [!TIP]
-> Make sure to escape BARs and double-quotes when you write the `do` option
-> inline as they are mistakenly recognized as command separator or the start of
-> the trailing comment.
->
-> ```vim
-> Plug 'junegunn/fzf', { 'do': 'yes \| ./install' }
-> ```
->
-> But you can avoid the escaping if you extract the inline specification using a
-> variable (or any Vimscript expression) as follows:
->
-> ```vim
-> let g:fzf_install = 'yes | ./install'
-> Plug 'junegunn/fzf', { 'do': g:fzf_install }
-> ```
-
-### `PlugInstall!` and `PlugUpdate!`
-
-The installer takes the following steps when installing/updating a plugin:
-
-1. `git clone` or `git fetch` from its origin
-2. Check out branch, tag, or commit and optionally `git merge` remote branch
-3. If the plugin was updated (or installed for the first time)
-    1. Update submodules
-    2. Execute post-update hooks
-
-The commands with the `!` suffix ensure that all steps are run unconditionally.
 
 ### Collaborators
 
