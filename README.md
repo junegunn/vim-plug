@@ -360,7 +360,7 @@ with the bang-versions of the commands: `PlugInstall!` and `PlugUpdate!`.
 > Plug 'junegunn/fzf', { 'do': g:fzf_install }
 > ```
 
-### `PlugInstall!` and `PlugUpdate!`
+#### `PlugInstall!` and `PlugUpdate!`
 
 The installer takes the following steps when installing/updating a plugin:
 

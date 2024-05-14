@@ -15,7 +15,7 @@ PLUG - TABLE OF CONTENTS                                         *plug* *plug-to
       Global options                          |plug-global-options|
       Keybindings                             |plug-keybindings|
       Post-update hooks                       |plug-post-update-hooks|
-      PlugInstall! and PlugUpdate!            |pluginstall-and-plugupdate|
+        PlugInstall! and PlugUpdate!          |pluginstall-and-plugupdate|
       On-demand loading of plugins            |plug-on-demand-loading-of-plugins|
       Collaborators                           |plug-collaborators|
       License                                 |plug-license|
@@ -336,7 +336,7 @@ variable (or any Vim script expression) as follows:
     Plug 'junegunn/fzf', { 'do': g:fzf_install }
 <
 
-< PlugInstall! and PlugUpdate! >______________________________________________~
+PlugInstall! and PlugUpdate!~
                                                     *pluginstall-and-plugupdate*
 
 The installer takes the following steps when installing/updating a plugin:
