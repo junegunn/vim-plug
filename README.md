@@ -160,11 +160,11 @@ call plug#begin()
 
 " Make sure you use single quotes
 
-" Shorthand notation for GitHub; translates to https://github.com/junegunn/vim-easy-align
-Plug 'junegunn/vim-easy-align'
+" Shorthand notation for GitHub; translates to https://github.com/junegunn/seoul256.vim.git
+Plug 'junegunn/seoul256.vim'
 
 " Any valid git URL is allowed
-Plug 'https://github.com/junegunn/seoul256.vim.git'
+Plug 'https://github.com/junegunn/vim-easy-align.git'
 
 " Using a tagged release; wildcard allowed (requires git 1.9.2 or above)
 Plug 'fatih/vim-go', { 'tag': '*' }
@@ -199,6 +199,10 @@ call plug#end()
 " You can revert the settings after the call like so:
 "   filetype indent off   " Disable file-type-specific indentation
 "   syntax off            " Disable syntax highlighting
+
+" Color schemes should be loaded after plug#end().
+" We prepend it with 'silent!' to ignore errors when it's not yet installed.
+silent! colorscheme seoul256
 ```
 
 ### Lua example for Neovim
@@ -213,11 +217,11 @@ local Plug = vim.fn['plug#']
 
 vim.call('plug#begin')
 
--- Shorthand notation for GitHub; translates to https://github.com/junegunn/vim-easy-align
-Plug('junegunn/vim-easy-align')
+-- Shorthand notation for GitHub; translates to https://github.com/junegunn/seoul256.vim.git
+Plug('junegunn/seoul256.vim')
 
 -- Any valid git URL is allowed
-Plug('https://github.com/junegunn/seoul256.vim.git')
+Plug('https://github.com/junegunn/vim-easy-align.git')
 
 -- Using a tagged release; wildcard allowed (requires git 1.9.2 or above)
 Plug('fatih/vim-go', { ['tag'] = '*' })
@@ -249,6 +253,10 @@ Plug('tpope/vim-fireplace', { ['for'] = 'clojure' })
 Plug('~/my-prototype-plugin')
 
 vim.call('plug#end')
+
+-- Color schemes should be loaded after plug#end().
+-- We prepend it with 'silent!' to ignore errors when it's not yet installed.
+vim.cmd('silent! colorscheme seoul256')
 ```
 
 ## Commands
