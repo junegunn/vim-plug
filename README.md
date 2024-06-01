@@ -105,7 +105,7 @@ iwr -useb https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim |`
 
 ## Usage
 
-Add a vim-plug section to your `~/.vimrc` (or `init.vim` for Neovim)
+Add a vim-plug section to your `~/.vimrc` (or `~/.config/nvim/init.vim` for Neovim)
 
 1. Begin the section with `call plug#begin()`
 1. List the plugins with `Plug` commands
@@ -127,6 +127,7 @@ Reload the file or restart Vim, then you can,
 * `:PlugInstall` to install the plugins
 * `:PlugUpdate` to install or update the plugins
 * `:PlugDiff` to review the changes from the last update
+* `:PlugClean` to remove plugins no longer in the list
 
 > [!NOTE]
 > That's basically all you need to know to get started. The rest of the
