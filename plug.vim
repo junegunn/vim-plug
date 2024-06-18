@@ -2281,7 +2281,10 @@ endfunction
 
 function! s:with_cd(cmd, dir, ...)
   let script = a:0 > 0 ? a:1 : 1
-  return printf('cd%s %s && %s', s:is_win ? ' /d' : '', plug#shellescape(a:dir, {'script': script}), a:cmd)
+  let pwsh = s:is_powershell(&shell)
+  let cd = s:is_win && !pwsh ? 'cd /d' : 'cd'
+  let sep = pwsh ? ';' : '&&'
+  return printf('%s %s %s %s', cd, plug#shellescape(a:dir, {'script': script, 'shell': &shell}), sep, a:cmd)
 endfunction
 
 function! s:system(cmd, ...)
