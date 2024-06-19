@@ -134,6 +134,17 @@ Reload the file or restart Vim, then you can,
 > document is for advanced users who want to know more about the features and
 > options.
 
+> [!TIP]
+> `plug#end()` automatically executes `filetype plugin indent on` and `syntax
+> enable`. We believe this is a good default for most users, but if you don't
+> want this behavior, you can revert the settings after the call.
+>
+> ```vim
+> call plug#end()
+> filetype indent off   " Disable file-type-specific indentation
+> syntax off            " Disable syntax highlighting
+> ```
+
 ### Getting Help
 
 - See [tutorial] page to learn more about the basics of vim-plug
