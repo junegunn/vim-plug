@@ -1330,6 +1330,11 @@ function! s:update_finish()
   endif
 endfunction
 
+function! s:mark_aborted(name, message)
+  let attrs = { 'running': 0, 'error': 1, 'abort': 1, 'lines': [a:message] }
+  let s:jobs[a:name] = extend(get(s:jobs, a:name, {}), attrs)
+endfunction
+
 function! s:job_abort(cancel)
   if (!s:nvim && !s:vim8) || !exists('s:jobs')
     return
@@ -1344,7 +1349,9 @@ function! s:job_abort(cancel)
     if j.new
       call s:rm_rf(g:plugs[name].dir)
     endif
-    let s:jobs[name] = { 'running': 0, 'lines': ['Aborted'], 'error': 1, 'abort': 1 }
+    if a:cancel
+      call s:mark_aborted(name, 'Aborted')
+    endif
   endfor
 
   if a:cancel
@@ -1562,7 +1569,7 @@ while 1 " Without TCO, Vim stack is bound to explode
   let name = keys(s:update.todo)[0]
   let spec = remove(s:update.todo, name)
   if get(spec, 'abort', 0)
-    let s:jobs[name] = { 'running': 0, 'lines': ['Skipped'], 'abort': 1, 'error': 1 }
+    call s:mark_aborted(name, 'Skipped')
     call s:reap(name)
     continue
   endif
