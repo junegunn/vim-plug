@@ -315,7 +315,7 @@ vim.cmd('silent! colorscheme seoul256')
 - `S` - `PlugStatus`
 - `R` - Retry failed update or installation tasks
 - `U` - Update plugins in the selected range
-- `q` - Close the window
+- `q` - Abort the running tasks or close the window
 - `:PlugStatus`
     - `L` - Load plugin
 - `:PlugDiff`
