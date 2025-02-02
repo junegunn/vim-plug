@@ -1,21 +1,3 @@
-<div align="center">
-<sup>Special thanks to:</sup>
-<br>
-<br>
-<a href="https://warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=vimplug_20240209">
-  <div>
-    <img src="https://raw.githubusercontent.com/junegunn/i/master/warp.png" width="300" alt="Warp">
-  </div>
-  <b>Warp is a modern, Rust-based terminal with AI built in so you and your team can build great software, faster.</b>
-  <div>
-    <sup>Visit warp.dev to learn more.</sup>
-  </div>
-</a>
-<br>
-<hr>
-</div>
-<br>
-
 <h1 title="vim-plug">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./plug-dark.png">
