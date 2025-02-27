@@ -7,7 +7,7 @@
    </a>
 
 ### [Warp, the intelligent terminal for developers](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=vim-plug)
-[Available for MacOS and Linux](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=vim-plug)<br>
+[Available for MacOS, Linux, & Windows](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=vim-plug)<br>
 
 </div>
 <hr>
