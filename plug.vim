@@ -398,9 +398,8 @@ function! plug#end()
     if has('syntax') && !exists('g:syntax_on')
       syntax enable
     end
-  else
-    call s:reload_plugins()
   endif
+  call s:reload_plugins()
 endfunction
 
 function! s:loaded_names()
