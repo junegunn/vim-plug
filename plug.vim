@@ -394,12 +394,19 @@ function! plug#end()
 
   call s:reorg_rtp()
   filetype plugin indent on
+  let g:plug_reload_plugins = get(g:, 'plug_reload_plugins', '')
   if has('vim_starting')
     if has('syntax') && !exists('g:syntax_on')
       syntax enable
     end
+  else
+    if g:plug_reload_plugins != 'force'
+      call s:reload_plugins()
+    endif
   endif
-  call s:reload_plugins()
+  if g:plug_reload_plugins == 'force'
+    call s:reload_plugins()
+  endif
 endfunction
 
 function! s:loaded_names()
