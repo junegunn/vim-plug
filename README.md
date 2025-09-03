@@ -1,6 +1,16 @@
 <div align="center" markdown="1">
+  <sup>Special thanks to:</sup>
+  <br>
+  <a href="https://tuple.app/vim-plug">
+    <img alt="Tuple's sponsorship image" src="https://raw.githubusercontent.com/junegunn/i/master/tuple.png" width="400">
+  </a>
+
+### [Tuple, the premier screen sharing app for developers](https://tuple.app/vim-plug)
+[Available for MacOS & Windows](https://tuple.app/vim-plug)<br>
+
+---
+
    <sup>Special thanks to:</sup>
-   <br>
    <br>
    <a href="https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=vim-plug">
       <img alt="Warp sponsorship" width="400" src="https://github.com/user-attachments/assets/ab8dd143-b0fd-4904-bdc5-dd7ecac94eae">
