@@ -1546,7 +1546,7 @@ endfunction
 
 function! s:checkout_command(spec)
   let a:spec.branch = s:git_origin_branch(a:spec)
-  return ['git', 'checkout', '-q', a:spec.branch, '--']
+  return ['git', 'checkout', '-q', '--guess', a:spec.branch, '--']
 endfunction
 
 function! s:merge_command(spec)
