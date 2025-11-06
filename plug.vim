@@ -2383,7 +2383,9 @@ function! s:git_validate(spec, check_branch)
       let err = join(['Invalid URI: '.remote,
                     \ 'Expected:    '.a:spec.uri,
                     \ 'PlugClean required.'], "\n")
-    elseif a:check_branch && has_key(a:spec, 'commit')
+    elseif !a:check_branch
+      return ['', 0]
+    elseif has_key(a:spec, 'commit')
       let sha = s:git_revision(a:spec.dir)
       if empty(sha)
         let err = join(add(result, 'PlugClean required.'), "\n")
@@ -2392,18 +2394,16 @@ function! s:git_validate(spec, check_branch)
                               \ a:spec.commit[:6], sha[:6]),
                       \ 'PlugUpdate required.'], "\n")
       endif
+    elseif has_key(a:spec, 'tag')
+      let tag = s:system_chomp('git describe --exact-match --tags HEAD 2>&1', a:spec.dir)
+      if a:spec.tag !=# tag && a:spec.tag !~ '\*'
+        let err = printf('Invalid tag: %s (expected: %s). Try PlugUpdate.',
+              \ (empty(tag) ? 'N/A' : tag), a:spec.tag)
+      endif
     elseif a:check_branch
       let current_branch = result[0]
-      " Check tag
       let origin_branch = s:git_origin_branch(a:spec)
-      if has_key(a:spec, 'tag')
-        let tag = s:system_chomp('git describe --exact-match --tags HEAD 2>&1', a:spec.dir)
-        if a:spec.tag !=# tag && a:spec.tag !~ '\*'
-          let err = printf('Invalid tag: %s (expected: %s). Try PlugUpdate.',
-                \ (empty(tag) ? 'N/A' : tag), a:spec.tag)
-        endif
-      " Check branch
-      elseif origin_branch !=# current_branch
+      if origin_branch !=# current_branch
         let err = printf('Invalid branch: %s (expected: %s). Try PlugUpdate.',
               \ current_branch, origin_branch)
       endif
