@@ -2343,6 +2343,7 @@ function! s:system_job(cmd) abort
   \ 'err_io': 'out',
   \})
   while job_status(job) ==# 'run'
+    sleep 10m
   endwhile
   let s:shell_error = job_info(job).exitval
   let result = filereadable(tmp) ? join(readfile(tmp, 'b'), "\n") : ''
