@@ -85,6 +85,9 @@ let s:TYPE = {
 \ }
 let s:loaded = get(s:, 'loaded', {})
 let s:triggers = get(s:, 'triggers', {})
+let s:need_filetypeplugin_au = 0
+let s:need_filetypeindent_au = 0
+let s:autocmd_queue_for_vimenter = []
 
 function! s:is_powershell(shell)
   return a:shell =~# 'powershell\(\.exe\)\?$' || a:shell =~# 'pwsh\(\.exe\)\?$'
@@ -324,6 +327,21 @@ function! plug#end()
   if get(g:, 'did_load_filetypes', 0)
     filetype off
   endif
+
+  let warn = []
+  if exists('g:did_load_ftplugin')
+    let warn += ['plugin']
+    let s:need_filetypeindent_au = 1
+  endif
+  if exists('g:did_indent_on')
+    let warn += ['indent']
+    let s:need_filetypeplugin_au = 1
+  endif
+  if !empty(warn)
+    redraw
+    call s:warn('echom', printf('[vim-plug] "filetype %s on" should not be used manually with vim-plug, please remove it from your vimrc.', join(warn)))
+  endif
+
   for name in g:plugs_order
     if !has_key(g:plugs, name)
       continue
@@ -401,7 +419,21 @@ function! plug#end()
     if has('syntax') && !exists('g:syntax_on')
       syntax enable
     end
+
+    " NOTE: v:vim_did_enter might not exist with older Vims, and handling it
+    " manually can be used in tests.
+    let s:vim_did_enter = 0
+    function! s:plug_on_vimenter()
+      let s:vim_did_enter = 1
+      for event in s:autocmd_queue_for_vimenter
+        call s:doautocmd(event)
+      endfor
+    endfunction
+    augroup PlugLOD
+      autocmd VimEnter * call s:plug_on_vimenter()
+    augroup END
   else
+    let s:vim_did_enter = 1
     call s:reload_plugins()
   endif
 endfunction
@@ -564,6 +596,12 @@ function! s:reorg_rtp()
 endfunction
 
 function! s:doautocmd(...)
+  if !s:vim_did_enter
+    if index(s:autocmd_queue_for_vimenter, a:000) == -1
+      call add(s:autocmd_queue_for_vimenter, a:000)
+    endif
+    return
+  endif
   if exists('#'.join(a:000, '#'))
     execute 'doautocmd' ((v:version > 703 || has('patch442')) ? '<nomodeline>' : '') join(a:000)
   endif
@@ -574,9 +612,7 @@ function! s:dobufread(names)
     let path = s:rtp(g:plugs[name])
     for dir in ['ftdetect', 'ftplugin', 'after/ftdetect', 'after/ftplugin']
       if len(finddir(dir, path))
-        if exists('#BufRead')
-          doautocmd BufRead
-        endif
+        call s:doautocmd('BufRead')
         return
       endif
     endfor
@@ -650,8 +686,17 @@ function! s:lod_ft(pat, names)
   let syn = 'syntax/'.a:pat.'.vim'
   call s:lod(a:names, ['plugin', 'after/plugin'], syn, 'after/'.syn)
   execute 'autocmd! PlugLOD FileType' a:pat
-  call s:doautocmd('filetypeplugin', 'FileType')
-  call s:doautocmd('filetypeindent', 'FileType')
+
+  " Executing this is only necessary if "filetype plugin indent on" was used
+  " before plug#end, and can be skipped when Vim has not entered always.
+  if s:vim_did_enter
+    if s:need_filetypeplugin_au
+      call s:doautocmd('filetypeplugin', 'FileType')
+    endif
+    if s:need_filetypeindent_au
+      call s:doautocmd('filetypeindent', 'FileType')
+    endif
+  endif
 endfunction
 
 if has('patch-7.4.1898')
