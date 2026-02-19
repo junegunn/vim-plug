@@ -778,13 +778,24 @@ function! s:update(force, names)
   call s:update_impl(1, a:force, a:names)
 endfunction
 
+function! s:do_need_exec_helptags(docdir)
+  let exts = s:uniq(sort(map(s:glob(a:docdir, '*.{txt,??x}'), 'v:val[-3:]')))
+  for ext in exts
+    let tagname = 'tags' . (ext == 'txt' ? '' : '-' . ext[:1])
+    if !filereadable(a:docdir .'/'. tagname) || empty(s:system('cd ' . s:shellesc(a:docdir) . ' && git ls-files ' . tagname))
+      return 1
+    endif
+  endfor
+  return 0
+endfunc
+
 function! plug#helptags()
   if !exists('g:plugs')
     return s:err('plug#begin was not called')
   endif
   for spec in values(g:plugs)
     let docd = join([s:rtp(spec), 'doc'], '/')
-    if isdirectory(docd)
+    if isdirectory(docd) && s:do_need_exec_helptags(docd)
       silent! execute 'helptags' s:esc(docd)
     endif
   endfor
@@ -2459,6 +2470,23 @@ function! s:git_validate(spec, check_branch)
   endif
   return [err, err =~# 'PlugClean']
 endfunction
+
+if exists('*uniq')
+  function! s:uniq(list) abort
+    return uniq(a:list)
+  endfunction
+else
+  function! s:uniq(list) abort
+    let i = len(a:list) - 1
+    while 0 < i
+      if a:list[i] ==# a:list[i - 1]
+        call remove(a:list, i)
+      endif
+      let i -= 1
+    endwhile
+    return a:list
+  endfunction
+endif
 
 function! s:rm_rf(dir)
   if isdirectory(a:dir)
