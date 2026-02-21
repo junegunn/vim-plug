@@ -1462,7 +1462,7 @@ function! s:spawn(name, spec, queue, opts)
   elseif s:vim8
     let cmd = join(map(copy(argv), 'plug#shellescape(v:val, {"script": 0})'))
     if has_key(a:opts, 'dir')
-      let cmd = s:with_cd(cmd, a:opts.dir, 0)
+      let cmd = s:with_cd(cmd, a:opts.dir, {'shell': s:is_win ? 'cmd.exe' : 'sh', 'script': 0})
     endif
     let argv = s:is_win ? ['cmd', '/s', '/c', '"'.cmd.'"'] : ['sh', '-c', cmd]
     let jid = job_start(s:is_win ? join(argv, ' ') : argv, {
@@ -2328,11 +2328,18 @@ function! s:format_message(bullet, name, message)
 endfunction
 
 function! s:with_cd(cmd, dir, ...)
-  let script = a:0 > 0 ? a:1 : 1
-  let pwsh = s:is_powershell(&shell)
+  let opts = a:0 > 0 && type(a:1) == s:TYPE.dict ? a:1 : {}
+  let opts.shell = get(opts, 'shell', &shell)
+  let opts.script = get(opts, 'script', 1)
+
+  let pwsh = s:is_powershell(opts.shell)
   let cd = s:is_win && !pwsh ? 'cd /d' : 'cd'
   let sep = pwsh ? ';' : '&&'
-  return printf('%s %s %s %s', cd, plug#shellescape(a:dir, {'script': script, 'shell': &shell}), sep, a:cmd)
+  let pwsh_block_required = pwsh && !has('patch-9.2.6')
+  let start = pwsh_block_required ? '& { ' : ''
+  let end = pwsh_block_required ? ' }' : ''
+
+  return printf('%s%s %s %s %s%s', start, cd, plug#shellescape(a:dir, opts), sep, a:cmd, end)
 endfunction
 
 function! s:system_job(cmd) abort
@@ -2372,7 +2379,7 @@ function! s:system(cmd, ...)
       let cmd = a:cmd
     endif
     if a:0 > 0
-      let cmd = s:with_cd(cmd, a:1, type(a:cmd) != s:TYPE.list)
+      let cmd = s:with_cd(cmd, a:1, {'script': type(a:cmd) != s:TYPE.list})
     endif
     if s:is_win && type(a:cmd) != s:TYPE.list
       let [batchfile, cmd] = s:batchfile(cmd)
