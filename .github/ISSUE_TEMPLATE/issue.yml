@@ -1,0 +1,59 @@
+name: Issue
+description: File an issue
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Before Submitting
+
+        - You checked the [faq](https://github.com/junegunn/vim-plug/wiki/faq) for common problems.
+        - Check your [requirements](https://github.com/junegunn/vim-plug/wiki/requirements) are satisfied.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      placeholder: Explain the problem here
+
+  - type: textarea
+    id: plug-block
+    attributes:
+      label: Plug block
+      description: Paste your Plug block (from `call plug#begin()` to `call plug#end()`)
+      render: vim
+
+  - type: textarea
+    id: version
+    attributes:
+      label: ":version"
+      description: Paste the contents of `:version` below
+      render: text
+
+  - type: checkboxes
+    id: type
+    attributes:
+      label: Type
+      options:
+        - label: Bug
+        - label: Enhancement
+        - label: Feature Request
+        - label: Question
+
+  - type: checkboxes
+    id: os
+    attributes:
+      label: OS
+      options:
+        - label: All/Other
+        - label: Linux
+        - label: macOS
+        - label: Windows
+
+  - type: checkboxes
+    id: vim
+    attributes:
+      label: Vim
+      options:
+        - label: Terminal Vim
+        - label: GVim
+        - label: Neovim
