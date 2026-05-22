@@ -2469,9 +2469,11 @@ endfunction
 
 function! s:rm_rf(dir)
   if isdirectory(a:dir)
-    return s:system(s:is_win
-    \ ? 'rmdir /S /Q '.plug#shellescape(a:dir)
-    \ : ['rm', '-rf', a:dir])
+    return s:system(!s:is_win
+    \ ? ['rm', '-rf', a:dir]
+    \ : s:is_powershell(&shell)
+    \ ? ['Remove-Item', '-Recurse', '-Force', a:dir]
+    \ : 'rmdir /S /Q '.plug#shellescape(a:dir))
   endif
 endfunction
 
