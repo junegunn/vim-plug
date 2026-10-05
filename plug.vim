@@ -550,7 +550,7 @@ function! s:reorg_rtp()
 
   let s:middle = get(s:, 'middle', &rtp)
   let rtps     = map(s:loaded_names(), 's:rtp(g:plugs[v:val])')
-  let afters   = filter(map(copy(rtps), 'globpath(v:val, "after")'), '!empty(v:val)')
+  let afters   = map(filter(copy(rtps), 'isdirectory(v:val."/after")'), 's:path(v:val."/after")')
   let rtp      = join(map(rtps, 'escape(v:val, ",")'), ',')
                  \ . ','.s:middle.','
                  \ . join(map(afters, 'escape(v:val, ",")'), ',')
@@ -573,7 +573,7 @@ function! s:dobufread(names)
   for name in a:names
     let path = s:rtp(g:plugs[name])
     for dir in ['ftdetect', 'ftplugin', 'after/ftdetect', 'after/ftplugin']
-      if len(finddir(dir, path))
+      if isdirectory(path.'/'.dir)
         if exists('#BufRead')
           doautocmd BufRead
         endif
