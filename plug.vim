@@ -570,6 +570,10 @@ function! s:doautocmd(...)
 endfunction
 
 function! s:dobufread(names)
+  " Nothing to detect in an unnamed empty buffer, e.g. the one on startup
+  if empty(bufname('%')) && line('$') == 1 && empty(getline(1))
+    return
+  endif
   for name in a:names
     let path = s:rtp(g:plugs[name])
     for dir in ['ftdetect', 'ftplugin', 'after/ftdetect', 'after/ftplugin']
