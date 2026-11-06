@@ -1233,7 +1233,7 @@ function! s:update_impl(pull, force, args) abort
   let s:submodule_opt = s:git_version_requirement(2, 8) ? ' --jobs='.threads : ''
 
   " Python version requirement (>= 2.7)
-  if python && !ruby && !use_job && s:update.threads > 1 && !has('python3')
+  if python && !ruby && s:update.threads > 1 && !has('python3')
     redir => pyv
     silent python import platform; print platform.python_version()
     redir END
