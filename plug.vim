@@ -1196,7 +1196,7 @@ function! s:update_impl(pull, force, args) abort
   endif
 
   let use_job = s:nvim || s:vim8
-  let python = !use_job && (has('python') || has('python3'))
+  let python = !use_job && (has('python3') || has('python'))
   let ruby = !use_job && (v:version >= 703 || v:version == 702 && has('patch374')) && !(s:is_win && has('gui_running')) && threads > 1 && has('ruby') && s:check_ruby()
 
   let s:update = {
