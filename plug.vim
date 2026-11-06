@@ -1196,8 +1196,8 @@ function! s:update_impl(pull, force, args) abort
   endif
 
   let use_job = s:nvim || s:vim8
-  let python = (has('python') || has('python3')) && !use_job
-  let ruby = has('ruby') && !use_job && (v:version >= 703 || v:version == 702 && has('patch374')) && !(s:is_win && has('gui_running')) && threads > 1 && s:check_ruby()
+  let python = !use_job && (has('python') || has('python3'))
+  let ruby = !use_job && (v:version >= 703 || v:version == 702 && has('patch374')) && !(s:is_win && has('gui_running')) && threads > 1 && has('ruby') && s:check_ruby()
 
   let s:update = {
     \ 'start':   reltime(),
@@ -1233,7 +1233,7 @@ function! s:update_impl(pull, force, args) abort
   let s:submodule_opt = s:git_version_requirement(2, 8) ? ' --jobs='.threads : ''
 
   " Python version requirement (>= 2.7)
-  if python && !has('python3') && !ruby && !use_job && s:update.threads > 1
+  if python && !ruby && !use_job && s:update.threads > 1 && !has('python3')
     redir => pyv
     silent python import platform; print platform.python_version()
     redir END
