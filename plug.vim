@@ -1647,7 +1647,7 @@ endwhile
 endfunction
 
 function! s:update_python()
-let py_exe = has('python') ? 'python' : 'python3'
+let py_exe = has('python3') ? 'python3' : 'python'
 execute py_exe "<< EOF"
 import datetime
 import functools
