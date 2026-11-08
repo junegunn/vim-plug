@@ -945,7 +945,9 @@ function! s:prepare(...)
   call s:assign_name()
 
   for k in ['<cr>', 'L', 'o', 'X', 'd', 'dd']
-    execute 'silent! unmap <buffer>' k
+	if !empty(maparg(k, '', 0, 1))
+		execute 'silent! unmap <buffer> ' . k
+	endif
   endfor
   setlocal buftype=nofile bufhidden=wipe nobuflisted nolist noswapfile nowrap cursorline modifiable nospell
   if exists('+colorcolumn')
