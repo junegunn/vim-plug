@@ -286,6 +286,7 @@ vim.cmd('silent! colorscheme seoul256')
 | `g:plug_timeout`    | 60                                | Time limit of each task in seconds (*Ruby & Python*)   |
 | `g:plug_retries`    | 2                                 | Number of retries in case of timeout (*Ruby & Python*) |
 | `g:plug_shallow`    | 1                                 | Use shallow clone                                      |
+| `g:plug_disable_credential_helper` | 1                   | Disable Git's credential helper when fetching pinned commits or when the Vim installer fetches an update (Git 2.0+) |
 | `g:plug_window`     | `-tabnew`                         | Command to open plug window                            |
 | `g:plug_pwindow`    | `vertical rightbelow new`         | Command to open preview window in `PlugDiff`           |
 | `g:plug_url_format` | `https://git::@github.com/%s.git` | `printf` format to build repo URL (Only applies to the subsequent `Plug` commands) |
